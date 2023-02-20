@@ -4,7 +4,8 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib import auth, messages
-from django.shortcuts import redirect
+from django.shortcuts import redirect, resolve_url
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from oic import rndstr
 from oic.oauth2 import AccessTokenResponse
@@ -33,7 +34,6 @@ get_user = _import_object(GET_USER_FUNCTION, "get_user")
 
 
 def get_oidc_client(op_name, client_id, provider_uri, redirect_uri):
-
     provider_info_uri = urljoin(
         provider_uri,
         get_settings_for_sso_op(op_name)["CONFIG_URI"],
@@ -76,6 +76,29 @@ class OIDCView(View, OIDCMixin):
                 "Please set 'op_name' when initializing with 'as_view()'"
             )  # FIXME
 
+    def get_settings(self, name):
+        return get_settings_for_sso_op(self.op_name)[name]
+
+    def get_next_url(self, request, redirect_field_name):
+        """Retrieves next url from request
+        Note: This verifies that the url is safe before returning it. If the url
+        is not safe, this returns None.
+        :arg HttpRequest request: the http request
+        :arg str redirect_field_name: the name of the field holding the next url
+        :returns: safe url or None
+        """
+        next_url = request.GET.get(redirect_field_name)
+        if next_url:
+
+            is_safe = url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts=self.get_settings("REDIRECT_ALLOWED_HOSTS"),
+                require_https=self.get_settings("REDIRECT_REQUIRES_HTTPS"),
+            )
+            if is_safe:
+                return next_url
+        return None
+
 
 class OIDCLoginView(OIDCView):
     def get(self, request, *args, **kwargs):
@@ -97,12 +120,52 @@ class OIDCLoginView(OIDCView):
         auth_req = client.client.construct_AuthorizationRequest(request_args=args)
         redirect_uri = auth_req.request(client.client.authorization_endpoint)
 
+        request.session["oidc_login_next"] = self.get_next_url(request, "next")
+
         return redirect(redirect_uri)
 
 
+class OIDCLogoutView(OIDCView):
+    @property
+    def redirect_url(self):
+        """Return the logout url defined in settings."""
+        return self.get_settings("REDIRECT_LOGOUT_URI")
+
+    def get(self, request):
+        return self.post(request)
+
+    def post(self, request):
+        """Log out the user."""
+        logout_url = self.redirect_url
+        #
+        # client = OIDClient(self.op_name)
+        # client.client.construct_EndSessionRequest()
+
+        if request.user.is_authenticated:
+            # Check if a method exists to build the URL to log out the user
+            # from the OP.
+            # logout_from_op = self.get_settings("OIDC_OP_LOGOUT_URL_METHOD", "")
+            # if logout_from_op:
+            #     logout_url = import_string(logout_from_op)(request)
+
+            # Log out the Django user if they were logged in.
+            auth.logout(request)
+
+        return redirect(logout_url)
+
+
 class OIDCCallbackView(OIDCView):
+    @property
+    def success_url(self):
+        # Pull the next url from the session or settings--we don't need to
+        # sanitize here because it should already have been sanitized.
+        next_url = self.request.session.get("oidc_login_next", None)
+        return next_url or resolve_url(
+            self.get_settings("REDIRECT_SUCCESS_DEFAULT_URI")
+        )
+
     def login_failure(self):
-        return redirect(get_settings_for_sso_op(self.op_name)["REDIRECT_FAILURE_URI"])
+        return redirect(self.get_settings(["REDIRECT_FAILURE_URI"]))
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
@@ -138,7 +201,7 @@ class OIDCCallbackView(OIDCView):
                     else:
                         auth.login(request, user)
                         messages.success(request, "Login successful")
-                        return redirect("/")
+                        return redirect(self.success_url)
 
         print("FAIL")
         messages.error(request, "Login failure")
