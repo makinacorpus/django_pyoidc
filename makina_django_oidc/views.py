@@ -40,7 +40,6 @@ class OIDClient:
 
         consumer_config = {
             # "debug": True,
-            "authz_page": "/callback",
             "response_type": "code",
         }
 
@@ -56,8 +55,8 @@ class OIDClient:
         )
 
         provider_info_uri = urljoin(
-            get_settings_for_sso_op(op_name)["PROVIDER_URI"],
-            get_settings_for_sso_op(op_name)["CONFIG_URI"],
+            get_settings_for_sso_op(op_name)["URI_PROVIDER"],
+            get_settings_for_sso_op(op_name)["URI_CONFIG"],
         )
 
         if session_id:
@@ -95,7 +94,7 @@ class OIDCView(View, OIDCMixin):
                 require_https=self.get_settings("REDIRECT_REQUIRES_HTTPS"),
             )
             if is_safe:
-                return next_url
+                return request.build_absolute_uri(next_url)
         return None
 
 
@@ -103,20 +102,24 @@ class OIDCLoginView(OIDCView):
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
 
-        client = OIDClient(self.op_name)
-
+        client = OIDClient(
+            self.op_name,
+        )
+        client.consumer.consumer_config["authz_page"] = self.get_settings(
+            "CALLBACK_PATH"
+        )
         redirect_uri = self.get_next_url(request, "next")
 
         if not redirect_uri:
-            redirect_uri = request.build_absolute_uri(
-                self.get_settings("REDIRECT_SUCCESS_DEFAULT_URI")
-            )
+            redirect_uri = self.get_settings("URI_DEFAULT_SUCCESS")
+
+        request.session["oidc_login_next"] = redirect_uri
 
         sid, location = client.consumer.begin(
             scope=["openid"],
             response_type="code",
             use_nonce=True,
-            path=redirect_uri.strip("/"),
+            path=self.request.build_absolute_uri("/"),
         )
 
         request.session["oidc_sid"] = sid
@@ -128,7 +131,7 @@ class OIDCLogoutView(OIDCView):
     @property
     def redirect_url(self):
         """Return the logout url defined in settings."""
-        return self.get_settings("REDIRECT_LOGOUT_URI")
+        return self.get_settings("URI_LOGOUT")
 
     def get(self, request):
         return self.post(request)
@@ -157,12 +160,10 @@ class OIDCCallbackView(OIDCView):
         # Pull the next url from the session or settings--we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
-        return next_url or resolve_url(
-            self.get_settings("REDIRECT_SUCCESS_DEFAULT_URI")
-        )
+        return next_url or resolve_url(self.get_settings("URI_DEFAULT_SUCCESS"))
 
     def login_failure(self):
-        return redirect(self.get_settings(["REDIRECT_FAILURE_URI"]))
+        return redirect(self.get_settings(["URI_FAILURE"]))
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
