@@ -108,7 +108,9 @@ class OIDCLoginView(OIDCView):
         redirect_uri = self.get_next_url(request, "next")
 
         if not redirect_uri:
-            redirect_uri = self.get_settings("REDIRECT_SUCCESS_DEFAULT_URI")
+            redirect_uri = request.build_absolute_uri(
+                self.get_settings("REDIRECT_SUCCESS_DEFAULT_URI")
+            )
 
         sid, location = client.consumer.begin(
             scope=["openid"],
