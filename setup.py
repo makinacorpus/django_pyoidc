@@ -44,4 +44,5 @@ setup(
         "Topic :: Security",
     ],
     keywords="openid oidc django sso single-sign-on openid-connect",
+    extras_require={"dev": ["python-decouple", "psycopg2"]},
 )
