@@ -4,19 +4,25 @@ from urllib.parse import urljoin
 import oic
 from django.conf import settings
 from django.contrib import auth, messages
+from django.http import HttpResponse
 from django.shortcuts import redirect, resolve_url
+from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
-from makina_django_oidc.session import OIDCSessionBackendForDjango
+from makina_django_oidc.models import OIDCSession
+from makina_django_oidc.session import OIDCCacheSessionBackendForDjango
 from makina_django_oidc.utils import get_settings_for_sso_op
 
 try:
     GET_USER_FUNCTION = settings.AUTH_GET_USER_FUNCTION
 except AttributeError:
     GET_USER_FUNCTION = "makina_django_oidc:get_user_by_email"
+
+SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
 def _import_object(path, def_name):
@@ -36,7 +42,7 @@ class OIDClient:
     def __init__(self, op_name, session_id=None):
         self._op_name = op_name
 
-        self.cache_backend = OIDCSessionBackendForDjango(self._op_name)
+        self.cache_backend = OIDCCacheSessionBackendForDjango(self._op_name)
 
         consumer_config = {
             # "debug": True,
@@ -121,7 +127,6 @@ class OIDCLoginView(OIDCView):
             use_nonce=True,
             path=self.request.build_absolute_uri("/"),
         )
-
         request.session["oidc_sid"] = sid
 
         return redirect(location)
@@ -139,19 +144,51 @@ class OIDCLogoutView(OIDCView):
     def post(self, request):
         """Log out the user."""
         logout_url = self.redirect_url
-
         if request.user.is_authenticated:
-            client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
-
             try:
-                client.consumer.do_end_session_request(
-                    scope=["openid"], state=request.session["oidc_sid"]
-                )
-            except oic.oauth2.exception.ResponseError:
-                pass  # FIXME : Keycloak error parsing => we shall create an issue
+                sid = request.session["oidc_sid"]
+                print(f"Logging out {sid}")
+                client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
+
+                try:
+                    client.consumer.do_end_session_request(
+                        scope=["openid"], state=request.session["oidc_sid"]
+                    )
+                except oic.oauth2.exception.ResponseError:
+                    pass  # FIXME : Keycloak error parsing => we shall create an issue
+            except Exception:
+                pass
+
             auth.logout(request)
+            OIDCSession.objects.filter(
+                sid=sid,
+            ).delete()
 
         return redirect(logout_url)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class OIDCBackChannelLogoutView(OIDCView):
+    def post(self, request):
+        client = OIDClient(
+            self.op_name,
+        )
+        body = request.body.decode("utf-8")[13:]
+
+        # Needed due to a bug in pyoidc :
+        # Issue : https://github.com/CZ-NIC/pyoidc/issues/853
+        # Test case related to this : https://github.com/CZ-NIC/pyoidc/blob/f6c590cd8d5834f7e2a2d746ded934549e1fd5f8/tests/test_oic_consumer_logout.py
+
+        client.consumer.sso_db = client.consumer.sdb
+        sid = client.consumer.backchannel_logout(request_args={"logout_token": body})
+        sessions = OIDCSession.objects.filter(sid=sid)
+        for session in sessions:
+            s = SessionStore()
+            s.delete(session.cache_session_key)
+            session.delete()
+        print(f"back-channel logout for sid = {sid}")
+
+        return HttpResponse("")
 
 
 class OIDCCallbackView(OIDCView):
@@ -182,6 +219,12 @@ class OIDCCallbackView(OIDCView):
                 return self.login_failure()
             else:
                 auth.login(request, user)
+                OIDCSession.objects.create(
+                    sid=request.session["oidc_sid"],
+                    uid=user.id,
+                    sub=userinfo["sub"],
+                    cache_session_key=request.session.session_key,
+                )
                 messages.success(request, "Login successful")
                 return redirect(self.success_url)
         else:
