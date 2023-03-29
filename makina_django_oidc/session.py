@@ -36,11 +36,9 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
         ]
 
     def __setitem__(self, key: str, value: Dict[str, Union[str, bool]]) -> None:
-        logger.debug(f"[SESSION] set [{key}] = {value}")
         self.storage.set(key, jsonpickle.encode(value))
 
     def __getitem__(self, key: str) -> Dict[str, Union[str, bool]]:
-        logger.debug(f"[SESSION] - get [{key}]")
         data = self.storage.get(key)
         if data is None:
             raise KeyError  # Makes __getItem__ handle like Python dict
@@ -54,17 +52,17 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
 
     def get_by_uid(self, uid: str) -> List[str]:
         result = OIDCSession.objects.filter(uid=uid).values_list("sid", flat=True)
-        logger.debug(f"[SESSION] get_by_sub : {result}")
+        logger.debug(f"Fetched the following sid : {result} for {uid=}")
 
         return result
 
     def get_by_sub(self, sub: str) -> List[str]:
         result = OIDCSession.objects.filter(sub=sub).values_list("sid", flat=True)
-        logger.debug(f"[SESSION] get_by_sub : {result}")
+        logger.debug(f"Fetched fhe following sid : {result} for {sub=}")
         return result
 
     def get(self, attr: str, val: str) -> List[str]:
-        logger.debug(f"[SESSION] GET SID where [{attr}] = {val}")
+        logger.debug(f"Fetch SID for sessions where [{attr}] = {val}")
         raise NotImplementedError(
             "Current session implementation does not support this method"
         )

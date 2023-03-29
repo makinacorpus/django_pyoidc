@@ -1,3 +1,4 @@
+import logging
 from importlib import import_module
 from urllib.parse import urljoin
 
@@ -23,6 +24,8 @@ except AttributeError:
     GET_USER_FUNCTION = "makina_django_oidc:get_user_by_email"
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
+
+logger = logging.getLogger(__name__)
 
 
 def _import_object(path, def_name):
@@ -145,9 +148,9 @@ class OIDCLogoutView(OIDCView):
         """Log out the user."""
         logout_url = self.redirect_url
         if request.user.is_authenticated:
+            sid = None
             try:
                 sid = request.session["oidc_sid"]
-                print(f"Logging out {sid}")
                 client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
 
                 try:
@@ -160,9 +163,10 @@ class OIDCLogoutView(OIDCView):
                 pass
 
             auth.logout(request)
-            OIDCSession.objects.filter(
-                sid=sid,
-            ).delete()
+            if sid:
+                OIDCSession.objects.filter(
+                    sid=sid,
+                ).delete()
 
         return redirect(logout_url)
 
@@ -181,13 +185,17 @@ class OIDCBackChannelLogoutView(OIDCView):
 
         client.consumer.sso_db = client.consumer.sdb
         sid = client.consumer.backchannel_logout(request_args={"logout_token": body})
-        sessions = OIDCSession.objects.filter(sid=sid)
-        for session in sessions:
-            s = SessionStore()
-            s.delete(session.cache_session_key)
-            session.delete()
-        print(f"back-channel logout for sid = {sid}")
-
+        if sid:
+            logger.info(
+                f"Backchannel logout request received and validated for sid = {sid}"
+            )
+            sessions = OIDCSession.objects.filter(sid=sid)
+            for session in sessions:
+                s = SessionStore()
+                s.delete(session.cache_session_key)
+                session.delete()
+        else:
+            logger.warning("Backchannel logout request rejected")
         return HttpResponse("")
 
 
