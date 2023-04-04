@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from jwt import JWT
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
@@ -91,6 +92,20 @@ class OIDCView(View, OIDCMixin):
     def get_settings(self, name):
         return get_settings_for_sso_op(self.op_name)[name]
 
+    def call_function(self, setting_name, *args, **kwargs):
+        function_path = get_settings_for_sso_op(self.op_name).get(
+            setting_name,
+        )
+        if function_path:
+            func = _import_object(function_path, "")
+            func(*args, **kwargs)
+
+    def call_callback_function(self, request, user):
+        self.call_function("CALLBACK_FUNCTION", request, user)
+
+    def call_logout_function(self, request):
+        self.call_function("LOGOUT_FUNCTION", request)
+
     def get_next_url(self, request, redirect_field_name):
         """
         Adapted from https://github.com/mozilla/mozilla-django-oidc/blob/71e4af8283a10aa51234de705d34cd298e927f97/mozilla_django_oidc/views.py#L132
@@ -161,11 +176,11 @@ class OIDCLogoutView(OIDCView):
                     pass  # FIXME : Keycloak error parsing => we shall create an issue
             except Exception:
                 pass
-
+            self.call_logout_function(request)
             auth.logout(request)
             if sid:
                 OIDCSession.objects.filter(
-                    sid=sid,
+                    session_state=sid,
                 ).delete()
 
         return redirect(logout_url)
@@ -173,30 +188,46 @@ class OIDCLogoutView(OIDCView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class OIDCBackChannelLogoutView(OIDCView):
-    def post(self, request):
-        client = OIDClient(
-            self.op_name,
+    def logout_sessions_by_sid(self, client: OIDClient, sid: str, body):
+        validated_sid = client.consumer.backchannel_logout(
+            request_args={"logout_token": body}
         )
+        if validated_sid != sid:
+            raise RuntimeError(f"Got {validated_sid}, expected {sid}")
+        sessions = OIDCSession.objects.filter(session_state=validated_sid)
+        for session in sessions:
+            self._logout_session(session)
+
+    def logout_sessions_by_sub(self, client: OIDClient, sub: str, body):
+        sessions = OIDCSession.objects.filter(sub=sub)
+        for session in sessions:
+            client.consumer.backchannel_logout(request_args={"logout_token": body})
+            self._logout_session(session)
+
+    def _logout_session(self, session: OIDCSession):
+        s = SessionStore()
+        s.delete(session.cache_session_key)
+        session.delete()
+        logger.info(f"Backchannel logout request received and validated for {session}")
+
+    def post(self, request):
+
         body = request.body.decode("utf-8")[13:]
+        decoded = JWT().decode(body, do_verify=False)
 
-        # Needed due to a bug in pyoidc :
-        # Issue : https://github.com/CZ-NIC/pyoidc/issues/853
-        # Test case related to this : https://github.com/CZ-NIC/pyoidc/blob/f6c590cd8d5834f7e2a2d746ded934549e1fd5f8/tests/test_oic_consumer_logout.py
+        sid = decoded.get("sid")
+        sub = decoded.get("sub")
+        if sub:
+            # Authorization server wants to kill all sessions
+            client = OIDClient(self.op_name)
+            self.logout_sessions_by_sub(client, sub, body)
 
-        client.consumer.sso_db = client.consumer.sdb
-        sid = client.consumer.backchannel_logout(request_args={"logout_token": body})
-        if sid:
-            logger.info(
-                f"Backchannel logout request received and validated for sid = {sid}"
-            )
-            sessions = OIDCSession.objects.filter(sid=sid)
-            for session in sessions:
-                s = SessionStore()
-                s.delete(session.cache_session_key)
-                session.delete()
+        elif sid:
+            client = OIDClient(self.op_name, session_id=sid)
+            self.logout_sessions_by_sid(client, sid, body)
         else:
-            logger.warning("Backchannel logout request rejected")
-        return HttpResponse("")
+            logger.warning("Got invalid logout token : sub or sid is missing")
+        return HttpResponse("")  # FIXME : Add   Cache-Control: no-store
 
 
 class OIDCCallbackView(OIDCView):
@@ -217,8 +248,12 @@ class OIDCCallbackView(OIDCView):
         aresp, atr, idt = client.consumer.parse_authz(query=request.GET.urlencode())
 
         if aresp["state"] == request.session["oidc_sid"]:
-            client.consumer.complete(state=aresp["state"])
-            userinfo = client.consumer.get_user_info(state=aresp["state"])
+            state = aresp["state"]
+            session_state = aresp.get("session_state")
+            if session_state:
+                logger.debug("Session state available, using it as session cache key")
+            client.consumer.complete(state=state, session_state=session_state)
+            userinfo = client.consumer.get_user_info(state=state)
 
             user = get_user(userinfo)  # Call user hook
 
@@ -228,12 +263,12 @@ class OIDCCallbackView(OIDCView):
             else:
                 auth.login(request, user)
                 OIDCSession.objects.create(
-                    sid=request.session["oidc_sid"],
-                    uid=user.id,
+                    state=state,
                     sub=userinfo["sub"],
                     cache_session_key=request.session.session_key,
+                    session_state=session_state,
                 )
-                messages.success(request, "Login successful")
+                self.call_callback_function(request, user)
                 return redirect(self.success_url)
         else:
             messages.error(request, "Login failure : suspicious operation")
