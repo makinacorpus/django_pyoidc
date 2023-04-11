@@ -1,31 +1,12 @@
 from unittest import mock
 from unittest.mock import ANY, call
 
-from django.test import TestCase, override_settings
-
 from makina_django_oidc.views import OIDClient
+from tests.utils import OIDCTestCase
 
 
-class SessionTestCase(TestCase):
+class SessionTestCase(OIDCTestCase):
     @mock.patch("makina_django_oidc.views.Consumer.provider_config")
-    @override_settings(
-        MAKINA_DJANGO_OIDC={
-            "client1": {
-                "CLIENT_ID": "1",
-                "CACHE_BACKEND": "default",
-                "URI_PROVIDER": "",
-                "URI_CONFIG": "",
-                "CLIENT_SECRET": "",
-            },
-            "client2": {
-                "CLIENT_ID": "2",
-                "CACHE_BACKEND": "default",
-                "URI_PROVIDER": "",
-                "URI_CONFIG": "",
-                "CLIENT_SECRET": "",
-            },
-        }
-    )
     def test_session_isolation_between_providers(self, mocked_provider_config):
         """
         Test that different SSO providers using same SID do not conflict

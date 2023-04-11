@@ -3,6 +3,7 @@ from decouple import config
 SECRET_KEY = "fake-key"
 INSTALLED_APPS = ["django.contrib.sessions", "tests", "makina_django_oidc"]
 
+ALLOWED_HOSTS = ["test.makina-django-oidc.notatld"]
 
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
