@@ -3,6 +3,7 @@ from unittest import mock
 from django.conf import settings
 from django.urls import reverse
 
+from makina_django_oidc.views import OIDClient
 from tests.utils import OIDCTestCase
 
 
@@ -95,3 +96,23 @@ class LoginViewTestCase(OIDCTestCase):
             SERVER_NAME="test.hacker.notatld",
         )
         self.assertEqual(response.status_code, 400)
+
+    @mock.patch("makina_django_oidc.views.Consumer.provider_config")
+    def test_oidc_session_is_saved(self, *args):
+        """
+        Test that the OIDC client is saved on login request, and that the returned session ID allows us to restore the client
+        """
+        response = self.client.get(
+            reverse("test_login"),
+            data={
+                "next": "https://"
+                + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + "/myview/details"
+            },
+            SERVER_NAME="test.makina-django-oidc.notatld",
+        )
+        self.assertEqual(response.status_code, 302)
+        sid = self.client.session["oidc_sid"]
+        self.assertIsNotNone(sid)
+        client = OIDClient(op_name="client1", session_id=sid)
+        self.assertEqual(client.consumer.client_id, "1")
