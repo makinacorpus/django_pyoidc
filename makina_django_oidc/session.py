@@ -34,21 +34,25 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
         self.storage: BaseCache = caches[
             get_settings_for_sso_op(op_name)["CACHE_BACKEND"]
         ]
+        self.op_name = op_name
+
+    def get_key(self, key):
+        return f"{self.op_name}-{key}"
 
     def __setitem__(self, key: str, value: Dict[str, Union[str, bool]]) -> None:
-        self.storage.set(key, jsonpickle.encode(value))
+        self.storage.set(self.get_key(key), jsonpickle.encode(value))
 
     def __getitem__(self, key: str) -> Dict[str, Union[str, bool]]:
-        data = self.storage.get(key)
+        data = self.storage.get(self.get_key(key))
         if data is None:
             raise KeyError  # Makes __getItem__ handle like Python dict
         return jsonpickle.decode(data)
 
     def __delitem__(self, key: str) -> None:
-        self.storage.delete(key)
+        self.storage.delete(self.get_key(key))
 
     def __contains__(self, key: str) -> bool:
-        return self.storage.get(key) is not None
+        return self.storage.get(self.get_key(key)) is not None
 
     def get_by_uid(self, uid: str) -> List[str]:
         result = OIDCSession.objects.filter(uid=uid).values_list("sid", flat=True)
