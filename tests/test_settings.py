@@ -38,3 +38,9 @@ MAKINA_DJANGO_OIDC = {
 
 
 ROOT_URLCONF = "tests.urls"
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
