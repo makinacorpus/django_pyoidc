@@ -1,6 +1,7 @@
 from unittest import mock
 
 from django.conf import settings
+from django.contrib.auth import SESSION_KEY, get_user_model
 from django.urls import reverse
 
 from makina_django_oidc.views import OIDClient
@@ -116,3 +117,56 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertIsNotNone(sid)
         client = OIDClient(op_name="client1", session_id=sid)
         self.assertEqual(client.consumer.client_id, "1")
+
+
+class LogoutViewTestCase(OIDCTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create(
+            username="test_user", email="test_user"
+        )
+
+    def test_logout_user_not_authenticated(self):
+        """
+        Test that trying to logout while not being connected redirects
+        """
+        response = self.client.get(reverse("test_logout"))
+        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+
+    def test_django_user_is_at_least_logged_out(self):
+        """
+        Test that logging out without any OIDC state at least kills the Django session
+        """
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("test_logout"))
+        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertFalse(
+            SESSION_KEY in self.client.session
+        )  # from https://stackoverflow.com/a/6013115
+
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    @mock.patch("makina_django_oidc.views.Consumer.do_end_session_request")
+    def test_logout_triggers_oidc_request_to_sso(
+        self, mocked_do_end_session_request, mocked_restore
+    ):
+        """
+        Test that logging out while being connected and having a valid OIDC session triggers an OIDC request to the SSO
+        noticing it of the logout.
+        """
+        self.client.force_login(self.user)
+
+        sid = "test_id_12345"
+
+        session = self.client.session
+        session["oidc_sid"] = sid
+        session.save()
+
+        response = self.client.get(reverse("test_logout"))
+        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertFalse(
+            SESSION_KEY in self.client.session
+        )  # from https://stackoverflow.com/a/6013115
+        mocked_do_end_session_request.assert_called_once_with(
+            scope=["openid"], state=sid
+        )
+        mocked_restore.assert_called_once_with(sid)

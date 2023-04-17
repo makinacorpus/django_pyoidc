@@ -166,15 +166,14 @@ class OIDCLogoutView(OIDCView):
             sid = None
             try:
                 sid = request.session["oidc_sid"]
-                client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
+                client = OIDClient(self.op_name, session_id=sid)
 
                 try:
-                    client.consumer.do_end_session_request(
-                        scope=["openid"], state=request.session["oidc_sid"]
-                    )
+                    client.consumer.do_end_session_request(scope=["openid"], state=sid)
                 except oic.oauth2.exception.ResponseError:
                     pass  # FIXME : Keycloak error parsing => we shall create an issue
-            except Exception:
+            except Exception as e:
+                logger.error(e)
                 pass
             self.call_logout_function(request)
             auth.logout(request)
