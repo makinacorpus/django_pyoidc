@@ -1,13 +1,23 @@
 from decouple import config
 
 SECRET_KEY = "fake-key"
-INSTALLED_APPS = ["django.contrib.sessions", "tests", "makina_django_oidc"]
+INSTALLED_APPS = [
+    "django.contrib.contenttypes",
+    "django.contrib.auth",
+    "django.contrib.sessions",
+    "tests",
+    "makina_django_oidc",
+]
 
+ALLOWED_HOSTS = ["test.makina-django-oidc.notatld"]
 
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
 ]
 
+# SESSION_ENGINE = "django.contrib.sessions.backends.file"
 
 DATABASES = {
     "default": {
@@ -38,3 +48,9 @@ MAKINA_DJANGO_OIDC = {
 
 
 ROOT_URLCONF = "tests.urls"
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}

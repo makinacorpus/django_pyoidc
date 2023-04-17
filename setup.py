@@ -27,7 +27,12 @@ setup(
     url="https://gitlab.makina-corpus.net/pfl/makina-django-oidc",
     python_requires=">=3.7",
     packages=find_packages(),
-    install_requires=["oic>=1.5.0", "django>=3.2", "jsonpickle"],
+    install_requires=[
+        "oic@git+https://github.com/CZ-NIC/pyoidc@444bd6845e13b06c14fbaefccbc0c47059aa2364",
+        "django>=3.2",
+        "jsonpickle",
+        "jwt",
+    ],
     classifiers=[
         "Topic :: Utilities",
         "Natural Language :: English",
