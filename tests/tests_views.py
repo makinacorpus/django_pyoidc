@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.urls import reverse
 
+from makina_django_oidc.models import OIDCSession
 from makina_django_oidc.views import OIDClient
 from tests.utils import OIDCTestCase
 
@@ -170,3 +171,204 @@ class LogoutViewTestCase(OIDCTestCase):
             scope=["openid"], state=sid
         )
         mocked_restore.assert_called_once_with(sid)
+
+
+class CallbackViewTestCase(OIDCTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create(
+            username="test_user", email="test_user"
+        )
+
+    def test_callback_but_no_sid_on_our_side(self):
+        """
+        Test that receiving a random request without any session states is well handled
+        """
+        response = self.client.get(reverse("test_callback"))
+
+        self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
+
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.parse_authz",
+        return_value=({"state": ""}, None, None),
+    )
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    def test_callback_but_state_mismatch(self, mocked_restore, mocked_parse_authz):
+        """
+        Test that receiving a callback with a wrong state parameter results in an HTTP 4XX error
+        """
+        self.client.force_login(self.user)
+
+        state = "test_id_12345"
+
+        session = self.client.session
+        session["oidc_sid"] = state
+        session.save()
+
+        response = self.client.get(reverse("test_callback"))
+        self.assertEqual(response.status_code, 400)
+        mocked_restore.assert_called_once_with(state)
+        mocked_parse_authz.assert_called_once()
+
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.parse_authz",
+        return_value=({"state": "test_id_12345"}, None, None),
+    )
+    @mock.patch("makina_django_oidc.views.get_user", return_value=None)
+    @mock.patch("makina_django_oidc.views.Consumer.get_user_info", return_value={})
+    @mock.patch("makina_django_oidc.views.Consumer.complete")
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    def test_callback_no_session_state_provided_invalid_user(
+        self,
+        mocked_restore,
+        mocked_complete,
+        mocked_get_user_info,
+        mocked_get_user,
+        mocked_parse_authz,
+    ):
+        """
+        Test that receiving a callback for a user that does not get validated by the developer-provided function 'get_user'
+        does not get logged in
+        """
+        self.client.force_login(self.user)
+
+        state = "test_id_12345"
+
+        session = self.client.session
+        session["oidc_sid"] = state
+        session.save()
+
+        response = self.client.get(reverse("test_callback"))
+        mocked_restore.assert_called_once_with(state)
+        mocked_complete.assert_called_once_with(state=state, session_state=None)
+        mocked_parse_authz.assert_called_once()
+        mocked_get_user_info.assert_called_once_with(state=state)
+        mocked_get_user.assert_called_once_with({})
+
+        self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
+        self.assertEqual(OIDCSession.objects.all().count(), 0)
+
+    @mock.patch("makina_django_oidc.views.OIDCView.call_callback_function")
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.parse_authz",
+        return_value=({"state": "test_id_12345"}, None, None),
+    )
+    @mock.patch("makina_django_oidc.views.get_user")
+    @mock.patch("makina_django_oidc.views.Consumer.get_user_info")
+    @mock.patch("makina_django_oidc.views.Consumer.complete")
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    def test_callback_no_session_state_provided_valid_user(
+        self,
+        mocked_restore,
+        mocked_complete,
+        mocked_get_user_info,
+        mocked_get_user,
+        mocked_parse_authz,
+        mocked_call_callback_function,
+    ):
+        """
+        Test that receiving a callback for a user that gets validated by the developer-provided function 'get_user'
+        is logged_in
+        """
+        self.client.force_login(self.user)
+
+        state = "test_id_12345"
+
+        session = self.client.session
+        session["oidc_sid"] = state
+        session.save()
+
+        user_info = {"sub": "aaaaaeeee"}
+        mocked_get_user_info.return_value = user_info
+
+        dummy_user = self.user
+        mocked_get_user.return_value = dummy_user
+
+        response = self.client.get(reverse("test_callback"))
+
+        with self.subTest("pyoidc calls are performed"):
+            mocked_restore.assert_called_once_with(state)
+            mocked_complete.assert_called_once_with(state=state, session_state=None)
+            mocked_parse_authz.assert_called_once()
+            mocked_get_user_info.assert_called_once_with(state=state)
+
+        mocked_get_user.assert_called_once_with(user_info)
+
+        self.assertRedirects(
+            response, "/default/success", fetch_redirect_response=False
+        )
+        with self.subTest("Session is created correctly :"):
+            self.assertEqual(OIDCSession.objects.all().count(), 1)
+
+            session = OIDCSession.objects.all().first()
+
+            self.assertEqual(session.session_state, None)
+            self.assertEqual(session.sub, user_info["sub"])
+            self.assertEqual(session.state, state)
+            self.assertEqual(session.cache_session_key, self.client.session.session_key)
+        mocked_call_callback_function.assert_called_once()
+
+    @mock.patch("makina_django_oidc.views.OIDCView.call_callback_function")
+    @mock.patch("makina_django_oidc.views.Consumer.parse_authz")
+    @mock.patch("makina_django_oidc.views.get_user")
+    @mock.patch("makina_django_oidc.views.Consumer.get_user_info")
+    @mock.patch("makina_django_oidc.views.Consumer.complete")
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    def test_callback_with_session_state_provided_valid_user(
+        self,
+        mocked_restore,
+        mocked_complete,
+        mocked_get_user_info,
+        mocked_get_user,
+        mocked_parse_authz,
+        mocked_call_callback_function,
+    ):
+        """
+        Test that receiving a callback with a session state (SID) for a user that gets validated by the developer-provided
+        function 'get_user' is logged_in
+        """
+        self.client.force_login(self.user)
+
+        state = "test_id_12345"
+        session_state = "fe634"
+
+        session = self.client.session
+        session["oidc_sid"] = state
+        session.save()
+
+        user_info = {"sub": "aaaaaeeee"}
+        mocked_get_user_info.return_value = user_info
+
+        authz = {"state": state, "session_state": session_state}
+        mocked_parse_authz.return_value = authz, None, None
+
+        dummy_user = self.user
+        mocked_get_user.return_value = dummy_user
+
+        response = self.client.get(reverse("test_callback"))
+
+        with self.subTest("pyoidc calls are performed"):
+            mocked_restore.assert_called_once_with(state)
+            mocked_complete.assert_called_once_with(
+                state=state, session_state=session_state
+            )
+            mocked_parse_authz.assert_called_once()
+            mocked_get_user_info.assert_called_once_with(state=state)
+
+        mocked_get_user.assert_called_once_with(user_info)
+
+        self.assertRedirects(
+            response, "/default/success", fetch_redirect_response=False
+        )
+
+        with self.subTest("Session is created correctly :"):
+            self.assertEqual(OIDCSession.objects.all().count(), 1)
+
+            session = OIDCSession.objects.all().first()
+
+            self.assertEqual(session.session_state, session_state)
+            self.assertEqual(session.sub, user_info["sub"])
+            self.assertEqual(session.state, state)
+            self.assertEqual(session.cache_session_key, self.client.session.session_key)
+
+        mocked_call_callback_function.assert_called_once()

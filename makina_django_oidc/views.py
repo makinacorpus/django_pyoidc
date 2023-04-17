@@ -4,7 +4,8 @@ from urllib.parse import urljoin
 
 import oic
 from django.conf import settings
-from django.contrib import auth, messages
+from django.contrib import auth
+from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse
 from django.shortcuts import redirect, resolve_url
 from django.utils.decorators import method_decorator
@@ -238,37 +239,36 @@ class OIDCCallbackView(OIDCView):
         return next_url or resolve_url(self.get_settings("URI_DEFAULT_SUCCESS"))
 
     def login_failure(self):
-        return redirect(self.get_settings(["URI_FAILURE"]))
+        return redirect(self.get_settings("URI_FAILURE"))
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
-        client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
+        if "oidc_sid" in request.session:
+            client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
 
-        aresp, atr, idt = client.consumer.parse_authz(query=request.GET.urlencode())
+            aresp, atr, idt = client.consumer.parse_authz(query=request.GET.urlencode())
 
-        if aresp["state"] == request.session["oidc_sid"]:
-            state = aresp["state"]
-            session_state = aresp.get("session_state")
-            if session_state:
-                logger.debug("Session state available, using it as session cache key")
-            client.consumer.complete(state=state, session_state=session_state)
-            userinfo = client.consumer.get_user_info(state=state)
+            if aresp["state"] == request.session["oidc_sid"]:
+                state = aresp["state"]
+                session_state = aresp.get("session_state")
+                client.consumer.complete(state=state, session_state=session_state)
+                userinfo = client.consumer.get_user_info(state=state)
 
-            user = get_user(userinfo)  # Call user hook
+                user = get_user(userinfo)  # Call user hook
 
-            if not user or not user.is_authenticated:
-                messages.error(request, "Login failure")
-                return self.login_failure()
+                if not user or not user.is_authenticated:
+                    return self.login_failure()
+                else:
+                    auth.login(request, user)
+                    OIDCSession.objects.create(
+                        state=state,
+                        sub=userinfo["sub"],
+                        cache_session_key=request.session.session_key,
+                        session_state=session_state,
+                    )
+                    self.call_callback_function(request, user)
+                    return redirect(self.success_url)
             else:
-                auth.login(request, user)
-                OIDCSession.objects.create(
-                    state=state,
-                    sub=userinfo["sub"],
-                    cache_session_key=request.session.session_key,
-                    session_state=session_state,
-                )
-                self.call_callback_function(request, user)
-                return redirect(self.success_url)
+                raise SuspiciousOperation()
         else:
-            messages.error(request, "Login failure : suspicious operation")
             return self.login_failure()

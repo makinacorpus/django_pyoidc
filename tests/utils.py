@@ -14,6 +14,7 @@ from django.test import TestCase, override_settings
             "REDIRECT_ALLOWED_HOSTS": ["test.makina-django-oidc.notatld"],
             "REDIRECT_REQUIRES_HTTPS": True,
             "URI_LOGOUT": "/logoutdone",
+            "URI_FAILURE": "/logout_failure",
         },
         "client2": {
             "CLIENT_ID": "2",
