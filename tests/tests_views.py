@@ -1,12 +1,17 @@
+from importlib import import_module
 from unittest import mock
+from unittest.mock import ANY, call
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.urls import reverse
+from jwt import JWT, jwk_from_dict
 
 from makina_django_oidc.models import OIDCSession
 from makina_django_oidc.views import OIDClient
 from tests.utils import OIDCTestCase
+
+SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
 class LoginViewTestCase(OIDCTestCase):
@@ -372,3 +377,239 @@ class CallbackViewTestCase(OIDCTestCase):
             self.assertEqual(session.cache_session_key, self.client.session.session_key)
 
         mocked_call_callback_function.assert_called_once()
+
+
+class BackchannelLogoutTestCase(OIDCTestCase):
+    @classmethod
+    def setUpTestData(cls):
+
+        """
+        To generate an other jwk key : 'jose jwk gen -i '{"alg":"HS256"}' -o oct.jwk'
+        """
+        cls.signing_key = jwk_from_dict(
+            {
+                "alg": "HS256",
+                "k": "aMQ4QgzeE_XS91lxhixouomrhy_Tymz_xGC1dmwG8Vw",
+                "key_ops": ["sign", "verify"],
+                "kty": "oct",
+            }
+        )
+
+    def test_invalid_backchannel_logout_wrong_method_request(self):
+        """
+        Test that performing a GET on a backchannel logout route results in an HTTP 405
+        :return:
+        """
+        response = self.client.get(reverse("test_blogout"))
+        self.assertEqual(response.status_code, 405)
+
+    def test_invalid_backchannel_logout_empty_request(self):
+        """
+        Test that providing an empty body results in an HTTP 400
+        :return:
+        """
+        response = self.client.post(
+            reverse("test_blogout"), content_type="application/x-www-form-urlencoded"
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_encoding(self):
+        """
+        Test that using something else than 'application/x-www-form-urlencoded' for the content-type is rejected
+        """
+        response = self.client.post(
+            reverse("test_blogout"),
+            data="".encode("utf-8"),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 415)
+
+    def test_invalid_backchannel_logout_no_sub_no_sid(self):
+        """
+        Test that providing an empty body results in an HTTP 400
+        """
+
+        payload = {}
+        body = JWT().encode(payload, key=self.signing_key)
+        request_body = "a" * 13 + body
+        response = self.client.post(
+            reverse("test_blogout"),
+            data=request_body.encode("utf-8"),
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            "Got invalid logout token : sub or sid is missing",
+        )
+
+    @mock.patch("makina_django_oidc.views.SessionStore.delete")
+    @mock.patch("makina_django_oidc.views.Consumer.backchannel_logout")
+    @mock.patch("makina_django_oidc.views.Consumer.provider_config")
+    def test_valid_backchannel_sub(
+        self, mocked_provider_config, mocked_backchannel_logout, mocked_session_delete
+    ):
+        """
+        Test that providing a valid SUB does kill the sessions
+        """
+
+        sub = "12333"
+        state = "abcde"
+        s = SessionStore()
+        s["data"] = "data"
+        s.create()
+        cache_session_key = s.session_key
+
+        OIDCSession.objects.create(
+            sub=sub, cache_session_key=cache_session_key, state=state
+        )
+
+        payload = {"sub": sub}
+        body = JWT().encode(payload, key=self.signing_key)
+        request_body = "a" * 13 + body
+        response = self.client.post(
+            reverse("test_blogout"),
+            data=request_body.encode("utf-8"),
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OIDCSession.objects.all().count(), 0)
+        mocked_backchannel_logout.assert_called_once()
+        mocked_session_delete.assert_called_once_with(cache_session_key)
+
+    @mock.patch("makina_django_oidc.views.SessionStore.delete")
+    @mock.patch("makina_django_oidc.views.Consumer.backchannel_logout")
+    @mock.patch("makina_django_oidc.views.Consumer.provider_config")
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    def test_valid_backchannel_sid(
+        self,
+        mocked_restore,
+        mocked_provider_config,
+        mocked_backchannel_logout,
+        mocked_session_delete,
+    ):
+        """
+        Test that providing a valid SID does kill the session
+        """
+
+        sub = "12333"
+        session_state = "sid:58"
+        state = "abcde"
+        s = SessionStore()
+        s["data"] = "data"
+        s.create()
+        cache_session_key = s.session_key
+
+        OIDCSession.objects.create(
+            sub=sub,
+            cache_session_key=cache_session_key,
+            state=state,
+            session_state=session_state,
+        )
+
+        mocked_backchannel_logout.return_value = session_state
+
+        payload = {"sid": session_state}
+        body = JWT().encode(payload, key=self.signing_key)
+        request_body = "a" * 13 + body
+        response = self.client.post(
+            reverse("test_blogout"),
+            data=request_body.encode("utf-8"),
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OIDCSession.objects.all().count(), 0)
+        mocked_backchannel_logout.assert_called_once()
+        mocked_session_delete.assert_called_once_with(cache_session_key)
+        mocked_restore.assert_called_once_with(session_state)
+
+    @mock.patch("makina_django_oidc.views.SessionStore.delete")
+    @mock.patch("makina_django_oidc.views.Consumer.backchannel_logout")
+    @mock.patch("makina_django_oidc.views.Consumer.provider_config")
+    @mock.patch("makina_django_oidc.views.Consumer.restore")
+    def test_invalid_backchannel_sid(
+        self,
+        mocked_restore,
+        mocked_provider_config,
+        mocked_backchannel_logout,
+        mocked_session_delete,
+    ):
+        """
+        Test that providing a mismatching sid value results in an HTTP 400
+        """
+
+        sub = "12333"
+        session_state = "sid:58"
+        state = "abcde"
+        s = SessionStore()
+        s["data"] = "data"
+        s.create()
+        cache_session_key = s.session_key
+
+        OIDCSession.objects.create(
+            sub=sub,
+            cache_session_key=cache_session_key,
+            state=state,
+            session_state=session_state,
+        )
+
+        mocked_backchannel_logout.return_value = "invalid_sid"
+
+        payload = {"sid": session_state}
+        body = JWT().encode(payload, key=self.signing_key)
+        request_body = "a" * 13 + body
+        response = self.client.post(
+            reverse("test_blogout"),
+            data=request_body.encode("utf-8"),
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(OIDCSession.objects.all().count(), 1)
+        mocked_backchannel_logout.assert_called_once()
+        mocked_session_delete.assert_not_called()
+        mocked_restore.assert_called_once_with(session_state)
+
+    @mock.patch("makina_django_oidc.views.SessionStore.delete")
+    @mock.patch("makina_django_oidc.views.Consumer.backchannel_logout")
+    @mock.patch("makina_django_oidc.views.Consumer.provider_config")
+    def test_valid_backchannel_sub_multiple_sessions(
+        self, mocked_provider_config, mocked_backchannel_logout, mocked_session_delete
+    ):
+        """
+        Test that providing a valid SUB does kill ALL the sessions
+        """
+
+        sub = "12333"
+        s = SessionStore()
+        s["data"] = "data1"
+        s.create()
+        cache_session_key_1 = s.session_key
+
+        s = SessionStore()
+        s["data"] = "data2"
+        s.create()
+        cache_session_key_2 = s.session_key
+
+        OIDCSession.objects.create(
+            sub=sub, cache_session_key=cache_session_key_1, state="1"
+        )
+        OIDCSession.objects.create(
+            sub=sub, cache_session_key=cache_session_key_2, state="2"
+        )
+
+        payload = {"sub": sub}
+        body = JWT().encode(payload, key=self.signing_key)
+        request_body = "a" * 13 + body
+        response = self.client.post(
+            reverse("test_blogout"),
+            data=request_body.encode("utf-8"),
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OIDCSession.objects.all().count(), 0)
+        mocked_backchannel_logout.assert_has_calls(
+            [call(request_args=ANY), call(request_args=ANY)]
+        )
+        mocked_session_delete.assert_has_calls(
+            [call(cache_session_key_1), call(cache_session_key_2)]
+        )

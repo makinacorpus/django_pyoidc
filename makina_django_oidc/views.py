@@ -13,6 +13,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwt import JWT
+from jwt.exceptions import JWTDecodeError
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
@@ -28,6 +29,10 @@ except AttributeError:
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
+
+
+class InvalidSIDException(Exception):
+    pass
 
 
 def _import_object(path, def_name):
@@ -124,6 +129,8 @@ class OIDCView(View, OIDCMixin):
 
 
 class OIDCLoginView(OIDCView):
+    http_method_names = ["get"]
+
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
 
@@ -152,6 +159,8 @@ class OIDCLoginView(OIDCView):
 
 
 class OIDCLogoutView(OIDCView):
+    http_method_names = ["get", "post"]
+
     @property
     def redirect_url(self):
         """Return the logout url defined in settings."""
@@ -188,12 +197,14 @@ class OIDCLogoutView(OIDCView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class OIDCBackChannelLogoutView(OIDCView):
+    http_method_names = ["post"]
+
     def logout_sessions_by_sid(self, client: OIDClient, sid: str, body):
         validated_sid = client.consumer.backchannel_logout(
             request_args={"logout_token": body}
         )
         if validated_sid != sid:
-            raise RuntimeError(f"Got {validated_sid}, expected {sid}")
+            raise InvalidSIDException(f"Got {validated_sid}, expected {sid}")
         sessions = OIDCSession.objects.filter(session_state=validated_sid)
         for session in sessions:
             self._logout_session(session)
@@ -211,26 +222,43 @@ class OIDCBackChannelLogoutView(OIDCView):
         logger.info(f"Backchannel logout request received and validated for {session}")
 
     def post(self, request):
+        if request.content_type != "application/x-www-form-urlencoded":
+            return HttpResponse("", status=415)
+        result = HttpResponse("")
+        try:
+            body = request.body.decode("utf-8")[13:]
+            decoded = JWT().decode(body, do_verify=False)
 
-        body = request.body.decode("utf-8")[13:]
-        decoded = JWT().decode(body, do_verify=False)
-
-        sid = decoded.get("sid")
-        sub = decoded.get("sub")
-        if sub:
-            # Authorization server wants to kill all sessions
-            client = OIDClient(self.op_name)
-            self.logout_sessions_by_sub(client, sub, body)
-
-        elif sid:
-            client = OIDClient(self.op_name, session_id=sid)
-            self.logout_sessions_by_sid(client, sid, body)
-        else:
-            logger.warning("Got invalid logout token : sub or sid is missing")
-        return HttpResponse("")  # FIXME : Add   Cache-Control: no-store
+            sid = decoded.get("sid")
+            sub = decoded.get("sub")
+            if sub:
+                # Authorization server wants to kill all sessions
+                client = OIDClient(self.op_name)
+                self.logout_sessions_by_sub(client, sub, body)
+            elif sid:
+                client = OIDClient(self.op_name, session_id=sid)
+                try:
+                    self.logout_sessions_by_sid(client, sid, body)
+                except InvalidSIDException as e:
+                    logger.warning(
+                        f"Got invalid sid from request : expected {sid}. Error : \n{e}"
+                    )
+                    result.status_code = 400
+            else:
+                result.status_code = 400
+                result.content = "Got invalid logout token : sub or sid is missing"
+                logger.warning("Got invalid logout token : sub or sid is missing")
+        except JWTDecodeError:
+            result.status_code = 400
+        except UnicodeDecodeError as e:
+            raise SuspiciousOperation(e)
+        result.headers["Cache-Control"] = "no-store"
+        return result
 
 
 class OIDCCallbackView(OIDCView):
+    http_method_names = ["get"]
+
     @property
     def success_url(self):
         # Pull the next url from the session or settings--we don't need to
