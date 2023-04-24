@@ -31,12 +31,12 @@ Welcome to Makina Django OIDC's documentation!
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :hidden:
    :caption: 📚 Reference
 
-   reference
-
+   user.rst
+   contributer.rst
 
 
 Indices and tables
