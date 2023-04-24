@@ -1,0 +1,55 @@
+# Configuration file for the Sphinx documentation builder.
+#
+# For the full list of built-in configuration values, see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+# -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(".."))
+
+project = "Makina Django OIDC"
+copyright = "2023, Paul FLORENCE, Régis LEROY"
+author = "Paul FLORENCE, Régis LEROY"
+
+# -- General configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
+extensions = [
+    "sphinx.ext.doctest",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosectionlabel",
+]
+
+intersphinx_cache_limit = 14  # cache for 2 weeks
+intersphinx_timeout = 3  # 3 seconds timeout
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.10/", None),
+    "django": (
+        "https://docs.djangoproject.com/en/stable/",
+        "https://docs.djangoproject.com/en/stable/_objects/",
+    ),
+}
+
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+
+# -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
+
+
+def setup(app):
+    app.add_crossref_type(
+        directivename="setting",
+        rolename="setting",
+        indextemplate="pair: %s; setting",
+    )

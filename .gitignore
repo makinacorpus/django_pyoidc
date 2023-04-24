@@ -3,3 +3,4 @@ makina_django_oidc.egg-info/
 **/__pycache__
 build/
 .env
+docs/_build
