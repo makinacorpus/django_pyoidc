@@ -1,9 +1,16 @@
+"""
+toto
+"""
 from typing import Any, Dict
 
 from makina_django_oidc.providers import Provider
 
 
 class Keycloak20Provider(Provider):
+    """
+    Provide django settings/urlconf based on keycloak behaviour (v18 and more)
+    """
+
     def __init__(self, keycloak_realm_uri: str, keycloak_realm: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.keycloak_realm_uri = keycloak_realm_uri

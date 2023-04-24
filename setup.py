@@ -49,5 +49,13 @@ setup(
         "Topic :: Security",
     ],
     keywords="openid oidc django sso single-sign-on openid-connect",
-    extras_require={"dev": ["python-decouple", "psycopg2"]},
+    extras_require={
+        "dev": [
+            "python-decouple",
+            "psycopg2",
+            "sphinx",
+            "sphinx_rtd_theme",
+            "sphinx-autobuild",
+        ]
+    },
 )
