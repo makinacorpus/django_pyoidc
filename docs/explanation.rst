@@ -1,6 +1,9 @@
 Makina Django OIDC Explanations
 ===============================
 
+Other OIDC libraries
+--------------------
+
 OIDC Logouts
 ------------
 
@@ -16,5 +19,3 @@ Front-channel logout
 Cache Management
 ----------------
 
-Other OIDC libraries
---------------------

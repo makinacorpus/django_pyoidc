@@ -10,8 +10,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
+copyright = "Free Software"
 project = "Makina Django OIDC"
-copyright = "2023, Paul FLORENCE, Régis LEROY"
 author = "Paul FLORENCE, Régis LEROY"
 
 # -- General configuration ---------------------------------------------------
@@ -24,6 +24,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
+    "sphinx_rtd_theme",
 ]
 
 intersphinx_cache_limit = 14  # cache for 2 weeks

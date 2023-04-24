@@ -1,11 +1,11 @@
-How to
+How-to guides
 ======
 
-Direct logout
---------------
+Use the django permission system with OIDC
+------------------------------------------
 
-Backchannel logout
-------------------
+Display custom message on login/logout
+--------------------------------------
 
 Redirect the user after login
 ------------------------------
