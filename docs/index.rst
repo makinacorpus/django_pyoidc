@@ -1,7 +1,3 @@
-.. Makina Django OIDC documentation master file, created by
-   sphinx-quickstart on Mon Apr 24 09:39:26 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Welcome to Makina Django OIDC's documentation!
 ==============================================
@@ -13,6 +9,13 @@ Welcome to Makina Django OIDC's documentation!
 
    tutorial
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: 🪄 How-to guides
+
+   how-to
+
 
 .. toctree::
    :maxdepth: 2
@@ -20,14 +23,6 @@ Welcome to Makina Django OIDC's documentation!
    :caption: 💡 Explanation
 
    explanation
-
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   :caption: 🪄 How-to guides
-
-   how-to
 
 
 .. toctree::
