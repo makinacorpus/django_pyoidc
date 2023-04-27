@@ -1,4 +1,4 @@
-Contributer API References
+Contributing API References
 ===============================
 
 Those classes might be useful to read :
