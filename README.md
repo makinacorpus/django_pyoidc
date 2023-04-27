@@ -33,7 +33,9 @@ INSTALLED_APPS = [
 ]
 ```
 
-Now you can pick an identity provider from the [available providers](). Create a file named `oidc.py` next to your settings file and initialize your provider there :
+Now you can pick an identity provider from the [available providers](). Providers class are a quick way to generate the library configuration and URLs for a givenv identity provider. You can also use [manual set] if you wish.
+
+Create a file named `oidc.py` next to your settings file and initialize your provider there :
 
 ```python
 from makina_django_oidc.providers.keycloak_20 import Keycloak20Provider
