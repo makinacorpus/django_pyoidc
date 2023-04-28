@@ -1,9 +1,74 @@
 Makina Django OIDC Explanations
 ===============================
 
-
 Other OIDC libraries
 --------------------
+
+We decided to role our own OIDC integration with Django, and that is not a small work. As such we first performed an analysis of the existing libraries, evaluating whether or not we should contribute to them or implement our own.
+
+In this section you will find the results of this analysis. We collected our data during the first months of 2023.
+
+Here are our criteria :
+
+* do you need a custom authentication backend to work ? Our use cas includes multi-tenant setup through `django-siteprefs <https://pypi.org/project/django-siteprefs/>`_
+* is security sensitive code based on a well known, well maintained library ?
+* is it still maintained ?
+* does it supports *Bearer* authentication (for ``django-rest-framework``).
+
+`django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Advantages** :
+
+- Goes well with `django-siteprefs <https://pypi.org/project/django-siteprefs/>`_
+- Nice hook system that is very very flexible and works well
+
+**Drawbacks** :
+
+- The OIDC implementation is based on a custom lib `python-openid-connect <https://gitlab.com/aiakos/python-openid-connect>`_ (which is itself based on ``jose``)
+- No *Bearer* authentication
+
+
+`dj-authentication <https://gitlab.com/aiakos/dj-authentication/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This library is based on ``django-auth-oidc`` and adds some glue to allow more features.
+
+**Advantages** :
+
+- Modular architecture which is very flexible
+- Does support *bearer* and *confidential* clients
+
+**Drawbacks**
+
+- Still a homemade OIDC implementation
+
+`mozilla-django-oidc <https://github.com/mozilla/mozilla-django-oidc/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Advantages**
+
+- Does support *confidential* and *bearer* modes
+- This is what seems to be the most used library of the Django ecosystem
+
+**Drawbacks**
+
+- It seems that adding OIDC features will be complicated as they seem to want to keep their library *"as minimal/lightweight as possible"*
+- The project seems dead ?
+
+
+`django-oidc <https://github.com/py-pa/django-oidc>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Advantages**
+
+- This library is based on `pyoidc <https://github.com/CZ-NIC/pyoidc>`_ which is a strong implementation of OIDC
+- It handles very well all kinds of login flow( *Authorization Code flow*, *Implicit flow* and *Hybrid flow*)
+
+**Drawbacks**
+
+- Very old and unmaintained
+
 
 OIDC Logouts
 ------------

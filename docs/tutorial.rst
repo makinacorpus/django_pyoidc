@@ -96,7 +96,7 @@ Configure the library
 *********************
 
 .. note::
-    In this part we use :ref:`providers <Providers>` as a quick way to generate the library configuration and URL patterns. However you can also :ref:`configure the settings <Configure the settings>` manually if you wish to dig into the configuration.
+    In this part we use :ref:`providers <Providers>` as a quick way to generate the library configuration and URL patterns. However you can also :ref:`configure the settings <Django settings>` manually if you wish to dig into the configuration.
 
 First, create a file named ``oidc.py`` and instantiate a :py:class:`makina_django_oidc.providers.Keyloack20Provider` as this is the provider that should be used with Keycloak.
 
@@ -142,8 +142,8 @@ Edit you django configuration to add your configuration to ``MAKINA_DJANGO_OIDC`
 
 .. code-block:: python
     :caption: settings.py
-    
-    from .oidc_providers import my_project_provider
+
+    from .oidc import my_project_provider
 
     MAKINA_DJANGO_OIDC = {
         **my_project_provider.get_config(allowed_hosts=["app.local:8082"]),
@@ -159,7 +159,7 @@ Finally, add OIDC views to your url configuration (`urls.py`):
 .. code-block:: python
     :caption: urls.py
 
-    from .oidc_providers import my_project_provider
+    from .oidc import my_project_provider
 
     urlpatterns = [
         path("auth", include(my_project_provider.get_urlpatterns())),

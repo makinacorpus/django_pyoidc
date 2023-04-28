@@ -4,11 +4,27 @@ This library allow *Single Sign On* (SSO) integration into Django through the [O
 
 It can be used to setup a Single Sign On using an identity provider (Keycloak, etc.) or to login using Google, Twitter, etc.
 
+**Warning** : this library has not been audited. However, we are based on [pyoidc](https://github.com/CZ-NIC/pyoidc/) which we believe is a sane OIDC implementation.
 
 ## Features
 
-- Hook system to customize
-- BackChannel Logout
+- Easy configuration through premade [`Provider`]() classes.
+- Multiple provider support
+- Easy integration with the [Django permission system]()
+- Highly customizable design that should suit most needs
+- Back-channel Logout
+- Sane and secure defaults settings
+
+## Acknowledgement
+
+This library is built on the work of many others. First all, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementation. This library is mostly about glue between Django and *pyoidc*.
+
+We were also heavily inspired by :
+
+* [`mozilla-django-oidc`](https://github.com/mozilla/mozilla-django-oidc) for it's login redirection URI management
+* [`django-auth-oidc`](https://gitlab.com/aiakos/django-auth-oidc) for it's hook system
+
+If you want to understand why we decided to implement our own library, this is documented [here]().
 
 ## Documentation
 
@@ -79,21 +95,13 @@ And you are ready to go !
 
 We wrote an extensive collection of 'how-to' guides in the [documentation]().
 
-## Related
-
-Here are some related projects
-
-[Awesome README](https://github.com/matiassingers/awesome-readme)
-
 ## Appendix
 
 - [Development instructions](./DEVELOPMENT.md)
 
-## Support
+## Commercial support
 
-If you need commercial support (new specific features, custom identity provider integration, etc.), you can always contact Makina Corpus administration at : contact@makina-corpus.com.
-
-You may also open a ticket, but we can not guarantee that it will be handled in a timely maneer.
+This project is sponsored by Makina Corpus. If you require assistance on your project(s), please contact us: contact@makina-corpus.com
 
 ## License
 
@@ -103,6 +111,4 @@ You may also open a ticket, but we can not guarantee that it will be handled in 
 ## Authors
 
 - [@gbip](https://www.github.com/gbip)
-- [@gbip](https://www.github.com/gbip)
-
 
