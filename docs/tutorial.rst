@@ -95,6 +95,25 @@ First, add the library app (``makina-django-oidc``) to your django applications,
 .. warning::
     Don't forget to run the migrations !
 
+Configure a cache backend
+*************************
+
+**You must have a cache backend** for this library to work ! The OIDC protocol is very statefull and we use Django cache system to store data. If you want to understand why, you can read the :ref:`Cache Management` page.
+
+For the sake of this tutorial, you can use this cache management snippet (it should be pasted in your ``settings.py`` :
+
+.. code-block:: python
+
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
+
+.. warning::
+    Do not use those settings in production ! Go read the `django documentation <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_ for more details.
+
 Configure the library
 *********************
 

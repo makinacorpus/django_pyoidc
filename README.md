@@ -54,6 +54,31 @@ INSTALLED_APPS = [
 ]
 ```
 
+Don't forget to add the session middleware ! Add in your `settings.py` :
+
+```python
+MIDDLEWARE = [
+    "django.contrib.sessions.middleware.SessionMiddleware",
+]
+```
+
+Now is time to run a migrate operation, as we create a database table ([read why here]()). Run in your project dir :
+
+```
+./manage.py migrate
+```
+
+We also need a cache ([read why here]()), so let's configure a dumb one for development purposes. Add in your `settings.py` :
+
+```python
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+```
+
 Now you can pick an identity provider from the [available providers](). Providers class are a quick way to generate the library configuration and URLs for a givenv identity provider. You can also use [manual set] if you wish.
 
 Create a file named `oidc.py` next to your settings file and initialize your provider there :

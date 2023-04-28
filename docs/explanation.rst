@@ -258,3 +258,19 @@ Django website to be only an OIDC client (not server) and we did not implement t
 Cache Management
 ----------------
 
+This library depends on Django cache system. Why ?
+
+The OIDC protocol has a lot of state (think of public cryptographic keys for json signature for example). As such we serialize OIDC state to the cache upon each operation (start login, complete login, etc.).
+
+However, to implement logout (and more specifically back-channel logout) we need to be able to link session keys used by django session framework, and oidc session identifiers.
+This data is stored in a database table, along with ``sub`` since it can also replace session identifiers in the specification.
+
+
+.. image:: images/cache/oidc_bl_init.png
+    :alt: Illustration of the data stored upon successful login
+
+.. image:: images/cache/oidc_bl_1.png
+    :alt: Illustration of how a user session is killed in a backchannel logout request
+
+.. image:: images/cache/oidc_bl_2.png
+    :alt: Illustration of how a user session is killed in a backchannel logout request
