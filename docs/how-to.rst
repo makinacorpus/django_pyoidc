@@ -1,6 +1,9 @@
 How-to guides
 ======
 
+Configure the settings
+----------------------
+
 Use the django permission system with OIDC
 ------------------------------------------
 

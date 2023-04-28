@@ -129,6 +129,21 @@ class OIDCView(View, OIDCMixin):
 
 
 class OIDCLoginView(OIDCView):
+    """
+    When receiving a GET request, this views redirects the user to the SSO identified by `op_name`.
+    This view is named ``<op_name>-login`` if you used ``get_urlpatterns``.
+
+
+    This view supports the *http query parameter* ``next`` (ie ``?next=http://...``) to specify which url the user should be redirected to on success.
+
+    The redirection behaviour is configured with the following settings :
+
+    * :ref:`REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
+    * :ref:`REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
+    * :ref:`REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
+    * :ref:`URI_DEFAULT_SUCCESS` defines the redirection URI no URI were provided in the HTTP request.
+    """
+
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
@@ -159,6 +174,16 @@ class OIDCLoginView(OIDCView):
 
 
 class OIDCLogoutView(OIDCView):
+    """
+    This view logs out the user, killing it's session on this service and notifying the identity provider that it has logged-out.
+    It is named ``<op_name>-logout`` if you used ``get_urlpatterns``.
+
+    It supports both ``GET`` and ``POST`` http methods.
+
+    The response is always a redirection to the configured :ref:`URI_LOGOUT` for this provider.
+
+    """
+
     http_method_names = ["get", "post"]
 
     @property
@@ -197,6 +222,13 @@ class OIDCLogoutView(OIDCView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class OIDCBackChannelLogoutView(OIDCView):
+    """
+    This view only accept POST requests. This is where your identity provider notifies the library that we should kill a user
+    session. Usually, you should not redirect a user manually to this view.
+
+    It is named ``<op_name>-backchannel-logout`` if you used ``get_urlpatterns``.
+    """
+
     http_method_names = ["post"]
 
     def logout_sessions_by_sid(self, client: OIDClient, sid: str, body):
@@ -257,6 +289,13 @@ class OIDCBackChannelLogoutView(OIDCView):
 
 
 class OIDCCallbackView(OIDCView):
+    """
+    This view only accepts GET request. This is where the identity provider redirects the user in the *Authorization Code Flow*.
+    Usually, you should not redirect a user manually to this view.
+
+    It is named ``<op_name>-callback`` if you used ``get_urlpatterns``.
+    """
+
     http_method_names = ["get"]
 
     @property

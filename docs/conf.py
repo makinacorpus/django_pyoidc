@@ -8,7 +8,23 @@
 import os
 import sys
 
+import django
+from django.conf import settings
+
 sys.path.insert(0, os.path.abspath(".."))
+
+# pass settings into configure
+settings.configure(
+    INSTALLED_APPS=[
+        "django.contrib.auth",
+        "django.contrib.contenttypes",
+        "django.contrib.sessions",
+        "makina_django_oidc",
+    ]
+)
+
+# call django.setup to load installed apps and other stuff
+django.setup()
 
 copyright = "Free Software"
 project = "Makina Django OIDC"
