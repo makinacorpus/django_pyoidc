@@ -15,6 +15,11 @@ It can be used to setup a Single Sign On using an identity provider (Keycloak, e
 - Back-channel Logout
 - Sane and secure defaults settings
 
+## Roadmap
+
+- `Bearer` authentication support for `django-rest-framework` integration
+- Frontchannel logout
+
 ## Acknowledgement
 
 This library is built on the work of many others. First all, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementation. This library is mostly about glue between Django and *pyoidc*.
