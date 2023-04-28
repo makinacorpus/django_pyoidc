@@ -221,7 +221,9 @@ class CallbackViewTestCase(OIDCTestCase):
     )
     @mock.patch("makina_django_oidc.views.get_user_by_email", return_value=None)
     @mock.patch("makina_django_oidc.views.Consumer.get_user_info", return_value={})
-    @mock.patch("makina_django_oidc.views.Consumer.complete")
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.complete", return_value={"id_token": "1234"}
+    )
     @mock.patch("makina_django_oidc.views.Consumer.restore")
     def test_callback_no_session_state_provided_invalid_user(
         self,
@@ -248,7 +250,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_complete.assert_called_once_with(state=state, session_state=None)
         mocked_parse_authz.assert_called_once()
         mocked_get_user_info.assert_called_once_with(state=state)
-        mocked_get_user.assert_called_once_with({})
+        mocked_get_user.assert_called_once_with({}, "1234")
 
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
         self.assertEqual(OIDCSession.objects.all().count(), 0)
@@ -260,7 +262,9 @@ class CallbackViewTestCase(OIDCTestCase):
     )
     @mock.patch("makina_django_oidc.views.get_user_by_email")
     @mock.patch("makina_django_oidc.views.Consumer.get_user_info")
-    @mock.patch("makina_django_oidc.views.Consumer.complete")
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.complete", return_value={"id_token": "1234"}
+    )
     @mock.patch("makina_django_oidc.views.Consumer.restore")
     def test_callback_no_session_state_provided_valid_user(
         self,
@@ -297,7 +301,7 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info)
+        mocked_get_user.assert_called_once_with(user_info, "1234")
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
@@ -317,7 +321,9 @@ class CallbackViewTestCase(OIDCTestCase):
     @mock.patch("makina_django_oidc.views.Consumer.parse_authz")
     @mock.patch("makina_django_oidc.views.get_user_by_email")
     @mock.patch("makina_django_oidc.views.Consumer.get_user_info")
-    @mock.patch("makina_django_oidc.views.Consumer.complete")
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.complete", return_value={"id_token": "1234"}
+    )
     @mock.patch("makina_django_oidc.views.Consumer.restore")
     def test_callback_with_session_state_provided_valid_user(
         self,
@@ -360,7 +366,7 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info)
+        mocked_get_user.assert_called_once_with(user_info, "1234")
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
