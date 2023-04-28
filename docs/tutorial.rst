@@ -13,9 +13,6 @@ To install this library the easiest way is to use the pypi package
 
   pip install makina-django-oidc
 
-::
-
-
 Configuring your SSO
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -145,6 +142,7 @@ Edit you django configuration to add your configuration to ``MAKINA_DJANGO_OIDC`
 
 .. code-block:: python
     :caption: settings.py
+    
     from .oidc_providers import my_project_provider
 
     MAKINA_DJANGO_OIDC = {
@@ -176,15 +174,3 @@ This will include 4 views in your URL configuration. They all have a name that d
 * a :class:`backchannel logout view <makina_django_oidc.views.OIDCBackChannelLogoutView>` named ``<op_name>-backchannel-logout``
 
 You should now be able to use the view names from this library to redirect the user to a login/logout page.
-
-Custom provider configuration
------------------------------
-
-Settings
-~~~~~~~~
-
-Views
-~~~~~
-
-URL Configuration
-~~~~~~~~~~~~~~~~~
