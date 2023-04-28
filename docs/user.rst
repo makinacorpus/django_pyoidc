@@ -4,8 +4,26 @@ User API Reference
 Django settings
 ---------------
 
+
+.. note::
+    We provide a set of predefined settings for some identity providers. As such, you can avoid having to configure by yourself this library and it's views.
+    Take a look at the :ref:`tutorial <Configure the library>` !
+
+
 Providers settings
 ~~~~~~~~~~~~~~~~~~
+
+All those settings must be defined in ``settings.py`` under the variable name ``MAKINA_DJANGO_OIDC``.
+You should define them as a nested dictionary. The key to this dictionary is called your **provider name** (or **op_name** in some places). All your settings configuration are local to this provider. This allows multi-provider configurations.
+
+.. code-block:: python
+
+    MAKINA_DJANGO_OIDC = {
+        'my_provider_name' : {
+            'setting_1' : 'value',
+            'setting_2' : 'value'
+        }
+    }
 
 URI_FAILURE
 ***********
@@ -76,15 +94,42 @@ So for example, if you were to have a module named ``oidc.py`` next to your proj
 .. note::
     Hook settings work on a provider by provider basis, you can have different hook functions for each of your identity providers
 
+
+.. note::
+    All those settings are optional
+
 LOGOUT_FUNCTION
 ***************
 
-Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user;
+Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
 
-CALLBACK_FUNCTION
-*****************
+This function takes only one arguments :
+
+1. a request instance :class:`django:django.http.HttpRequest`
+
+If the user was logged in, you can get the user using ``request.user``.
+
+LOGIN_FUNCTION
+**************
 
 Calls the provided function on user login. The functions is called if the login is successful.
+
+This function takes two arguments :
+
+1. a request instance :class:`django:django.http.HttpRequest`
+2. a user instance :class:`django.contrib.auth.models.User`
+
+Since the user wasn't logged in, it is not yet attached to the request instance at this stage. As such trying to access ``request.user`` will return an unauthenticated user.
+
+USER_FUNCTION
+*************
+
+Calls the provided function on user login. It takes two arguments :
+
+* the user info token (a dictionary) from the identity provider
+* the id token
+
+It is expected to return a :class:`django.contrib.auth.models.User` instance.
 
 Views
 -----

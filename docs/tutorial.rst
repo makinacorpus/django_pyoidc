@@ -143,7 +143,7 @@ Edit you django configuration to add your configuration to ``MAKINA_DJANGO_OIDC`
 .. code-block:: python
     :caption: settings.py
 
-    from .oidc_providers import my_project_provider
+    from .oidc import my_project_provider
 
     MAKINA_DJANGO_OIDC = {
         **my_project_provider.get_config(allowed_hosts=["app.local:8082"]),
@@ -159,7 +159,7 @@ Finally, add OIDC views to your url configuration (`urls.py`):
 .. code-block:: python
     :caption: urls.py
 
-    from .oidc_providers import my_project_provider
+    from .oidc import my_project_provider
 
     urlpatterns = [
         path("auth", include(my_project_provider.get_urlpatterns())),
