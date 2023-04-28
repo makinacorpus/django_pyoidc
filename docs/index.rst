@@ -31,8 +31,6 @@ Welcome to Makina Django OIDC's documentation!
    :caption: 📚 Reference
 
    user.rst
-   contributing.rst
-
 
 Indices and tables
 ==================

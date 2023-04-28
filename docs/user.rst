@@ -181,3 +181,10 @@ Each provider implements the configuration logic and provides mostly two methods
     :members:
     :undoc-members:
     :special-members: __init__
+
+
+
+.. automodule:: makina_django_oidc.providers.base
+    :members:
+    :undoc-members:
+    :special-members: __init__
