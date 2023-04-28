@@ -17,14 +17,10 @@ from jwt.exceptions import JWTDecodeError
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
+from makina_django_oidc import get_user_by_email
 from makina_django_oidc.models import OIDCSession
 from makina_django_oidc.session import OIDCCacheSessionBackendForDjango
 from makina_django_oidc.utils import get_settings_for_sso_op
-
-try:
-    GET_USER_FUNCTION = settings.AUTH_GET_USER_FUNCTION
-except AttributeError:
-    GET_USER_FUNCTION = "makina_django_oidc:get_user_by_email"
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -43,9 +39,6 @@ def _import_object(path, def_name):
         cls = def_name
 
     return getattr(import_module(mod), cls)
-
-
-get_user = _import_object(GET_USER_FUNCTION, "get_user")
 
 
 class OIDClient:
@@ -105,6 +98,13 @@ class OIDCView(View, OIDCMixin):
         if function_path:
             func = _import_object(function_path, "")
             func(*args, **kwargs)
+
+    def call_get_user_function(self, info_token):
+        user_function_setting_name = "USER_FUNCTION"
+        if user_function_setting_name in get_settings_for_sso_op(self.op_name):
+            return self.call_function(user_function_setting_name, info_token)
+        else:
+            return get_user_by_email(info_token)
 
     def call_callback_function(self, request, user):
         self.call_function("CALLBACK_FUNCTION", request, user)
@@ -320,8 +320,9 @@ class OIDCCallbackView(OIDCView):
                 session_state = aresp.get("session_state")
                 client.consumer.complete(state=state, session_state=session_state)
                 userinfo = client.consumer.get_user_info(state=state)
-
-                user = get_user(userinfo)  # Call user hook
+                user = self.call_get_user_function(
+                    info_token=userinfo
+                )  # Call user hook
 
                 if not user or not user.is_authenticated:
                     return self.login_failure()

@@ -219,7 +219,7 @@ class CallbackViewTestCase(OIDCTestCase):
         "makina_django_oidc.views.Consumer.parse_authz",
         return_value=({"state": "test_id_12345"}, None, None),
     )
-    @mock.patch("makina_django_oidc.views.get_user", return_value=None)
+    @mock.patch("makina_django_oidc.views.get_user_by_email", return_value=None)
     @mock.patch("makina_django_oidc.views.Consumer.get_user_info", return_value={})
     @mock.patch("makina_django_oidc.views.Consumer.complete")
     @mock.patch("makina_django_oidc.views.Consumer.restore")
@@ -258,7 +258,7 @@ class CallbackViewTestCase(OIDCTestCase):
         "makina_django_oidc.views.Consumer.parse_authz",
         return_value=({"state": "test_id_12345"}, None, None),
     )
-    @mock.patch("makina_django_oidc.views.get_user")
+    @mock.patch("makina_django_oidc.views.get_user_by_email")
     @mock.patch("makina_django_oidc.views.Consumer.get_user_info")
     @mock.patch("makina_django_oidc.views.Consumer.complete")
     @mock.patch("makina_django_oidc.views.Consumer.restore")
@@ -315,7 +315,7 @@ class CallbackViewTestCase(OIDCTestCase):
 
     @mock.patch("makina_django_oidc.views.OIDCView.call_callback_function")
     @mock.patch("makina_django_oidc.views.Consumer.parse_authz")
-    @mock.patch("makina_django_oidc.views.get_user")
+    @mock.patch("makina_django_oidc.views.get_user_by_email")
     @mock.patch("makina_django_oidc.views.Consumer.get_user_info")
     @mock.patch("makina_django_oidc.views.Consumer.complete")
     @mock.patch("makina_django_oidc.views.Consumer.restore")
