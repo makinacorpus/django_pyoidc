@@ -99,11 +99,9 @@ We wrote an extensive collection of 'how-to' guides in the [documentation]().
 
 - [Development instructions](./DEVELOPMENT.md)
 
-## Support
+## Commercial support
 
-If you need commercial support (new specific features, custom identity provider integration, etc.), you can always contact Makina Corpus administration at : contact@makina-corpus.com.
-
-You may also open a ticket, but we can not guarantee that it will be handled in a timely maneer.
+This project is sponsored by Makina Corpus. If you require assistance on your project(s), please contact us: contact@makina-corpus.com
 
 ## License
 
