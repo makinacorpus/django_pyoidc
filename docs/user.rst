@@ -4,6 +4,8 @@ User API Reference
 Django settings
 ---------------
 
+Providers settings
+~~~~~~~~~~~~~~~~~~
 
 URI_FAILURE
 ***********
@@ -60,6 +62,29 @@ CACHE_BACKEND
 
 This setting configures the cache backend that is used to store sessions details.
 You can read more about *Cache Management* :ref:`here <Cache Management>`.
+
+Hook settings
+~~~~~~~~~~~~~
+
+Hook settings are path to a python function that should be called in specific context. We use a custom syntax to reference a function of a module.
+
+The syntax is : ``<module path>:<function name>``.
+
+
+So for example, if you were to have a module named ``oidc.py`` next to your project settings with a function called ``logout_callback`` you should use the string ``<your application root module>.oidc:logout_callback`` in your settings.
+
+.. note::
+    Hook settings work on a provider by provider basis, you can have different hook functions for each of your identity providers
+
+LOGOUT_FUNCTION
+***************
+
+Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user;
+
+CALLBACK_FUNCTION
+*****************
+
+Calls the provided function on user login. The functions is called if the login is successful.
 
 Views
 -----

@@ -142,7 +142,7 @@ Edit you django configuration to add your configuration to ``MAKINA_DJANGO_OIDC`
 
 .. code-block:: python
     :caption: settings.py
-    
+
     from .oidc_providers import my_project_provider
 
     MAKINA_DJANGO_OIDC = {
