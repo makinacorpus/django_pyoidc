@@ -108,6 +108,8 @@ We wrote an extensive collection of 'how-to' guides in the [documentation]().
 
 This project is sponsored by Makina Corpus. If you require assistance on your project(s), please contact us: contact@makina-corpus.com
 
+## Report a security vulnerability
+
 ## License
 
 [GPL](./LICENSE)

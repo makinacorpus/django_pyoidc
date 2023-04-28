@@ -92,6 +92,9 @@ First, add the library app (``makina-django-oidc``) to your django applications,
         "makina-django-oidc"
     ]
 
+.. warning::
+    Don't forget to run the migrations !
+
 Configure the library
 *********************
 
