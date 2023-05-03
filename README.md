@@ -95,14 +95,14 @@ from makina_django_oidc.providers.keycloak import KeycloakProvider
 
 my_oidc_provider = KeycloakProvider(
     op_name="keycloak",
-    logout_redirect="http://app.local:8082/",
-    failure_redirect="http://app.local:8082/",
-    success_redirect="http://app.local:8082/",
-    redirect_requires_https=False,
     client_secret="s3cret",
     client_id="my_client_id",
     keycloak_base_uri="http://keycloak.local:8080/auth/", # we use the auth/ path prefix option on Keycloak
     keycloak_realm="Demo",
+    logout_redirect="http://app.local:8082/",
+    failure_redirect="http://app.local:8082/",
+    success_redirect="http://app.local:8082/",
+    redirect_requires_https=False,
 )
 ```
 
