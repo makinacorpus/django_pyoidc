@@ -10,7 +10,7 @@ In this section you will find the results of this analysis. We collected our dat
 
 Here are our criteria :
 
-* do you need a custom authentication backend to work ? Our use cas includes multi-tenant setup through `django-siteprefs <https://pypi.org/project/django-siteprefs/>`_
+* do you need a custom authentication backend to work ? Our use case includes multi-tenant setup through `django-siteprefs <https://pypi.org/project/django-siteprefs/>`_
 * is security sensitive code based on a well known, well maintained library ?
 * is it still maintained ?
 * does it supports *Bearer* authentication (for ``django-rest-framework``).
@@ -49,7 +49,7 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 **Advantages**
 
 - Does support *confidential* and *bearer* modes
-- This is what seems to be the most used library of the Django ecosystem
+- This library has good usage among Django projects
 
 **Drawbacks**
 
@@ -68,7 +68,44 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 **Drawbacks**
 
 - Very old and unmaintained
+- 
+ 
+ `Django OAuth Toolkit <https://github.com/jazzband/django-oauth-toolkit>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+**Advantages**
+
+- This is what seems to be the most used library of the Django ecosystem
+- It is stable and maintained, quite certainly robust
+- `<OIDC support documentation https://django-oauth-toolkit.readthedocs.io/en/latest/oidc.html>
+
+**Drawbacks**
+
+- It's not only an oidc client, it can act as a server, and do other work on the oauth2 scope, not just oidc (which is a specialization of oauth2 for SSO).
+- Documentation (which needs to covers also the *server* part) is not easy to use for an *simple* oidc client integration
+
+This Project Goals
+-------------------
+
+This project aim to make OIDC client integration with Django easier while still being robust, exapandable and flexible.
+To reach this goal we wanted a project with:
+- good documentations, based on use cases and helping users doing the right things in the quite complex OIDC world
+- robust security components (handling the cryptography and security aspects of OIDC)
+- more real world usage than the too simple 'handle OIDC login' examples (like API modes, logouts, asynchronous logouts, MtoM mode, multi-tenant setup, etc.)
+
+Handling the 'login' part in OIDC is quite easy, on the client side. And this part is usually managed by a library (like pyoidc for example).
+
+Direct Logout and Asynchronous logouts are more complex to understand and manage. TH next part is a deeper explanation on this subject.
+
+MtoM mode is about Machine-To-Machine communication, like B-to-B, the fact that you application may need to use OIDC not only to handle real
+(human) users sessions, but also maybe connections made by some other applications, or you may also need to perform such operation (connecting
+a remote web service using OIDC, not using an human account but a service account instead, identifying as an application and not as a human).
+
+The multi-tenant feature means handling several OIDC providers, it is not uncommon to allow several identity providers on your login page.
+A good OIDC client should facilitate the configuration mechanisms for handling several very different OIDC connectors. Using both a
+classical web application (generating HTML pages) and a REST API on the same Django application could also be managed with different OIDC credentials,
+and the OIDC client configuration should let you use différent credentials on theses applications sections with ease.
 
 OIDC Logouts
 ------------
@@ -91,9 +128,10 @@ In a *'classical'* web application, without the SSO you have two cases:
 equivalent).
 * You have a more classical *'full stack'* web application, or API, with a cookie based session.
 
-In the first case there's no '*logout'* work on the API side. And this will always be the case, that's not something managed by your backend.
-For cookie based session login out is quite easy, you invalidate the cookie (Usually by sending back a new version of this cookie to the user,
-but simply destroying the cookie on your side is enough to make this session invalid.
+In the first case there's no '*logout'* work on the API side. And this will always be the case, that's not something managed by
+your backend.
+For cookie based session login out is quite easy, you invalidate the cookie (usually by sending back a new version of this cookie
+to the user, but simply destroying the cookie on your side is enough to make this session invalid).
 
 Now, using OIDC, if you simply drop your application cookie you have a **big problem**. Your application may even show the user
 a disconnect confirmation page, and maybe a new login page with several options (local login, SSO login ,etc.). But if the user
@@ -146,19 +184,22 @@ Direct logout
 
 OIDC specification : https://openid.net/specs/openid-connect-rpinitiated-1_0.html
 
-The direct logout is the first use case, the *simple* one. The active SSO user is currently on your Django managed website, he wants to disconnect.
+The direct logout is the first use case, the *simple* one. The active SSO user is currently on your Django managed website,
+he wants to disconnect.
 
 The OIDC library must be connected to this disconnect action, because two things must be done:
 * destroy the local user session
 * send a special redirect link to the SSO disconnection page
 
-here several things may happen for the user experience, depending on the SSO server and the arguments supported and used on this disconnection link.
+Here several things may happen for the user experience, depending on the SSO server and the arguments supported and used on
+this disconnection link.
 
-* Maybe the SSO server will show a disconnect confirmation page to the user
-* Maybe we can send the SSO server a final redirect link for a page where the user should be redirected after the logout will be done (Note that the SSO server may apply some restrictions on the allowed URI for the redirect link)
+* Maybe the SSO server will show a disconnect confirmation page to the user.
+* Maybe we can send the SSO server a final redirect link for a page where the user should be redirected after the logout will
+  be done (Note that the SSO server may apply some restrictions on the allowed URI for the redirect link).
 * Maybe we have to send some special arguments on this redirect link.
 
-For example old version of Keycloak SSO server used disconnect links looking like: ::
+As an example, old version of Keycloak SSO server used disconnect links looking like: ::
 
 /auth/realms/<realm>/protocol/openid-connect/logout?redirect_uri=<a valid redirect uri>
 
@@ -168,9 +209,9 @@ and some arguments are reworded.::
 /realms/<realm>/protocol/openid-connect/logout?post_logout_redirect_uri=<a valid redirect uri>&id_token_hint=<a valid user token>
 
 So finding the right syntax for the direct logout link may require some tests, be sure to validate that the library is generating the right type of
-logout link, you should have several settings available to alter this link. various parameters can be added on this logout link like the user locale or the current client_id.
+logout link, you should have several settings available to alter this link. Various parameters can be added on this logout link like the user locale or the current client_id.
 
-On this library, to use a direct SSO logout you need to use the `OIDCLogoutView`, by default it is connected to ``<module route prefix if any>/logout``.
+On this library, to use a direct SSO logout you need to use the ``OIDCLogoutView``, by default it is connected to ``<module route prefix if any>/logout``.
 This view will destroy the local Django session and the local OIDC session elements, and then generates a browser redirect to the SSO server logout url.
 You can extend this view by defining a **LOGOUT_FUNCTION** which runs just before these deletions and redirects.
 
@@ -179,34 +220,35 @@ Back-channel logout
 
 OIDC specification : https://openid.net/specs/openid-connect-backchannel-1_0.html
 
-The Back Channel logout is a direct HTTP communication coming from the SSO server to your website. It does not imply the user browser.
-
 The **SSO Server client configuration** for your application will need to know the Back-Channel url on your Django application, this url
 is by default **``<absolute url of your website>/<url prefix for this module if any>/back_channel_logout/``**.
 
-You **must** ensure that your client settings on the SSO server have the back-channel logout activated and set on this special URL.
+You **must** ensure that your client's settings on the SSO server have the back-channel logout activated and set on this special URL.
+
+The Back Channel logout is a direct HTTP communication coming from the SSO server to your website. It does not imply the user browser.
 
 This means it cannot use the user cookies, and that means you cannot rely on the classical Django session to detect the *active* user.
 
 Your Django websites needs a routed url that can be reached directly by the SSO server, the routed action will manage the incoming SSO
-server request.
+server request. As stated above the default url is **``<absolute url of your website>/<url prefix for this module if any>/back_channel_logout/``**.
 
-This is a special POST request which does not contain any potential csrf token. You receive a POST without showing any form. One of the
-first thing to ensure is that receiving a POST on this route without the anti-csrf validation will not be blocked, and for that this
-library use the `csrf_exempt` tag on the `OIDCBackChannelLogoutView`.
+This backchannel logout action is a special POST request which does not contain any potential csrf token. You receive a POST without showing any form.
+One of the first thing to ensure is that receiving a POST on this route without the anti-csrf validation will not be blocked, and for that this
+library use the ``csrf_exempt`` tag on the ``OIDCBackChannelLogoutView``.
 
 The body of this POST request is a JWT (which must be validated, of course), inside this JWT the **key** used to find which local user
-session should be destroyed is the `sid` claim or the `sub` claim.
-This `sid` is a key which was already present in all the tokens we received before from the SSO, that the SSO session
-identifier for this user.
-The `sub` claim is the `Subject identifier`, something which uniquely identify the user on the SSO server.
-You can have both `sub` or `sid` or at least one of them. And the OIDC specification states that if you do
-not have the `sid` session identifier it means that all sessions of the `sub` user should be removed.
+session should be destroyed is the ``sid`` claim or the ``sub`` claim.
+This ``sid`` is a key which was already present in all the tokens we received before from the SSO, that's the SSO **session
+identifier** for this user.
+The ``sub`` claim is the ``Subject identifier``, something which **uniquely identify the user** on the SSO server.
+You can have both ``sub`` or ``sid`` or at least one of them. And the OIDC specification states that if you do
+not have the ``sid`` session identifier it means that all sessions of the ``sub`` user should be removed.
 
-To be able to destroy the user session based on this `sid` or `sub` we have to ensure that we can find back any local Django session
+To be able to destroy the user session based on this ``sid`` or ``sub`` we have to ensure that we can find back any local Django session
 by theses identifiers, which are not the Django session identifier.
-This is the main reason of having an `OIDCSession` model managed by this library, it can be used to find and destroy all sessions
-associated with a `sub` identifier or for the `sid` search in the session_state attribute of this model.
+This is the main reason of having an ``OIDCSession`` model managed by this library, it can be used to find and destroy all sessions
+associated with a ``sub`` identifier or for the ``sid`` search in the session_state attribute of this model. Check also the exaplanations
+on **cache management** below.
 
 If you can use the Backchannel logout, i.e. it is supported by the SSO server and you can transmits the right url to use to get a working
 configuration for your client on this SSO server, then **you should try to use it instead of Front-Channel logout**, it is **more reliable**
@@ -246,7 +288,7 @@ should extend this library to also include Html5Storage cleanup on disconnect. A
 have automatically the current active user session loaded and simply end it. If the current user session is not active nothing should
 be done. This means that we should maybe not even generate a redirect to the SSO login page or the application login page.
 
-This logout request may have some optional `sid` (SSO session identifier) and `iss` (SSO Server issuing the request) claims.
+This logout request may have some optional ``sid`` (SSO session identifier) and ``iss`` (SSO Server issuing the request) claims.
 We are not required to use these attributes to decide whether or not the current session should be terminated.
 We could simply terminate the current active user session. But we can use these claims to check that the current user session matches
 the claims. The default behavior of this library should be to check the claims if they are provided, maybe with a setting to alter this behavior
@@ -258,12 +300,17 @@ Django website to be only an OIDC client (not server) and we did not implement t
 Cache Management
 ----------------
 
-This library depends on Django cache system. Why ?
+This library depends on **Django cache system**. Why do an OIDC client depends on a cache ?
 
-The OIDC protocol has a lot of state (think of public cryptographic keys for json signature for example). As such we serialize OIDC state to the cache upon each operation (start login, complete login, etc.).
+The OIDC protocol has a lot of states (as several messages are exchanged and some elements are send back to validate that the response
+goes with your request, or that no one tried to *replay* the exchange) and also needs to store external elements (think of public cryptographic
+keys used to verify the tokens signatures for example).
 
-However, to implement logout (and more specifically back-channel logout) we need to be able to link session keys used by django session framework, and oidc session identifiers.
-This data is stored in a database table, along with ``sub`` since it can also replace session identifiers in the specification.
+As such we serialize OIDC state to the cache upon each operation (start login, complete login, etc.).
+
+However, to implement logout (and more specifically back-channel logout) we need to be able to link session keys used by the django
+session framework, and oidc session identifiers  (``sid`` and ``sub`` since it can also replace session identifiers in the specification).
+This data is stored in a database table.
 
 
 .. image:: images/cache/oidc_bl_init.png

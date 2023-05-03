@@ -33,7 +33,7 @@ This setting configures where a user is redirected on login failure.
 URI_LOGOUT
 **********
 
-This setting configures where a user is redirected on logout.
+This setting configures where a user is redirected after succesful SSO logout.
 
 URI_DEFAULT_SUCCESS
 *******************
