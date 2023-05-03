@@ -91,9 +91,9 @@ Now you can pick an identity provider from the [available providers](https://mak
 Create a file named `oidc.py` next to your settings file and initialize your provider there :
 
 ```python
-from makina_django_oidc.providers.keycloak_20 import Keycloak20Provider
+from makina_django_oidc.providers.keycloak import KeycloakProvider
 
-my_project_provider = Keycloak20Provider(
+my_oidc_provider = KeycloakProvider(
     op_name="keycloak",
     logout_redirect="http://app.local:8082/",
     failure_redirect="http://app.local:8082/",
@@ -101,7 +101,7 @@ my_project_provider = Keycloak20Provider(
     redirect_requires_https=False,
     client_secret="s3cret",
     client_id="my_client_id",
-    keycloak_realm_uri="http://keycloak.local:8080/",
+    keycloak_base_uri="http://keycloak.local:8080/auth/", # we use the auth/ path prefix option on Keycloak
     keycloak_realm="Demo",
 )
 ```
@@ -109,20 +109,20 @@ my_project_provider = Keycloak20Provider(
 You can then add to your django configuration the following line :
 
 ```python
-from .oidc_providers import my_project_provider
+from .oidc_providers import my_oidc_provider
 
 MAKINA_DJANGO_OIDC = {
-    **my_project_provider.get_config(allowed_hosts=["app.local:8082"]),
+    **my_oidc_provider.get_config(allowed_hosts=["app.local:8082"]),
 }
 ```
 
 Finally, add OIDC views to your url configuration (`urls.py`):
 
 ```python
-from .oidc_providers import my_project_provider
+from .oidc_providers import my_oidc_provider
 
 urlpatterns = [
-    path("auth", include(my_project_provider.get_urlpatterns())),
+    path("auth", include(my_oidc_provider.get_urlpatterns())),
 ]
 ```
 
