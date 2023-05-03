@@ -177,7 +177,7 @@ Each provider implements the configuration logic and provides mostly two methods
 * One to generate a configuration dict to be inserted in the ``MAKINA_DJANGO_OIDC`` value of your django settings : :py:meth:`get_config() <makina_django_oidc.providers.base.Provider.get_config>`
 * One to generate urls to be :func:`included <django:django.urls.reverse>` in your url configuration : :py:meth:`get_urlpatterns() <makina_django_oidc.providers.base.Provider.get_urlpatterns>`
 
-.. autoclass:: makina_django_oidc.providers.Keycloak20Provider
+.. autoclass:: makina_django_oidc.providers.KeycloakProvider
     :members:
     :undoc-members:
     :special-members: __init__

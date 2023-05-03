@@ -79,7 +79,7 @@ You can also print the *userinfo token* here. If you use Keycloak, you could hav
       "name": "Admin User",
       "groups": [
         "basic-users",
-        "default-roles-demo",
+        "default-role-my-realm",
         "admins"
       ],
       "preferred_username": "admin",
@@ -116,10 +116,10 @@ Using a provider, edith your configuration like this :
 .. code-block:: python
 
     MAKINA_DJANGO_OIDC = {
-        **my_project_provider.get_config(allowed_hosts=["myhost"]),
+        **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
     }
 
-    MAKINA_DJANGO_OIDC[my_project_provider.op_name]["USER_FUNCTION"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, change it to your root module
+    MAKINA_DJANGO_OIDC[my_oidc_provider.op_name]["USER_FUNCTION"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
 
 
 
