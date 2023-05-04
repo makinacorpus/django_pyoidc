@@ -22,7 +22,7 @@ Add in those two functions :
         messages.success(request, f"Welcome '{user.username}', you have been logged in")
 
 
-    def logout_function(request):
+    def logout_function(request, logout_request_args):
         messages.success(
             request, f"{request.user.username}, you have been logged out successfully"
         )

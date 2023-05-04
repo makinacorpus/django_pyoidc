@@ -8,7 +8,7 @@ from makina_django_oidc.providers.base import Provider
 
 class Keycloak10Provider(Provider):
     """
-    Provide django settings/urlconf based on keycloak behaviour (v10 to v16)
+    Provide Django settings/urlconf based on keycloak behaviour (v10 to v18)
     """
 
     def __init__(self, keycloak_base_uri: str, keycloak_realm: str, *args, **kwargs):
@@ -21,4 +21,5 @@ class Keycloak10Provider(Provider):
         # result[self.op_name]["SCOPE"] = "full-dedicated"
         result[self.op_name]["URI_PROVIDER"] = self.keycloak_base_uri
         result[self.op_name]["URI_CONFIG"] = f"/auth/realms/{self.keycloak_realm}"
+        result[self.op_name]["LOGOUT_QUERY_STRING_REDIRECT_PARAMETER"] = "redirect_uri"
         return result
