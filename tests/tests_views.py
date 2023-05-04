@@ -151,9 +151,12 @@ class LogoutViewTestCase(OIDCTestCase):
         )  # from https://stackoverflow.com/a/6013115
 
     @mock.patch("makina_django_oidc.views.Consumer.restore")
-    @mock.patch("makina_django_oidc.views.Consumer.do_end_session_request")
-    def test_logout_triggers_oidc_request_to_sso(
-        self, mocked_do_end_session_request, mocked_restore
+    @mock.patch(
+        "makina_django_oidc.views.Consumer.request_info",
+        return_value=("http://example.com", "", "", ""),
+    )
+    def test_logout_generates_oidc_request_to_sso(
+        self, mocked_request_info, mocked_restore
     ):
         """
         Test that logging out while being connected and having a valid OIDC session triggers an OIDC request to the SSO
@@ -168,13 +171,13 @@ class LogoutViewTestCase(OIDCTestCase):
         session.save()
 
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "http://example.com", fetch_redirect_response=False
+        )
         self.assertFalse(
             SESSION_KEY in self.client.session
         )  # from https://stackoverflow.com/a/6013115
-        mocked_do_end_session_request.assert_called_once_with(
-            scope=["openid"], state=sid
-        )
+        mocked_request_info.assert_called_once()
         mocked_restore.assert_called_once_with(sid)
 
 

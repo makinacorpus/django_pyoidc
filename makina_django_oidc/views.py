@@ -241,7 +241,10 @@ class OIDCLogoutView(OIDCView):
 
         # Hook user logout function
         extra_args = self.call_logout_function(request, request_args)
-        extra_args.update(request_args)
+        if extra_args:
+            extra_args.update(request_args)
+        else:
+            extra_args = request_args
 
         # Django disconnection
         auth.logout(request)
@@ -380,13 +383,13 @@ class OIDCCallbackView(OIDCView):
                 userinfo = client.consumer.get_user_info(state=state)
 
                 # TODO: add a setting to allow/disallow session storage of the tokens
-                if "id_token_jwt" in tokens:
-                    request.session["oidc_id_token_jwt"] = tokens["id_token_jwt"]
-                if "access_token" in tokens:
-                    request.session["oidc_access_token"] = tokens["access_token"]
-                if "id_token" in tokens:
-                    request.session["oidc_id_token"] = tokens["id_token"].serialize()
-                request.session["oidc_userinfo"] = userinfo.serialize()
+                # if "id_token_jwt" in tokens:
+                #     request.session["oidc_id_token_jwt"] = tokens["id_token_jwt"]
+                # if "access_token" in tokens:
+                #     request.session["oidc_access_token"] = tokens["access_token"]
+                # if "id_token" in tokens:
+                #     request.session["oidc_id_token"] = tokens["id_token"].serialize()
+                # request.session["oidc_userinfo"] = userinfo.serialize()
 
                 # Call user hook
                 # TODO: use id_token and not access_token has variable name
