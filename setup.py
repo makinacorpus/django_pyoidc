@@ -53,9 +53,11 @@ setup(
         "dev": [
             "python-decouple",
             "psycopg2",
-            "sphinx",
+            "sphinx<7",
             "sphinx_rtd_theme",
             "sphinx-autobuild",
+            "isort",
+            "pre-commit",
         ]
     },
 )
