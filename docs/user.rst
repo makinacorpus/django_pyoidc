@@ -33,7 +33,7 @@ This setting configures where a user is redirected on login failure.
 URI_LOGOUT
 **********
 
-This setting configures where a user is redirected after succesful SSO logout.
+This setting configures where a user is redirected after successful SSO logout.
 
 URI_DEFAULT_SUCCESS
 *******************
@@ -103,9 +103,10 @@ LOGOUT_FUNCTION
 
 Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
 
-This function takes only one arguments :
+This function takes two arguments :
 
 1. a request instance :class:`django:django.http.HttpRequest`
+2. TODO FIXME RLE
 
 If the user was logged in, you can get the user using ``request.user``.
 

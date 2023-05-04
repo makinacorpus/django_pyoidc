@@ -1,22 +1,11 @@
-"""
-toto
-"""
-from typing import Any, Dict
-
-from makina_django_oidc.providers.keycloak_10 import Keycloak10Provider
+from makina_django_oidc.providers.keycloak_18 import Keycloak18Provider
 
 
-class KeycloakProvider(Keycloak10Provider):
+class KeycloakProvider(Keycloak18Provider):
     """
-    Provide django settings/urlconf based on keycloak behaviour (v17 and more).
+    Provide django settings/urlconf based on keycloak behaviour (latest version).
 
-    For Keycloak before version 17 please check Keycloak_10 provider
+    For older Keycloak versions please check the other Keycloak_* providers.
     """
 
-    def get_config(self, allowed_hosts) -> Dict[str, Dict[str, Any]]:
-        result = super().get_config(allowed_hosts)
-        # Starting with v17 the /auth/ prefix is not activated by default
-        # if you altered Keycloak configuration to keep the auth/ path prefix please add
-        # this prefix in the keycloak_base_uri setting
-        result[self.op_name]["URI_CONFIG"] = f"/realms/{self.keycloak_realm}"
-        return result
+    pass
