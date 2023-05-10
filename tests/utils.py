@@ -44,11 +44,11 @@ class OIDCTestCase(TestCase):
             "URI_CONFIG": "realms/realm1",
             "CLIENT_SECRET": "secret_app1",
             "CALLBACK_PATH": "/callback",
-            "URI_DEFAULT_SUCCESS": "/default/success",
+            "URI_DEFAULT_SUCCESS": "/test-success",
             "REDIRECT_ALLOWED_HOSTS": ["testserver"],
             "REDIRECT_REQUIRES_HTTPS": False,
-            "URI_LOGOUT": "/logoutdone",
-            "URI_FAILURE": "/logout_failure",
+            "URI_LOGOUT": "/test-logout-done",
+            "URI_FAILURE": "/test-failure",
         },
     },
 )
@@ -203,7 +203,7 @@ class OIDCE2ETestCase(LiveServerTestCase):
       "oidc.ciba.grant.enabled" : "false",
       "backchannel.logout.session.required" : "true",
       "backchannel.logout.url" : "{url}/back_channel_logout",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "{url}/*",
       "display.on.consent.screen" : "false",
       "oauth2.device.authorization.grant.enabled" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
