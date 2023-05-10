@@ -137,7 +137,9 @@ class LogoutViewTestCase(OIDCTestCase):
         Test that trying to logout while not being connected redirects
         """
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "http://testserver/logoutdone", fetch_redirect_response=False
+        )
 
     def test_django_user_is_at_least_logged_out(self):
         """
@@ -145,7 +147,9 @@ class LogoutViewTestCase(OIDCTestCase):
         """
         self.client.force_login(self.user)
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "http://testserver/logoutdone", fetch_redirect_response=False
+        )
         self.assertFalse(
             SESSION_KEY in self.client.session
         )  # from https://stackoverflow.com/a/6013115
