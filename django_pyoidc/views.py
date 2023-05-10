@@ -8,6 +8,7 @@ from django.contrib import auth
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse
 from django.shortcuts import redirect, resolve_url
+from django.template import loader
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
@@ -430,3 +431,48 @@ class OIDCCallbackView(OIDCView):
                 "OIDC login process failure. No OIDC sid state in user session for a request on the OIDC callback."
             )
             return self.login_failure()
+
+
+class OIDCTestSuccessView(OIDCView):
+    """
+    Used in e2e tests to validate login of a user.
+
+    """
+
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+
+        template = loader.get_template("tests.html")
+        return HttpResponse(template.render(request=request))
+
+
+class OIDCTestFailureView(OIDCView):
+    """
+    Used in e2e tests to validate login failures.
+
+    """
+
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+
+        template = loader.get_template("tests.html")
+        return HttpResponse(template.render(request=request))
+
+
+class OIDCTestLogoutView(OIDCView):
+    """
+    Used in e2e tests to validate logout of a user.
+
+    """
+
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+
+        template = loader.get_template("tests.html")
+        return HttpResponse(template.render(request=request))

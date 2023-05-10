@@ -58,6 +58,7 @@ setup(
             "sphinx-autobuild",
             "isort",
             "pre-commit",
+            "selenium",
         ]
     },
 )
