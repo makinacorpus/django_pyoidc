@@ -1,13 +1,15 @@
 from django.urls import path
 
+from makina_django_oidc.test_views import (
+    OIDCTestFailureView,
+    OIDCTestLogoutView,
+    OIDCTestSuccessView,
+)
 from django_pyoidc.views import (
     OIDCBackChannelLogoutView,
     OIDCCallbackView,
     OIDCLoginView,
     OIDCLogoutView,
-    OIDCTestFailureView,
-    OIDCTestLogoutView,
-    OIDCTestSuccessView,
 )
 
 urlpatterns = [
@@ -34,12 +36,12 @@ urlpatterns = [
     ),
     path(
         "test-logout-done/",
-        OIDCTestFailureView.as_view(op_name="sso1"),
+        OIDCTestLogoutView.as_view(op_name="sso1"),
         name="test_logout_done",
     ),
     path(
         "test-failure/",
-        OIDCTestLogoutView.as_view(op_name="sso1"),
+        OIDCTestFailureView.as_view(op_name="sso1"),
         name="test_failure",
     ),
 ]
