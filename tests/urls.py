@@ -5,6 +5,8 @@ from django_pyoidc.views import (
     OIDCCallbackView,
     OIDCLoginView,
     OIDCLogoutView,
+)
+from django_pyoidc.test_views import (
     OIDCTestFailureView,
     OIDCTestLogoutView,
     OIDCTestSuccessView,
@@ -34,12 +36,12 @@ urlpatterns = [
     ),
     path(
         "test-logout-done/",
-        OIDCTestFailureView.as_view(op_name="sso1"),
+        OIDCTestLogoutView.as_view(op_name="sso1"),
         name="test_logout_done",
     ),
     path(
         "test-failure/",
-        OIDCTestLogoutView.as_view(op_name="sso1"),
+        OIDCTestFailureView.as_view(op_name="sso1"),
         name="test_failure",
     ),
 ]
