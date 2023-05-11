@@ -164,41 +164,41 @@ class OIDCE2ETestCase(LiveServerTestCase):
         )
 
         print(" + Create client applications.")
-        cls.app1_id = cls.registerClient("app1", "secret_app1", cls.live_server_url)
-        cls.app1_bis_id = cls.registerClient(
+        app1_id = cls.registerClient("app1", "secret_app1", cls.live_server_url)
+        app1_bis_id = cls.registerClient(
             "app1-bis", "secret_app1-bis", cls.live_server_url
         )
-        cls.app2_foo_id = cls.registerClient(
+        app2_foo_id = cls.registerClient(
             "app2-foo", "secret_app2-foo", cls.live_server_url
         )
-        cls.app2_bar_id = cls.registerClient(
+        app2_bar_id = cls.registerClient(
             "app2-bar", "secret_app2-bar", cls.live_server_url
         )
 
         print(" + Create client applications access roles.")
-        cls.app1_role = cls.registerClientRole(cls.app1_id, "AccessApp1")
-        cls.app1_bis_role = cls.registerClientRole(cls.app1_bis_id, "AccessApp1Bis")
-        cls.app2_foo_role = cls.registerClientRole(cls.app2_foo_id, "AccessApp2Foo")
-        cls.app2_bar_role = cls.registerClientRole(cls.app2_bar_id, "AccessApp2Bar")
+        app1_role = cls.registerClientRole(app1_id, "AccessApp1")
+        app1_bis_role = cls.registerClientRole(app1_bis_id, "AccessApp1Bis")
+        app2_foo_role = cls.registerClientRole(app2_foo_id, "AccessApp2Foo")
+        app2_bar_role = cls.registerClientRole(app2_bar_id, "AccessApp2Bar")
 
         print(" + Create Client Scopes.")
         id_zone_app1 = cls.registerClientScope(
             "zone-app1",
-            [{cls.app1_id: cls.app1_role}, {cls.app1_bis_id: cls.app1_bis_role}],
+            [{app1_id: app1_role}, {app1_bis_id: app1_bis_role}],
         )
         id_zone_app2 = cls.registerClientScope(
             "zone-app2",
             [
-                {cls.app2_foo_id: cls.app2_foo_role},
-                {cls.app2_bar_id: cls.app2_bar_role},
+                {app2_foo_id: app2_foo_role},
+                {app2_bar_id: app2_bar_role},
             ],
         )
 
         print(" + Update applications client scopes")
-        cls.addClientScopeForClient(cls.app1_id, id_zone_app1)
-        cls.addClientScopeForClient(cls.app1_bis_id, id_zone_app1)
-        cls.addClientScopeForClient(cls.app2_foo_id, id_zone_app2)
-        cls.addClientScopeForClient(cls.app2_bar_id, id_zone_app2)
+        cls.addClientScopeForClient(app1_id, id_zone_app1)
+        cls.addClientScopeForClient(app1_bis_id, id_zone_app1)
+        cls.addClientScopeForClient(app2_foo_id, id_zone_app2)
+        cls.addClientScopeForClient(app2_bar_id, id_zone_app2)
 
         print(" + Create Groups.")
         gApp1 = cls.registerGroup(
