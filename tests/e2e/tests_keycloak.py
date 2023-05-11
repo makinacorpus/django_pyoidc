@@ -78,6 +78,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         self, login_start_url, login_end_url, user, password, active_sso_session=False
     ):
         if not active_sso_session:
+            self.selenium.get(login_start_url)
             self.wait.until(EC.url_changes(login_start_url))
             # wait ->
             #   EC.url_changes('a') // anything but a
@@ -108,7 +109,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         start_url = f"{self.live_server_url}{login_url}"
         end_url = f"{self.live_server_url}{success_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
-        self._selenium_sso_login(self, start_url, end_url, "user1", "passwd1")
+        self._selenium_sso_login(start_url, end_url, "user1", "passwd1")
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check we are logged in
@@ -281,7 +282,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
-        wait = WebDriverWait(self.selenium, timeout)
+        self.wait = WebDriverWait(self.selenium, timeout)
         self._selenium_sso_login(
             start_url, middle_url, "user_app2", "passwd2", active_sso_session=False
         )
@@ -297,7 +298,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         # click logout
         self.selenium.find_element(By.ID, "oidc-logout-link").click()
 
-        wait.until(EC.url_matches(end_url))
+        self.wait.until(EC.url_matches(end_url))
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check we are NOT logged in
