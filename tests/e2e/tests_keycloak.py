@@ -99,6 +99,17 @@ class KeycloakTestCase(OIDCE2ETestCase):
             self.selenium.get(login_start_url)
         self.wait.until(EC.url_matches(login_end_url))
 
+    def _selenium_logout(self, end_url):
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        # check we have the logout link
+        self.assertTrue("OIDC-LOGOUT-LINK" in bodyText)
+        # click logout
+        self.selenium.find_element(By.ID, "oidc-logout-link").click()
+        self.wait.until(EC.url_matches(end_url))
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        # check we are NOT logged in
+        self.assertTrue("You are logged out" in bodyText)
+
     def test_01_selenium_sso_login(self, *args):
         """
         Test a complete working OIDC login.
@@ -275,7 +286,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         },
     )
     def test_05_selenium_audience_checks(self, *args):
-        timeout = 250
+        timeout = 25
         login_url = reverse("test_login")
         success_url = reverse("test_sucess")
         post_logout_url = reverse("test_logout_done")
@@ -288,18 +299,21 @@ class KeycloakTestCase(OIDCE2ETestCase):
         )
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-
         print(bodyText)
+
         # Check the session message is shown
         self.assertTrue("message: user_app2@example.com is logged in." in bodyText)
 
-        # check we have the logout link
-        self.assertTrue("OIDC-LOGOUT-LINK" in bodyText)
-        # click logout
-        self.selenium.find_element(By.ID, "oidc-logout-link").click()
+        self._selenium_logout(end_url)
 
-        self.wait.until(EC.url_matches(end_url))
+        self._selenium_sso_login(
+            start_url, middle_url, "user_app3", "passwd3", active_sso_session=False
+        )
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-        # check we are NOT logged in
-        self.assertTrue("You are logged out" in bodyText)
+        print(bodyText)
+
+        # Check the session message is shown
+        self.assertTrue("message: user_app3@example.com is logged in." in bodyText)
+
+        self._selenium_logout(end_url)
