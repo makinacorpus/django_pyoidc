@@ -33,7 +33,7 @@ This setting configures where a user is redirected on login failure.
 URI_LOGOUT
 **********
 
-This setting configures where a user is redirected on logout.
+This setting configures where a user is redirected after successful SSO logout.
 
 URI_DEFAULT_SUCCESS
 *******************
@@ -103,9 +103,10 @@ LOGOUT_FUNCTION
 
 Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
 
-This function takes only one arguments :
+This function takes two arguments :
 
 1. a request instance :class:`django:django.http.HttpRequest`
+2. TODO FIXME RLE
 
 If the user was logged in, you can get the user using ``request.user``.
 
@@ -177,7 +178,7 @@ Each provider implements the configuration logic and provides mostly two methods
 * One to generate a configuration dict to be inserted in the ``MAKINA_DJANGO_OIDC`` value of your django settings : :py:meth:`get_config() <makina_django_oidc.providers.base.Provider.get_config>`
 * One to generate urls to be :func:`included <django:django.urls.reverse>` in your url configuration : :py:meth:`get_urlpatterns() <makina_django_oidc.providers.base.Provider.get_urlpatterns>`
 
-.. autoclass:: makina_django_oidc.providers.Keycloak20Provider
+.. autoclass:: makina_django_oidc.providers.KeycloakProvider
     :members:
     :undoc-members:
     :special-members: __init__

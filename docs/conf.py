@@ -28,7 +28,7 @@ django.setup()
 
 copyright = "Free Software"
 project = "Makina Django OIDC"
-author = "Paul FLORENCE, Régis LEROY"
+author = "Paul FLORENCE, Régis LEROY (regilero)"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

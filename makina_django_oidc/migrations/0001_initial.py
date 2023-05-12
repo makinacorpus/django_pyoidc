@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
                 ("cache_session_key", models.TextField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
-        ),
+        )
     ]
