@@ -96,7 +96,7 @@ To reach this goal we wanted a project with:
 
 Handling the 'login' part in OIDC is quite easy, on the client side. And this part is usually managed by a library (like pyoidc for example).
 
-Direct Logout and Asynchronous logouts are more complex to understand and manage. TH next part is a deeper explanation on this subject.
+Direct Logout and Asynchronous logouts are more complex to understand and manage. The next section is a deeper explanation on this subject.
 
 MtoM mode is about Machine-To-Machine communication, like B-to-B, the fact that you application may need to use OIDC not only to handle real
 (human) users sessions, but also maybe connections made by some other applications, or you may also need to perform such operation (connecting
