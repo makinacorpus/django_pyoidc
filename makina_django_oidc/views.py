@@ -157,8 +157,6 @@ class OIDCLoginView(OIDCView):
 
     The redirection behaviour is configured with the following settings :
 
-    TODO: repeated lines here about REDIRECT_REQUIRES_HTTPS, and I'm not sure it is used here
-    * :ref:`REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
     * :ref:`REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
     * :ref:`REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
     * :ref:`URI_DEFAULT_SUCCESS` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
