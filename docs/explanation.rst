@@ -68,7 +68,6 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 **Drawbacks**
 
 - Very old and unmaintained
-- 
  
  `Django OAuth Toolkit <https://github.com/jazzband/django-oauth-toolkit>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +77,7 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 
 - This is what seems to be the most used library of the Django ecosystem
 - It is stable and maintained, quite certainly robust
-- `<OIDC support documentation https://django-oauth-toolkit.readthedocs.io/en/latest/oidc.html>
+- `<OIDC support documentation https://django-oauth-toolkit.readthedocs.io/en/latest/oidc.html>`_
 
 **Drawbacks**
 
@@ -125,7 +124,7 @@ login out is simple and mean simply destroying your application session.
 In a *'classical'* web application, without the SSO you have two cases:
 
 * You just have an API backend, there is no real *'session'*, you receive the use information from a JWT in API calls (or an
-equivalent).
+  equivalent).
 * You have a more classical *'full stack'* web application, or API, with a cookie based session.
 
 In the first case there's no '*logout'* work on the API side. And this will always be the case, that's not something managed by
@@ -160,15 +159,15 @@ with another user in one of the client application, then visit your application 
 (you still have a valid session based cookie for another user).
 
 * **One** solution is to keep track of the **access_token short lifetime** you received when creating your local Django session.
-This time validity is quite certainly shorter than your Django session lifetime. Then you can add a regular check of this access_token
-lifetime and have Django **regularly and transparently asking the SSO for a new access token** when this access token is end-of-life.
-This is made using the refresh token which has a longer lifetime. Now if the SSO session has been terminated, the next time you'll try
-to transparently get a new access_token it will fail, and your OIDC client can decide to destroy the local Django session in that case.
-This solution is almost OK, you may still have some problems while the previous access token is still valid, and depending on the
-lifetime of access token it can be for 5, 10 or 15 minutes. This SSO connection **'refreshing'** is implemented in this library, and
-already ensure the minimum indirect SSO disconnect support.
+  This time validity is quite certainly shorter than your Django session lifetime. Then you can add a regular check of this access_token
+  lifetime and have Django **regularly and transparently asking the SSO for a new access token** when this access token is end-of-life.
+  This is made using the refresh token which has a longer lifetime. Now if the SSO session has been terminated, the next time you'll try
+  to transparently get a new access_token it will fail, and your OIDC client can decide to destroy the local Django session in that case.
+  This solution is almost OK, you may still have some problems while the previous access token is still valid, and depending on the
+  lifetime of access token it can be for 5, 10 or 15 minutes. This SSO connection **'refreshing'** is implemented in this library, and
+  already ensure the minimum indirect SSO disconnect support.
 * the **second** and **third** solutions are managed by the SSO server (and your application), they are called **Back-channel logout**
-and **Front-channel logout**. Not all SSO servers implements theses things, and usually not both.
+  and **Front-channel logout**. Not all SSO servers implements theses things, and usually not both.
 
 We'll detail these two solutions and the way to use it with this library in the next parts, but to give you a summary the goal here is
 that when the user disconnects from another client we want the SSO to be able to reach you and ask your application to logout the user
@@ -238,8 +237,10 @@ library use the ``csrf_exempt`` tag on the ``OIDCBackChannelLogoutView``.
 
 The body of this POST request is a JWT (which must be validated, of course), inside this JWT the **key** used to find which local user
 session should be destroyed is the ``sid`` claim or the ``sub`` claim.
+
 This ``sid`` is a key which was already present in all the tokens we received before from the SSO, that's the SSO **session
-identifier** for this user.
+identifier** for this user. (Note: Only Identity Provider implementing session management might send this sid, so it's not always present).
+
 The ``sub`` claim is the ``Subject identifier``, something which **uniquely identify the user** on the SSO server.
 You can have both ``sub`` or ``sid`` or at least one of them. And the OIDC specification states that if you do
 not have the ``sid`` session identifier it means that all sessions of the ``sub`` user should be removed.
@@ -272,9 +273,9 @@ with that.
 
 * This special logout page must not be the logout page which redirects to the SSO, the goal is to destroy the local session only
 * Chaining the redirects is hard, if one of the other applications reached in this chain is badly implemented the redirect 
-loop may not reach you (stuck on this other application, usually on a 404), and you cannot disconnect the user. That's why iframes are better.
-But it may interfere with combined protocols logouts (front channel SAML logouts and then OIDC logouts for example)
-* iframes may not be very reliable with increasing browser third party access security
+  loop may not reach you (stuck on this other application, usually on a 404), and you cannot disconnect the user. That's why iframes are better.
+  But it may interfere with combined protocols logouts (front channel SAML logouts and then OIDC logouts for example)
+* iframes may not be very reliable with increasing browser third party access security.
 
 The **SSO Server client configuration** for your application will need to know the Front-Channel url on your Django application, this url
 is by default **``<absolute url of your website>/<url prefix for this module if any>/front_channel_logout/``**.
