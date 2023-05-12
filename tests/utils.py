@@ -116,6 +116,11 @@ class OIDCE2ETestCase(LiveServerTestCase):
             )
             print(e.stderr)
             if e.returncode == 125:
+                print(" +----------|  |--------------------------+ ")
+                print(" +---------_|  |_-------------------------+ ")
+                print(" +---------\    /-------------------------+ ")  # noqa
+                print(" +----------\  /--------------------------+ ")  # noqa
+                print(" +-----------\/---------------------------+ ")  # noqa
                 print(
                     "   + Try removing any previous Keycloak image running using this command:"
                 )
@@ -123,6 +128,9 @@ class OIDCE2ETestCase(LiveServerTestCase):
                     '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-keycloak-image --format="{{.ID}}")'
                 )
                 print("   + Check also you have no service running on localhost:8080.")
+                print(" +---------------------------------------+ ")
+                print(" +---------------------------------------+ ")
+                print(" +---------------------------------------+ ")
         finally:
             os.chdir(cls.workdir)
         if cls.docker_id:
@@ -241,7 +249,7 @@ class OIDCE2ETestCase(LiveServerTestCase):
             ],
         )
         cls.registerUser(
-            "user_app1",
+            "user_app3",
             "passwd3",
             groups=[
                 gApp1,
@@ -305,11 +313,10 @@ class OIDCE2ETestCase(LiveServerTestCase):
             if last_error == "" and len(errors) > 1:
                 last_error = errors[-2:-1][0]
             # print(f"Last Error: >{last_error}<")
-            if (
-                e.returncode == 1
-                and last_error
-                == "Failed to send request - Connect to 127.0.0.1:8080 [/127.0.0.1] failed: Connection refused (Connection refused)"
-            ):
+            if e.returncode == 1 and last_error in [
+                "Failed to send request - Connect to 127.0.0.1:8080 [/127.0.0.1] failed: Connection refused (Connection refused)",
+                "Invalid user credentials [invalid_grant]",
+            ]:
                 raise NotReadyException()
             else:
                 print(
