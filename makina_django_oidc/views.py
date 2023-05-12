@@ -220,10 +220,6 @@ class OIDCLogoutView(OIDCView):
 
         client = None
         sid = request.session.get("oidc_sid")
-        try:
-            client = OIDClient(self.op_name, session_id=sid)
-        except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
-            logger.exception(e)
 
         redirect_arg_name = get_setting_for_sso_op(
             self.op_name,
@@ -234,6 +230,13 @@ class OIDCLogoutView(OIDCView):
             redirect_arg_name: post_logout_url,
             "client_id": get_settings_for_sso_op(self.op_name)["CLIENT_ID"],
         }
+
+        if sid:
+            try:
+                client = OIDClient(self.op_name, session_id=sid)
+            except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
+                logger.error("OIDC Logout call error when loading OIDC state: ")
+                logger.exception(e)
 
         # Hook user logout function
         extra_args = self.call_logout_function(request, request_args)
