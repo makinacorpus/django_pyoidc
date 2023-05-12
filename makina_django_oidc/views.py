@@ -270,7 +270,7 @@ class OIDCLogoutView(OIDCView):
             return redirect(url)
         else:
             logger.error(
-                f"Cannot build the SSO disconnection link, still redrecting directly to {post_logout_url}"
+                f"Cannot build the SSO disconnection link, still redirecting directly to {post_logout_url}"
             )
             return redirect(post_logout_url)
 
