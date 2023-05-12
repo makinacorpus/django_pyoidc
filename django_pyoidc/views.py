@@ -95,16 +95,18 @@ class OIDCView(View, OIDCMixin):
             func = _import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_get_user_function(self, info_token, access_token):
+    def call_get_user_function(self, info_token, access_token_jwt, id_token):
         user_function_setting_name = "HOOK_GET_USER"
         if user_function_setting_name in get_settings_for_sso_op(self.op_name):
+            logger.debug("OIDC, Calling user hook on get_user")
             return self.call_function(
-                user_function_setting_name, info_token, access_token
+                user_function_setting_name, info_token, access_token_jwt, id_token
             )
         else:
-            return get_user_by_email(info_token, access_token)
+            return get_user_by_email(info_token, id_token)
 
     def call_callback_function(self, request, user):
+        logger.debug("OIDC, Calling user hook on login")
         self.call_function("HOOK_USER_LOGIN", request, user)
 
     def call_logout_function(self, user_request, logout_request_args):
@@ -380,31 +382,50 @@ class OIDCCallbackView(OIDCView):
                 session_state = aresp.get("session_state")
 
                 # pyoidc will make the next steps in OIDC login protocol
-                tokens = client.consumer.complete(
-                    state=state, session_state=session_state
-                )
+                try:
+                    tokens = client.consumer.complete(
+                        state=state, session_state=session_state
+                    )
+                except Exception as e:
+                    logger.exception(e)
+                    logger.error(
+                        "OIDC login process failure; cannot end login protocol."
+                    )
+                    return self.login_failure()
 
                 # Collect data from userinfo endpoint
-                userinfo = client.consumer.get_user_info(state=state)
+                try:
+                    userinfo = client.consumer.get_user_info(state=state)
+                except Exception as e:
+                    logger.exception(e)
+                    logger.error(
+                        "OIDC login process failure; Cannot retrieve userinfo."
+                    )
+                    return self.login_failure()
 
                 # TODO: add a setting to allow/disallow session storage of the tokens
-                # if "id_token_jwt" in tokens:
-                #     request.session["oidc_id_token_jwt"] = tokens["id_token_jwt"]
-                # if "access_token" in tokens:
-                #     request.session["oidc_access_token"] = tokens["access_token"]
-                # if "id_token" in tokens:
-                #     request.session["oidc_id_token"] = tokens["id_token"].serialize()
-                # request.session["oidc_userinfo"] = userinfo.serialize()
-
                 # Call user hook
                 # TODO: use id_token and not access_token has variable name
-                logger.debug("OIDC, Calling user hook on get_user")
+                access_token_jwt = (
+                    tokens["access_token"] if "access_token" in tokens else None
+                )
+                # FIXME: token instropsection for access_token deserialization?
+                id_token_claims = (
+                    tokens["id_token"].to_dict() if "id_token" in tokens else None
+                )
+                # id_token_jwt = (
+                #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
+                # )
+                userinfo_claims = userinfo.to_dict()
+
                 user = self.call_get_user_function(
-                    info_token=userinfo, access_token=tokens["id_token"]
+                    info_token=userinfo_claims,
+                    access_token_jwt=access_token_jwt,
+                    id_token=id_token_claims,
                 )
 
                 if not user or not user.is_authenticated:
-                    logger.warning(
+                    logger.error(
                         "OIDC login process failure. Cannot set active authenticated user."
                     )
                     return self.login_failure()
