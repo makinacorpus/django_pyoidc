@@ -219,12 +219,11 @@ class OIDCLogoutView(OIDCView):
             redirect(post_logout_url)
 
         client = None
-        sid = None
+        sid = request.session.get("oidc_sid")
         try:
-            sid = request.session["oidc_sid"]
             client = OIDClient(self.op_name, session_id=sid)
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             pass
 
         redirect_arg_name = get_setting_for_sso_op(
