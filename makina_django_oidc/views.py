@@ -222,9 +222,8 @@ class OIDCLogoutView(OIDCView):
         sid = request.session.get("oidc_sid")
         try:
             client = OIDClient(self.op_name, session_id=sid)
-        except Exception as e:
+        except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
             logger.exception(e)
-            pass
 
         redirect_arg_name = get_setting_for_sso_op(
             self.op_name,
