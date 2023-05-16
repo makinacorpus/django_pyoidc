@@ -1,7 +1,10 @@
+import contextlib
 import logging
 import os
 import subprocess
 import time
+from typing import Generator
+from unittest.mock import MagicMock, patch
 
 from django.core.servers.basehttp import ThreadedWSGIServer, WSGIRequestHandler
 from django.test import TestCase, override_settings
@@ -174,13 +177,13 @@ class OIDCE2ETestCase(LiveServerTestCase):
         print(" + Create client applications.")
         app1_id = cls.registerClient("app1", "secret_app1", cls.live_server_url)
         app1_bis_id = cls.registerClient(
-            "app1-bis", "secret_app1-bis", cls.live_server_url
+            "app1-bis", "secret_app1-bis", cls.live_server_url, bearerOnly=True
         )
         app2_foo_id = cls.registerClient(
             "app2-foo", "secret_app2-foo", cls.live_server_url
         )
         app2_bar_id = cls.registerClient(
-            "app2-bar", "secret_app2-bar", cls.live_server_url
+            "app2-bar", "secret_app2-bar", cls.live_server_url, bearerOnly=True
         )
 
         print(" + Create client applications access roles.")
@@ -328,12 +331,17 @@ class OIDCE2ETestCase(LiveServerTestCase):
         return output
 
     @classmethod
-    def registerClient(cls, name, secret, url):
+    def registerClient(cls, name, secret, url, bearerOnly=False):
+        redirectUris = "[ ]" if bearerOnly else f'[ "{url}/*" ]'
+        bBearerOnly = "true" if bearerOnly else "false"
+        bStandardFlowEnabled = "false" if bearerOnly else "true"
+
         output = cls.docker_keycloak_command(
             f"""bin/kcadm.sh create clients -r realm1 -f - << EOF
 {{
     "clientId": "{name}",
     "name": "{name}",
+    "description": "{name}",
     "rootUrl": "{url}",
     "adminUrl" : "",
     "baseUrl" : "",
@@ -342,12 +350,12 @@ class OIDCE2ETestCase(LiveServerTestCase):
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "{secret}",
-    "redirectUris" : [ "{url}/*" ],
+    "redirectUris" : {redirectUris},
     "webOrigins" : [ "+" ],
     "notBefore" : 0,
-    "bearerOnly" : false,
+    "bearerOnly" : {bBearerOnly},
     "consentRequired" : false,
-    "standardFlowEnabled" : true,
+    "standardFlowEnabled" : {bStandardFlowEnabled},
     "implicitFlowEnabled" : false,
     "directAccessGrantsEnabled" : false,
     "serviceAccountsEnabled" : false,
@@ -357,7 +365,7 @@ class OIDCE2ETestCase(LiveServerTestCase):
     "attributes" : {{
       "oidc.ciba.grant.enabled" : "false",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "{url}/*",
+      "post.logout.redirect.uris" : "+",
       "display.on.consent.screen" : "false",
       "oauth2.device.authorization.grant.enabled" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -476,3 +484,16 @@ EOF"""
                 cls.docker_keycloak_command(
                     f"bin/kcadm.sh update users/{user_id}/groups/{group}" " -r realm1"
                 )
+
+
+@contextlib.contextmanager
+def wrap_class(obj: object, method: str) -> Generator[MagicMock, None, None]:
+    mock = MagicMock()
+    real_method = getattr(obj, method)
+
+    def wrap_method(self, *args, **kwargs):
+        mock.__call__(*args, **kwargs)
+        return real_method(self, *args, **kwargs)
+
+    with patch.object(obj, method, wrap_method):
+        yield mock
