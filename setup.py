@@ -28,7 +28,7 @@ setup(
     python_requires=">=3.7",
     packages=find_packages(),
     install_requires=[
-        "oic@git+https://github.com/CZ-NIC/pyoidc@444bd6845e13b06c14fbaefccbc0c47059aa2364",
+        "oic==1.6.0",
         "django>=3.2",
         "jsonpickle",
         "jwt",
