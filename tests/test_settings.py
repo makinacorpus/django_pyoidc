@@ -9,7 +9,7 @@ INSTALLED_APPS = [
     "makina_django_oidc",
 ]
 
-ALLOWED_HOSTS = ["test.makina-django-oidc.notatld"]
+ALLOWED_HOSTS = ["test.django-pyoidc.notatld"]
 
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
