@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from makina_django_oidc.providers.keycloak_10 import Keycloak10Provider
+from django_pyoidc.providers.keycloak_10 import Keycloak10Provider
 
 
 class Keycloak17Provider(Keycloak10Provider):

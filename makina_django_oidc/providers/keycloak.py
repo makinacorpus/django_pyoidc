@@ -1,4 +1,4 @@
-from makina_django_oidc.providers.keycloak_18 import Keycloak18Provider
+from django_pyoidc.providers.keycloak_18 import Keycloak18Provider
 
 
 class KeycloakProvider(Keycloak18Provider):

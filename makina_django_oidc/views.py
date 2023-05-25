@@ -17,10 +17,10 @@ from jwt.exceptions import JWTDecodeError
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
-from makina_django_oidc import get_user_by_email
-from makina_django_oidc.models import OIDCSession
-from makina_django_oidc.session import OIDCCacheSessionBackendForDjango
-from makina_django_oidc.utils import get_setting_for_sso_op, get_settings_for_sso_op
+from django_pyoidc import get_user_by_email
+from django_pyoidc.models import OIDCSession
+from django_pyoidc.session import OIDCCacheSessionBackendForDjango
+from django_pyoidc.utils import get_setting_for_sso_op, get_settings_for_sso_op
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 

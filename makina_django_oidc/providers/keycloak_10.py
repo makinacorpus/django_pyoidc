@@ -3,7 +3,7 @@ toto
 """
 from typing import Any, Dict
 
-from makina_django_oidc.providers.base import Provider
+from django_pyoidc.providers.base import Provider
 
 
 class Keycloak10Provider(Provider):

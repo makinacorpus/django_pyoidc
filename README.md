@@ -91,7 +91,7 @@ Now you can pick an identity provider from the [available providers](https://dja
 Create a file named `oidc.py` next to your settings file and initialize your provider there :
 
 ```python
-from makina_django_oidc.providers.keycloak import KeycloakProvider
+from django_pyoidc.providers.keycloak import KeycloakProvider
 
 my_oidc_provider = KeycloakProvider(
     op_name="keycloak",

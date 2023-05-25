@@ -1,6 +1,6 @@
 from django.urls import path
 
-from makina_django_oidc.views import (
+from django_pyoidc.views import (
     OIDCBackChannelLogoutView,
     OIDCCallbackView,
     OIDCLoginView,

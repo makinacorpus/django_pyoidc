@@ -6,7 +6,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     "tests",
-    "makina_django_oidc",
+    "django_pyoidc",
 ]
 
 ALLOWED_HOSTS = ["test.django-pyoidc.notatld"]

@@ -10,7 +10,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(HERE, "README.md")) as readme_file, open(
     os.path.join(HERE, "CHANGES.md")
 ) as changes_file, open(
-    os.path.join(HERE, "makina_django_oidc", "VERSION")
+    os.path.join(HERE, "django_pyoidc", "VERSION")
 ) as version_file:
     README = readme_file.read()
     CHANGES = changes_file.read()
@@ -23,7 +23,7 @@ setup(
     version="0.1",
     description="Authenticate your users using OpenID Connect (OIDC)",
     author="Makina Corpus",
-    author_email="makina_django_oidc@makina-corpus.net",
+    author_email="django_pyoidc@makina-corpus.net",
     url="https://gitlab.makina-corpus.net/pfl/django-pyoidc",
     python_requires=">=3.7",
     packages=find_packages(),
