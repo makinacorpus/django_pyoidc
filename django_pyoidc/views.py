@@ -53,7 +53,7 @@ class OIDClient:
         }
 
         client_config = {
-            "client_id": get_settings_for_sso_op(op_name)["CLIENT_ID"],
+            "client_id": get_settings_for_sso_op(op_name)["OIDC_CLIENT_ID"],
             "client_authn_method": CLIENT_AUTHN_METHOD,
         }
 
@@ -63,26 +63,14 @@ class OIDClient:
             client_config=client_config,
         )
 
-        base = get_settings_for_sso_op(op_name)["URI_PROVIDER"]
-        path = get_settings_for_sso_op(op_name)["URI_CONFIG"]
-        # avoid urljoin strange behaviors
-        # like :
-        #   http://localhost:8080/foo + /bar => http://localhost:8080/bar
-        #   http://localhost:8080/foo/ + /bar => http://localhost:8080/bar
-        # but
-        #   http://localhost:8080/foo/ + bar => http://localhost:8080/foo/bar
-        if not base.endswith("/"):
-            base = f"{base}/"
-        if path.startswith("/"):
-            path = path[1:]
-        provider_info_uri = urljoin(base, path)
+        provider_info_uri = get_settings_for_sso_op(op_name)["OIDC_PROVIDER_DISCOVERY_URI"]
 
         if session_id:
             self.consumer.restore(session_id)
         else:
             self.consumer.provider_config(provider_info_uri)
             self.consumer.client_secret = get_settings_for_sso_op(op_name)[
-                "CLIENT_SECRET"
+                "OIDC_CLIENT_SECRET"
             ]
 
 
@@ -94,7 +82,7 @@ class OIDCView(View, OIDCMixin):
     def get(self, *args, **kwargs):
         if self.op_name is None:
             raise Exception(
-                "Please set 'op_name' when initializing with 'as_view()'"
+                "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
             )  # FIXME
 
     def get_settings(self, name):
@@ -107,7 +95,7 @@ class OIDCView(View, OIDCMixin):
             return func(*args, **kwargs)
 
     def call_get_user_function(self, info_token, access_token):
-        user_function_setting_name = "USER_FUNCTION"
+        user_function_setting_name = "HOOK_USER_FUNCTION"
         if user_function_setting_name in get_settings_for_sso_op(self.op_name):
             return self.call_function(
                 user_function_setting_name, info_token, access_token
@@ -116,7 +104,7 @@ class OIDCView(View, OIDCMixin):
             return get_user_by_email(info_token, access_token)
 
     def call_callback_function(self, request, user):
-        self.call_function("LOGIN_FUNCTION", request, user)
+        self.call_function("LOGIN_HOOK", request, user)
 
     def call_logout_function(self, user_request, logout_request_args):
         """Function called right before local session removal and before final redirection to the SSO server.
@@ -129,7 +117,7 @@ class OIDCView(View, OIDCMixin):
         Returns:
             dict: extra query string arguments to add to the SSO disconnection url
         """
-        return self.call_function("LOGOUT_FUNCTION", user_request, logout_request_args)
+        return self.call_function("LOGOUT_HOOK", user_request, logout_request_args)
 
     def get_next_url(self, request, redirect_field_name):
         """
@@ -139,8 +127,8 @@ class OIDCView(View, OIDCMixin):
         if next_url:
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
-                allowed_hosts=self.get_settings("REDIRECT_ALLOWED_HOSTS"),
-                require_https=self.get_settings("REDIRECT_REQUIRES_HTTPS"),
+                allowed_hosts=self.get_settings("LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"),
+                require_https=self.get_settings("LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS"),
             )
             if is_safe:
                 return request.build_absolute_uri(next_url)
@@ -169,12 +157,12 @@ class OIDCLoginView(OIDCView):
 
         client = OIDClient(self.op_name)
         client.consumer.consumer_config["authz_page"] = self.get_settings(
-            "CALLBACK_PATH"
+            "LOGIN_URI_CALLBACK"
         )
         redirect_uri = self.get_next_url(request, "next")
 
         if not redirect_uri:
-            redirect_uri = self.get_settings("URI_DEFAULT_SUCCESS")
+            redirect_uri = self.get_settings("POST_LOGIN_URI_SUCCESS_DEFAULT")
 
         request.session["oidc_login_next"] = redirect_uri
 
@@ -206,7 +194,7 @@ class OIDCLogoutView(OIDCView):
     @property
     def post_logout_url(self):
         """Return the post logout url defined in settings."""
-        return self.get_settings("URI_LOGOUT")
+        return self.get_settings("POST_LOGOUT_REDIRECT_URI")
 
     def get(self, request):
         return self.post(request)
@@ -234,7 +222,7 @@ class OIDCLogoutView(OIDCView):
         )
         request_args = {
             redirect_arg_name: post_logout_url,
-            "client_id": get_settings_for_sso_op(self.op_name)["CLIENT_ID"],
+            "client_id": get_settings_for_sso_op(self.op_name)["OIDC_CLIENT_ID"],
         }
 
         if sid:
@@ -363,10 +351,10 @@ class OIDCCallbackView(OIDCView):
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
-        return next_url or resolve_url(self.get_settings("URI_DEFAULT_SUCCESS"))
+        return next_url or resolve_url(self.get_settings("POST_LOGIN_URI_SUCCESS_DEFAULT"))
 
     def login_failure(self):
-        return redirect(self.get_settings("URI_FAILURE"))
+        return redirect(self.get_settings("POST_LOGIN_URI_FAILURE"))
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)

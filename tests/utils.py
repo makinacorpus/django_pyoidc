@@ -4,24 +4,22 @@ from django.test import TestCase, override_settings
 @override_settings(
     DJANGO_PYOIDC={
         "sso1": {
-            "CLIENT_ID": "1",
-            "CACHE_BACKEND": "default",
-            "URI_PROVIDER": "",
-            "URI_CONFIG": "",
-            "CLIENT_SECRET": "",
-            "CALLBACK_PATH": "/callback",
-            "URI_DEFAULT_SUCCESS": "/default/success",
-            "REDIRECT_ALLOWED_HOSTS": ["test.django-pyoidc.notatld"],
-            "REDIRECT_REQUIRES_HTTPS": True,
-            "URI_LOGOUT": "/logoutdone",
-            "URI_FAILURE": "/logout_failure",
+            "OIDC_CLIENT_ID": "1",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "",
+            "OIDC_CLIENT_SECRET": "",
+            "LOGIN_URI_CALLBACK": "/callback",
+            "POST_LOGIN_URI_SUCCESS_DEFAULT": "/default/success",
+            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["test.django-pyoidc.notatld"],
+            "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": True,
+            "POST_LOGOUT_REDIRECT_URI": "/logoutdone",
+            "POST_LOGIN_URI_FAILURE": "/logout_failure",
         },
         "sso2": {
-            "CLIENT_ID": "2",
-            "CACHE_BACKEND": "default",
-            "URI_PROVIDER": "",
-            "URI_CONFIG": "",
-            "CLIENT_SECRET": "",
+            "OIDC_CLIENT_ID": "2",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "",
+            "OIDC_CLIENT_SECRET": "",
         },
     }
 )
