@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import WebDriverWait
 
-from tests.utils import OIDCE2ETestCase, wrap_class
+from tests_e2e.utils import OIDCE2ETestCase, wrap_class
 
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
