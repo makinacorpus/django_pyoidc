@@ -11,7 +11,7 @@ To install this library the easiest way is to use the pypi package
 
 ::
 
-  pip install makina-django-oidc
+  pip install django-pyoidc
 
 Configuring your SSO
 ~~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ Install the application
 It is now time to configure your Django project.
 
 
-First, add the library app (``makina-django-oidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
+First, add the library app (``django-pyoidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
 
 .. code-block:: python
     :caption: settings.py
@@ -90,7 +90,7 @@ First, add the library app (``makina-django-oidc``) to your django applications,
         "django.contrib.auth",
         "django.contrib.sessions",
         ...
-        "makina-django-oidc"
+        "django-pyoidc"
     ]
 
 .. warning::
@@ -123,7 +123,7 @@ Configure the library
     In this part we use :ref:`providers <Providers>` as a quick way to generate the library configuration and URL patterns.
     However you can also :ref:`configure the settings <Django settings>` manually if you wish to dig into the configuration.
 
-First, create a file named ``oidc.py`` and instantiate a :py:class:`makina_django_oidc.providers.Keyloack20Provider`
+First, create a file named ``oidc.py`` and instantiate a :py:class:`django_pyoidc.providers.Keyloack20Provider`
 as this is the provider that should be used with Keycloak.
 
 We have many settings to provide :
@@ -148,12 +148,12 @@ Here is my configuration for this tutorial :
 .. code-block:: python
     :caption: oidc.py
 
-    from makina_django_oidc.providers.keycloak import KeycloakProvider
+    from django_pyoidc.providers.keycloak import KeycloakProvider
 
     my_oidc_provider = KeycloakProvider(
         op_name="keycloak",
         client_secret="s3cret",
-        client_id="demo_makina_django_oidc",
+        client_id="demo_django_pyoidc",
         keycloak_base_uri="http://keycloak.local:8080/auth/",
         keycloak_realm="Demo",
         #logout_redirect="http://app.local:8082/",
@@ -174,8 +174,8 @@ If you check this json you can extract paths from this file. For example the fir
 ``http://keycloak.local:8080/auth/realms/Demo``. Everything before the ``realms`` keyword is the
 ``keycloak_base_uri`` that this library needs, the word following ``realms/`` is the ``keycloak_realm`` parameter.
 
-Then you can use the methods :py:meth:`get_config() <makina_django_oidc.providers.base.Provider.get_config>` and
-:py:meth:`get_urlpatterns() <makina_django_oidc.providers.base.Provider.get_urlpatterns>` to easily generate the settings
+Then you can use the methods :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>` and
+:py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>` to easily generate the settings
 and url configuration for your provider.
 
 Edit your django configuration to add your configuration to ``MAKINA_DJANGO_OIDC`` settings :
@@ -207,9 +207,9 @@ Finally, add OIDC views to your url configuration (`urls.py`):
 
 This will include 4 views in your URL configuration. They all have a name that derives from the ``op_name`` that you used to create your provider.
 
-* a :class:`login view <makina_django_oidc.views.OIDCLoginView>` named ``<op_name>-login``, here handled on the ``/auth/login`` path
-* a :class:`logout view <makina_django_oidc.views.OIDCLogoutView>` named ``<op_name>-logout``, here handled on the ``/auth/logout`` path
-* a :class:`callback view <makina_django_oidc.views.OIDCCallbackView>` named ``<op_name>-callback``, here handled on the ``/auth/callback`` path
-* a :class:`backchannel logout view <makina_django_oidc.views.OIDCBackChannelLogoutView>` named ``<op_name>-backchannel-logout``, here handled on the ``/auth/backchannel-logout`` path
+* a :class:`login view <django_pyoidc.views.OIDCLoginView>` named ``<op_name>-login``, here handled on the ``/auth/login`` path
+* a :class:`logout view <django_pyoidc.views.OIDCLogoutView>` named ``<op_name>-logout``, here handled on the ``/auth/logout`` path
+* a :class:`callback view <django_pyoidc.views.OIDCCallbackView>` named ``<op_name>-callback``, here handled on the ``/auth/callback`` path
+* a :class:`backchannel logout view <django_pyoidc.views.OIDCBackChannelLogoutView>` named ``<op_name>-backchannel-logout``, here handled on the ``/auth/backchannel-logout`` path
 
 You should now be able to use the view names from this library to redirect the user to a login/logout page.

@@ -8,8 +8,8 @@ from django.core.cache import BaseCache, caches
 from jsonpickle.handlers import BaseHandler
 from oic.utils.session_backend import SessionBackend
 
-from makina_django_oidc.models import OIDCSession
-from makina_django_oidc.utils import get_settings_for_sso_op
+from django_pyoidc.models import OIDCSession
+from django_pyoidc.utils import get_settings_for_sso_op
 
 logger = logging.getLogger(__name__)
 

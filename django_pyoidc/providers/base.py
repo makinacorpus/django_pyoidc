@@ -48,7 +48,7 @@ class Provider:
                 this provider sessions. Take a look at :ref:`Cache Management`
 
         Returns:
-            dict: A dictionary with all the settings that `makina-django-oidc` expects to work properly
+            dict: A dictionary with all the settings that `django-pyoidc` expects to work properly
         """
         return {
             self.op_name: {
@@ -90,7 +90,7 @@ class Provider:
         Returns:
             A list of urllpatterns to be included using :func:`django:django.urls.include` in your urllconfiguration
         """
-        from makina_django_oidc.views import (
+        from django_pyoidc.views import (
             OIDCCallbackView,
             OIDCLoginView,
             OIDCLogoutView,
