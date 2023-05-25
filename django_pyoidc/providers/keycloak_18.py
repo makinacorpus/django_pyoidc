@@ -12,6 +12,6 @@ class Keycloak18Provider(Keycloak17Provider):
         result = super().get_config(allowed_hosts)
         # logout redirection query string parameter name altered, fromredirect_uri to post_logout_redirect_uri
         result[self.op_name][
-            "LOGOUT_QUERY_STRING_REDIRECT_PARAMETER"
+            "OIDC_LOGOUT_QUERY_STRING_REDIRECT_PARAMETER"
         ] = "post_logout_redirect_uri"
         return result

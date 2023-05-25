@@ -159,7 +159,7 @@ TODO: audience check outside of get_user, settings based
         audiences = id_token["aud"]
 
         # Perform audience check
-        if settings.DJANGO_PYOIDC["keycloak"]["CLIENT_ID"] not in audiences:
+        if settings.DJANGO_PYOIDC["keycloak"]["OIDC_CLIENT_ID"] not in audiences:
             raise PermissionDenied("You do not have access to this application")
 
         User = get_user_model()
@@ -242,7 +242,7 @@ Here is an example of a login button redirecting the user to the page named "pro
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
 
-However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`REDIRECT_REQUIRES_HTTPS` and :ref:`REDIRECT_ALLOWED_HOSTS`.
+However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS` and :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS`.
 
 TODO: RedirectDemo now exists, where do I connect it?
 
@@ -259,10 +259,10 @@ In a multi-provider setup, the settings look like this :
 
     DJANGO_PYOIDC = {
         'oidc_provider_name_1' : {
-            'CLIENT_ID' : '' # <- provider 1 settings here
+            'OIDC_CLIENT_ID' : '' # <- provider 1 settings here
         }
         'oidc_provider_name_2' : {
-            'CLIENT_ID' : '' # <- provider 2 settings here
+            'OIDC_CLIENT_ID' : '' # <- provider 2 settings here
         }
      }
 
