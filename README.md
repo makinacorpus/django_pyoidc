@@ -2,8 +2,8 @@
 
 
 <p align="center">
-<a href="https://makina-django-oidc.readthedocs.io">
-        <img src="https://img.shields.io/readthedocs/makina-django-oidc" />
+<a href="https://django-pyoidc.readthedocs.io">
+        <img src="https://img.shields.io/readthedocs/django-pyoidc" />
 </a>
 </p>
 
@@ -15,9 +15,9 @@ It can be used to setup a Single Sign On using an identity provider (Keycloak, e
 
 ## Features
 
-- Easy configuration through premade [`Provider`](https://makina-django-oidc.readthedocs.io/en/latest/user.html#providers) classes.
+- Easy configuration through premade [`Provider`](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers) classes.
 - Multiple provider support
-- Easy integration with the [Django permission system](https://makina-django-oidc.readthedocs.io/en/latest/how-to.html#use-the-django-permission-system-with-oidc)
+- Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/en/latest/how-to.html#use-the-django-permission-system-with-oidc)
 - Highly customizable design that should suit most needs
 - Back-channel Logout
 - Sane and secure defaults settings
@@ -36,11 +36,11 @@ We were also heavily inspired by :
 * [`mozilla-django-oidc`](https://github.com/mozilla/mozilla-django-oidc) for it's login redirection URI management
 * [`django-auth-oidc`](https://gitlab.com/aiakos/django-auth-oidc) for it's hook system
 
-If you want to understand why we decided to implement our own library, this is documented [here](https://makina-django-oidc.readthedocs.io/en/latest/explanation.html#other-oidc-libraries).
+If you want to understand why we decided to implement our own library, this is documented [here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#other-oidc-libraries).
 
 ## Documentation
 
-The documentation is graciously hosted at [readthedocs](https://makina-django-oidc.readthedocs.io).
+The documentation is graciously hosted at [readthedocs](https://django-pyoidc.readthedocs.io).
 
 ## Installation
 
@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     ...
-    "makina-django-oidc"
+    "django-pyoidc"
 ]
 ```
 
@@ -69,13 +69,13 @@ MIDDLEWARE = [
 ]
 ```
 
-Now is time to run a migrate operation, as we create a database table ([read why here](https://makina-django-oidc.readthedocs.io/en/latest/explanation.html#cache-management)). Run in your project dir :
+Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#cache-management)). Run in your project dir :
 
 ```
 ./manage.py migrate
 ```
 
-We also need a cache ([read why here](https://makina-django-oidc.readthedocs.io/en/latest/explanation.html#cache-management)), so let's configure a dumb one for development purposes. Add in your `settings.py` :
+We also need a cache ([read why here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#cache-management)), so let's configure a dumb one for development purposes. Add in your `settings.py` :
 
 ```python
 CACHES = {
@@ -86,7 +86,7 @@ CACHES = {
 }
 ```
 
-Now you can pick an identity provider from the [available providers](https://makina-django-oidc.readthedocs.io/en/latest/user.html#providers). Providers class are a quick way to generate the library configuration and URLs for a givenv identity provider. You can also use [manual set] if you wish.
+Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers). Providers class are a quick way to generate the library configuration and URLs for a givenv identity provider. You can also use [manual set] if you wish.
 
 Create a file named `oidc.py` next to your settings file and initialize your provider there :
 
@@ -128,11 +128,11 @@ urlpatterns = [
 
 And you are ready to go !
 
-If you struggle with those instructions, take a look at [the quickstart tutorial](https://makina-django-oidc.readthedocs.io/en/latest/tutorial.html#getting-started).
+If you struggle with those instructions, take a look at [the quickstart tutorial](https://django-pyoidc.readthedocs.io/en/latest/tutorial.html#getting-started).
 
 ## Usage/Examples
 
-We wrote an extensive collection of 'how-to' guides in the [documentation](https://makina-django-oidc.readthedocs.io/en/latest/how-to.html).
+We wrote an extensive collection of 'how-to' guides in the [documentation](https://django-pyoidc.readthedocs.io/en/latest/how-to.html).
 
 ## Appendix
 

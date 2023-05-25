@@ -11,7 +11,7 @@ To install this library the easiest way is to use the pypi package
 
 ::
 
-  pip install makina-django-oidc
+  pip install django-pyoidc
 
 Configuring your SSO
 ~~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ Install the application
 It is now time to configure your Django project.
 
 
-First, add the library app (``makina-django-oidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
+First, add the library app (``django-pyoidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
 
 .. code-block:: python
     :caption: settings.py
@@ -90,7 +90,7 @@ First, add the library app (``makina-django-oidc``) to your django applications,
         "django.contrib.auth",
         "django.contrib.sessions",
         ...
-        "makina-django-oidc"
+        "django-pyoidc"
     ]
 
 .. warning::

@@ -26,7 +26,7 @@ class LoginViewTestCase(OIDCTestCase):
         """
         response = self.client.get(
             reverse("test_login"),
-            SERVER_NAME="test.makina-django-oidc.notatld",
+            SERVER_NAME="test.django-pyoidc.notatld",
         )
         self.assertRedirects(
             response, "https://sso.notatld", fetch_redirect_response=False
@@ -52,14 +52,14 @@ class LoginViewTestCase(OIDCTestCase):
                 + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
-            SERVER_NAME="test.makina-django-oidc.notatld",
+            SERVER_NAME="test.django-pyoidc.notatld",
         )
         self.assertRedirects(
             response, "https://sso.notatld", fetch_redirect_response=False
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            "https://test.makina-django-oidc.notatld/myview/details",
+            "https://test.django-pyoidc.notatld/myview/details",
         )
 
     @mock.patch("makina_django_oidc.views.Consumer.provider_config")
@@ -78,7 +78,7 @@ class LoginViewTestCase(OIDCTestCase):
                 + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
-            SERVER_NAME="test.makina-django-oidc.notatld",
+            SERVER_NAME="test.django-pyoidc.notatld",
         )
         self.assertRedirects(
             response, "https://sso.notatld", fetch_redirect_response=False
@@ -99,7 +99,7 @@ class LoginViewTestCase(OIDCTestCase):
         """
         response = self.client.get(
             reverse("test_login"),
-            data={"next": "test.makina-django-oidc.notatld/myview/details"},
+            data={"next": "test.django-pyoidc.notatld/myview/details"},
             SERVER_NAME="test.hacker.notatld",
         )
         self.assertEqual(response.status_code, 400)
@@ -116,7 +116,7 @@ class LoginViewTestCase(OIDCTestCase):
                 + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
-            SERVER_NAME="test.makina-django-oidc.notatld",
+            SERVER_NAME="test.django-pyoidc.notatld",
         )
         self.assertEqual(response.status_code, 302)
         sid = self.client.session["oidc_sid"]

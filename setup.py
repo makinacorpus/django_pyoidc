@@ -19,12 +19,12 @@ with open(os.path.join(HERE, "README.md")) as readme_file, open(
 # from distutils.core import setup
 
 setup(
-    name="makina-django-oidc",
+    name="django-pyoidc",
     version="0.1",
     description="Authenticate your users using OpenID Connect (OIDC)",
     author="Makina Corpus",
     author_email="makina_django_oidc@makina-corpus.net",
-    url="https://gitlab.makina-corpus.net/pfl/makina-django-oidc",
+    url="https://gitlab.makina-corpus.net/pfl/django-pyoidc",
     python_requires=">=3.7",
     packages=find_packages(),
     install_requires=[

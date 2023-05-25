@@ -11,7 +11,7 @@ from django.test import TestCase, override_settings
             "CLIENT_SECRET": "",
             "CALLBACK_PATH": "/callback",
             "URI_DEFAULT_SUCCESS": "/default/success",
-            "REDIRECT_ALLOWED_HOSTS": ["test.makina-django-oidc.notatld"],
+            "REDIRECT_ALLOWED_HOSTS": ["test.django-pyoidc.notatld"],
             "REDIRECT_REQUIRES_HTTPS": True,
             "URI_LOGOUT": "/logoutdone",
             "URI_FAILURE": "/logout_failure",
