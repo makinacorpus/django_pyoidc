@@ -90,7 +90,7 @@ class Provider:
         Returns:
             A list of urllpatterns to be included using :func:`django:django.urls.include` in your urllconfiguration
         """
-        from makina_django_oidc.views import (
+        from django_pyoidc.views import (
             OIDCCallbackView,
             OIDCLoginView,
             OIDCLogoutView,

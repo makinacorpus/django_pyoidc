@@ -151,17 +151,17 @@ Views
 
 
 
-.. autoclass:: makina_django_oidc.views.OIDCLoginView
+.. autoclass:: django_pyoidc.views.OIDCLoginView
     :members:
     :special-members: http_method_names
 
-.. autoclass:: makina_django_oidc.views.OIDCCallbackView
+.. autoclass:: django_pyoidc.views.OIDCCallbackView
     :members:
 
-.. autoclass:: makina_django_oidc.views.OIDCLogoutView
+.. autoclass:: django_pyoidc.views.OIDCLogoutView
     :members:
 
-.. autoclass:: makina_django_oidc.views.OIDCBackChannelLogoutView
+.. autoclass:: django_pyoidc.views.OIDCBackChannelLogoutView
     :members:
 
 
@@ -175,17 +175,17 @@ Providers classes allows the final user to configure their project without havin
 Each provider implements the configuration logic and provides mostly two methods :
 
 
-* One to generate a configuration dict to be inserted in the ``MAKINA_DJANGO_OIDC`` value of your django settings : :py:meth:`get_config() <makina_django_oidc.providers.base.Provider.get_config>`
-* One to generate urls to be :func:`included <django:django.urls.reverse>` in your url configuration : :py:meth:`get_urlpatterns() <makina_django_oidc.providers.base.Provider.get_urlpatterns>`
+* One to generate a configuration dict to be inserted in the ``MAKINA_DJANGO_OIDC`` value of your django settings : :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>`
+* One to generate urls to be :func:`included <django:django.urls.reverse>` in your url configuration : :py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>`
 
-.. autoclass:: makina_django_oidc.providers.KeycloakProvider
+.. autoclass:: django_pyoidc.providers.KeycloakProvider
     :members:
     :undoc-members:
     :special-members: __init__
 
 
 
-.. automodule:: makina_django_oidc.providers.base
+.. automodule:: django_pyoidc.providers.base
     :members:
     :undoc-members:
     :special-members: __init__

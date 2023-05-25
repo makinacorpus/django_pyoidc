@@ -1,12 +1,12 @@
 from unittest import mock
 from unittest.mock import ANY, call
 
-from makina_django_oidc.views import OIDClient
+from django_pyoidc.views import OIDClient
 from tests.utils import OIDCTestCase
 
 
 class SessionTestCase(OIDCTestCase):
-    @mock.patch("makina_django_oidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.views.Consumer.provider_config")
     def test_session_isolation_between_providers(self, mocked_provider_config):
         """
         Test that different SSO providers using same SID do not conflict

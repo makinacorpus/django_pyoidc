@@ -19,7 +19,7 @@ settings.configure(
         "django.contrib.auth",
         "django.contrib.contenttypes",
         "django.contrib.sessions",
-        "makina_django_oidc",
+        "django_pyoidc",
     ]
 )
 
