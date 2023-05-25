@@ -50,7 +50,7 @@ DATABASES = {
         "PORT": config("POSTGRES_PORT", default=5432),
     }
 }
-MAKINA_DJANGO_OIDC = {
+DJANGO_PYOIDC = {
     "test": {
         "PROVIDER_URI": "http://oidc.test/",
         "REDIRECT_URI": "http://oidc.test/callback",

@@ -35,12 +35,12 @@ If you used a provider, the best way to achieve that is by modifying the configu
 
 .. code-block:: python
 
-    MAKINA_DJANGO_OIDC = {
+    DJANGO_PYOIDC = {
         **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
     }
 
-    MAKINA_DJANGO_OIDC[my_oidc_provider.op_name]["LOGIN_FUNCTION"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
-    MAKINA_DJANGO_OIDC[my_oidc_provider.op_name]["LOGOUT_FUNCTION"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["LOGIN_FUNCTION"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["LOGOUT_FUNCTION"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
 
 
 If you configured your settings manually, juste add the LOGIN/LOGOUT function keys to your configuration. See
@@ -125,11 +125,11 @@ Using a provider, edith your configuration like this :
 
 .. code-block:: python
 
-    MAKINA_DJANGO_OIDC = {
+    DJANGO_PYOIDC = {
         **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
     }
 
-    MAKINA_DJANGO_OIDC[my_oidc_provider.op_name]["USER_FUNCTION"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["USER_FUNCTION"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
 
 
 
@@ -159,7 +159,7 @@ TODO: audience check outside of get_user, settings based
         audiences = id_token["aud"]
 
         # Perform audience check
-        if settings.MAKINA_DJANGO_OIDC["keycloak"]["CLIENT_ID"] not in audiences:
+        if settings.DJANGO_PYOIDC["keycloak"]["CLIENT_ID"] not in audiences:
             raise PermissionDenied("You do not have access to this application")
 
         User = get_user_model()
@@ -257,7 +257,7 @@ In a multi-provider setup, the settings look like this :
 
 .. code-block:: python
 
-    MAKINA_DJANGO_OIDC = {
+    DJANGO_PYOIDC = {
         'oidc_provider_name_1' : {
             'CLIENT_ID' : '' # <- provider 1 settings here
         }
@@ -273,7 +273,7 @@ If you are using our premade providers configuration, your ``settings.py`` will 
 
     from .oidc_providers import oidc_provider_1, oidc_provider_2
 
-    MAKINA_DJANGO_OIDC = {
+    DJANGO_PYOIDC = {
         **oidc_provider_1.get_config(allowed_hosts=["app.local:8082"]),
         **oidc_provider_2.get_config(allowed_hosts=["app.local:8082"]),
      }

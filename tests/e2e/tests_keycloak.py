@@ -169,7 +169,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
 
     @override_settings(
-        MAKINA_DJANGO_OIDC={
+        DJANGO_PYOIDC={
             "sso1": {
                 "CLIENT_ID": "app1",
                 "CACHE_BACKEND": "default",
@@ -182,8 +182,8 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "REDIRECT_REQUIRES_HTTPS": False,
                 "URI_LOGOUT": "/test-logout-done",
                 "URI_FAILURE": "/test-failure",
-                "LOGIN_FUNCTION": "makina_django_oidc.tests.callbacks:login_callback",
-                "LOGOUT_FUNCTION": "makina_django_oidc.tests.callbacks:logout_callback",
+                "LOGIN_FUNCTION": "django_pyoidc.tests.callbacks:login_callback",
+                "LOGOUT_FUNCTION": "django_pyoidc.tests.callbacks:logout_callback",
             },
         },
     )
@@ -226,7 +226,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         self.assertTrue("Logout Callback for user1@example.com." in bodyText)
 
     @override_settings(
-        MAKINA_DJANGO_OIDC={
+        DJANGO_PYOIDC={
             "sso1": {
                 "CLIENT_ID": "bad_client_id",
                 "CACHE_BACKEND": "default",
@@ -268,7 +268,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         self.assertTrue("Invalid parameter: redirect_uri" in bodyText)
 
     @override_settings(
-        MAKINA_DJANGO_OIDC={
+        DJANGO_PYOIDC={
             "sso1": {
                 "CLIENT_ID": "app1",
                 "CACHE_BACKEND": "default",
@@ -281,7 +281,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "REDIRECT_REQUIRES_HTTPS": False,
                 "URI_LOGOUT": "/test-logout-done",
                 "URI_FAILURE": "/test-failure",
-                "USER_FUNCTION": "makina_django_oidc.tests.callbacks:get_user",
+                "USER_FUNCTION": "django_pyoidc.tests.callbacks:get_user",
             },
         },
     )
@@ -319,7 +319,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         self._selenium_logout(end_url)
 
     @override_settings(
-        MAKINA_DJANGO_OIDC={
+        DJANGO_PYOIDC={
             "sso1": {
                 "CLIENT_ID": "app1",
                 "CACHE_BACKEND": "default",
@@ -332,7 +332,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "REDIRECT_REQUIRES_HTTPS": False,
                 "URI_LOGOUT": "/test-logout-done",
                 "URI_FAILURE": "/test-failure",
-                "USER_FUNCTION": "makina_django_oidc.tests.callbacks:get_user",
+                "USER_FUNCTION": "django_pyoidc.tests.callbacks:get_user",
             },
         },
     )

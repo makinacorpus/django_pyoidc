@@ -1,6 +1,6 @@
 from django.urls import path
 
-from makina_django_oidc.test_views import (
+from django_pyoidc.test_views import (
     OIDCTestFailureView,
     OIDCTestLogoutView,
     OIDCTestSuccessView,
