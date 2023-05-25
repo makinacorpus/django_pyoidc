@@ -94,7 +94,7 @@ class OIDCE2ETestCase(LiveServerTestCase):
 
         cls.workdir = os.getcwd()
         print(f"Current workdir: {cls.workdir} ...")
-        cls.docker_workdir = f"{cls.workdir}/tests/e2e"
+        cls.docker_workdir = f"{cls.workdir}/tests_e2e/docker"
         os.chdir(cls.docker_workdir)
         cls.docker_id = None
         try:
