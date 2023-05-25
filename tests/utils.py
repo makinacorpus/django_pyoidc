@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @override_settings(
-    MAKINA_DJANGO_OIDC={
+    DJANGO_PYOIDC={
         "sso1": {
             "CLIENT_ID": "1",
             "CACHE_BACKEND": "default",
@@ -54,7 +54,7 @@ class NotReadyException(Exception):
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
     ],
-    MAKINA_DJANGO_OIDC={
+    DJANGO_PYOIDC={
         "sso1": {
             "CLIENT_ID": "app1",
             "CACHE_BACKEND": "default",

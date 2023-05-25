@@ -111,7 +111,7 @@ You can then add to your django configuration the following line :
 ```python
 from .oidc_providers import my_oidc_provider
 
-MAKINA_DJANGO_OIDC = {
+DJANGO_PYOIDC = {
     **my_oidc_provider.get_config(allowed_hosts=["app.local:8082"]),
 }
 ```

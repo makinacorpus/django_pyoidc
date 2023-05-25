@@ -178,14 +178,14 @@ Then you can use the methods :py:meth:`get_config() <django_pyoidc.providers.bas
 :py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>` to easily generate the settings
 and url configuration for your provider.
 
-Edit your django configuration to add your configuration to ``MAKINA_DJANGO_OIDC`` settings :
+Edit your django configuration to add your configuration to ``DJANGO_PYOIDC`` settings :
 
 .. code-block:: python
     :caption: settings.py
 
     from .oidc import my_oidc_provider
 
-    MAKINA_DJANGO_OIDC = {
+    DJANGO_PYOIDC = {
         **my_oidc_provider.get_config(allowed_hosts=["app.local:8082"]),
     }
 
