@@ -68,7 +68,7 @@ DJANGO_PYOIDC = {
 }
 
 
-ROOT_URLCONF = "tests.urls"
+ROOT_URLCONF = "tests_e2e.urls"
 
 CACHES = {
     "default": {
