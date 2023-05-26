@@ -33,7 +33,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.MAKINA_DJANGO_OIDC["client1"]["URI_DEFAULT_SUCCESS"],
+            settings.DJANGO_PYOIDC["sso1"]["URI_DEFAULT_SUCCESS"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -49,7 +49,7 @@ class LoginViewTestCase(OIDCTestCase):
             reverse("test_login"),
             data={
                 "next": "https://"
-                + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -75,7 +75,7 @@ class LoginViewTestCase(OIDCTestCase):
             reverse("test_login"),
             data={
                 "next": "http://"
-                + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -85,7 +85,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.MAKINA_DJANGO_OIDC["client1"]["URI_DEFAULT_SUCCESS"],
+            settings.DJANGO_PYOIDC["sso1"]["URI_DEFAULT_SUCCESS"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -113,7 +113,7 @@ class LoginViewTestCase(OIDCTestCase):
             reverse("test_login"),
             data={
                 "next": "https://"
-                + settings.MAKINA_DJANGO_OIDC["client1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -121,7 +121,7 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertEqual(response.status_code, 302)
         sid = self.client.session["oidc_sid"]
         self.assertIsNotNone(sid)
-        client = OIDClient(op_name="client1", session_id=sid)
+        client = OIDClient(op_name="sso1", session_id=sid)
         self.assertEqual(client.consumer.client_id, "1")
 
 
@@ -137,7 +137,9 @@ class LogoutViewTestCase(OIDCTestCase):
         Test that trying to logout while not being connected redirects
         """
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "http://testserver/logoutdone", fetch_redirect_response=False
+        )
 
     def test_django_user_is_at_least_logged_out(self):
         """
@@ -145,7 +147,9 @@ class LogoutViewTestCase(OIDCTestCase):
         """
         self.client.force_login(self.user)
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(response, "/logoutdone", fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "http://testserver/logoutdone", fetch_redirect_response=False
+        )
         self.assertFalse(
             SESSION_KEY in self.client.session
         )  # from https://stackoverflow.com/a/6013115

@@ -213,7 +213,13 @@ class OIDCLogoutView(OIDCView):
 
     def post(self, request):
         """Log out the user."""
-        post_logout_url = self.post_logout_url
+        url = self.post_logout_url
+        # If this url is not already an absolute url
+        # we  make it absolute using the current domain
+        if not url[:7] in ["http://", "https:/"]:
+            post_logout_url = request.build_absolute_uri(url)
+        else:
+            post_logout_url = url
 
         if not request.user.is_authenticated:
             redirect(post_logout_url)

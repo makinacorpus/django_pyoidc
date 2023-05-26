@@ -2,8 +2,8 @@ from django.test import TestCase, override_settings
 
 
 @override_settings(
-    MAKINA_DJANGO_OIDC={
-        "client1": {
+    DJANGO_PYOIDC={
+        "sso1": {
             "CLIENT_ID": "1",
             "CACHE_BACKEND": "default",
             "URI_PROVIDER": "",
@@ -16,7 +16,7 @@ from django.test import TestCase, override_settings
             "URI_LOGOUT": "/logoutdone",
             "URI_FAILURE": "/logout_failure",
         },
-        "client2": {
+        "sso2": {
             "CLIENT_ID": "2",
             "CACHE_BACKEND": "default",
             "URI_PROVIDER": "",

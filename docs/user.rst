@@ -13,12 +13,12 @@ Django settings
 Providers settings
 ~~~~~~~~~~~~~~~~~~
 
-All those settings must be defined in ``settings.py`` under the variable name ``MAKINA_DJANGO_OIDC``.
+All those settings must be defined in ``settings.py`` under the variable name ``DJANGO_PYOIDC``.
 You should define them as a nested dictionary. The key to this dictionary is called your **provider name** (or **op_name** in some places). All your settings configuration are local to this provider. This allows multi-provider configurations.
 
 .. code-block:: python
 
-    MAKINA_DJANGO_OIDC = {
+    DJANGO_PYOIDC = {
         'my_provider_name' : {
             'setting_1' : 'value',
             'setting_2' : 'value'
@@ -136,7 +136,7 @@ Views
 -----
 
 .. note::
-    When instantiating a view from this library (ie through django's 'as_view()') you **must** set the named argument ``op_name`` to point to a valid ``MAKINA_DJANGO_OIDC`` settings entry.
+    When instantiating a view from this library (ie through django's 'as_view()') you **must** set the named argument ``op_name`` to point to a valid ``DJANGO_PYOIDC`` settings entry.
     If you use :ref:`Providers` then this behaviour is automatically implemented.
 
     Here is an example :
@@ -175,7 +175,7 @@ Providers classes allows the final user to configure their project without havin
 Each provider implements the configuration logic and provides mostly two methods :
 
 
-* One to generate a configuration dict to be inserted in the ``MAKINA_DJANGO_OIDC`` value of your django settings : :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>`
+* One to generate a configuration dict to be inserted in the ``DJANGO_PYOIDC`` value of your django settings : :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>`
 * One to generate urls to be :func:`included <django:django.urls.reverse>` in your url configuration : :py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>`
 
 .. autoclass:: django_pyoidc.providers.KeycloakProvider
