@@ -9,9 +9,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 with open(os.path.join(HERE, "README.md")) as readme_file, open(
     os.path.join(HERE, "CHANGES.md")
-) as changes_file, open(
-    os.path.join(HERE, "django_pyoidc", "VERSION")
-) as version_file:
+) as changes_file, open(os.path.join(HERE, "django_pyoidc", "VERSION")) as version_file:
     README = readme_file.read()
     CHANGES = changes_file.read()
     VERSION = version_file.read().strip()

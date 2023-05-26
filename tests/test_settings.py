@@ -1,5 +1,3 @@
-import os
-
 from decouple import config
 
 SECRET_KEY = "fake-key"
