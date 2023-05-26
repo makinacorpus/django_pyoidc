@@ -1,10 +1,5 @@
 from django.urls import path
 
-from django_pyoidc.test_views import (
-    OIDCTestFailureView,
-    OIDCTestLogoutView,
-    OIDCTestSuccessView,
-)
 from django_pyoidc.views import (
     OIDCBackChannelLogoutView,
     OIDCCallbackView,
@@ -28,20 +23,5 @@ urlpatterns = [
         "back_channel_logout/",
         OIDCBackChannelLogoutView.as_view(op_name="sso1"),
         name="test_blogout",
-    ),
-    path(
-        "test-success/",
-        OIDCTestSuccessView.as_view(op_name="sso1"),
-        name="test_sucess",
-    ),
-    path(
-        "test-logout-done/",
-        OIDCTestLogoutView.as_view(op_name="sso1"),
-        name="test_logout_done",
-    ),
-    path(
-        "test-failure/",
-        OIDCTestFailureView.as_view(op_name="sso1"),
-        name="test_failure",
     ),
 ]
