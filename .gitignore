@@ -4,3 +4,4 @@ django_pyoidc.egg-info/
 build/
 .env
 docs/_build
+geckodriver.log
