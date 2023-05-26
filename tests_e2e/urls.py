@@ -1,15 +1,15 @@
 from django.urls import path
 
-from django_pyoidc.test_views import (
-    OIDCTestFailureView,
-    OIDCTestLogoutView,
-    OIDCTestSuccessView,
-)
 from django_pyoidc.views import (
     OIDCBackChannelLogoutView,
     OIDCCallbackView,
     OIDCLoginView,
     OIDCLogoutView,
+)
+from tests_e2e.test_app.views import (
+    OIDCTestFailureView,
+    OIDCTestLogoutView,
+    OIDCTestSuccessView,
 )
 
 urlpatterns = [
