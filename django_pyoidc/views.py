@@ -1,6 +1,5 @@
 import logging
 from importlib import import_module
-from urllib.parse import urljoin
 
 # import oic
 from django.conf import settings
@@ -63,7 +62,9 @@ class OIDClient:
             client_config=client_config,
         )
 
-        provider_info_uri = get_settings_for_sso_op(op_name)["OIDC_PROVIDER_DISCOVERY_URI"]
+        provider_info_uri = get_settings_for_sso_op(op_name)[
+            "OIDC_PROVIDER_DISCOVERY_URI"
+        ]
 
         if session_id:
             self.consumer.restore(session_id)
@@ -95,7 +96,7 @@ class OIDCView(View, OIDCMixin):
             return func(*args, **kwargs)
 
     def call_get_user_function(self, info_token, access_token):
-        user_function_setting_name = "HOOK_USER_FUNCTION"
+        user_function_setting_name = "HOOK_GET_USER"
         if user_function_setting_name in get_settings_for_sso_op(self.op_name):
             return self.call_function(
                 user_function_setting_name, info_token, access_token
@@ -104,7 +105,7 @@ class OIDCView(View, OIDCMixin):
             return get_user_by_email(info_token, access_token)
 
     def call_callback_function(self, request, user):
-        self.call_function("LOGIN_HOOK", request, user)
+        self.call_function("HOOK_USER_LOGIN", request, user)
 
     def call_logout_function(self, user_request, logout_request_args):
         """Function called right before local session removal and before final redirection to the SSO server.
@@ -117,7 +118,7 @@ class OIDCView(View, OIDCMixin):
         Returns:
             dict: extra query string arguments to add to the SSO disconnection url
         """
-        return self.call_function("LOGOUT_HOOK", user_request, logout_request_args)
+        return self.call_function("HOOK_USER_LOGOUT", user_request, logout_request_args)
 
     def get_next_url(self, request, redirect_field_name):
         """
@@ -351,7 +352,9 @@ class OIDCCallbackView(OIDCView):
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
-        return next_url or resolve_url(self.get_settings("POST_LOGIN_URI_SUCCESS_DEFAULT"))
+        return next_url or resolve_url(
+            self.get_settings("POST_LOGIN_URI_SUCCESS_DEFAULT")
+        )
 
     def login_failure(self):
         return redirect(self.get_settings("POST_LOGIN_URI_FAILURE"))

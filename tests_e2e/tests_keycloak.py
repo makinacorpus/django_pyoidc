@@ -173,8 +173,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
             "sso1": {
                 "OIDC_CLIENT_ID": "app1",
                 "CACHE_DJANGO_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
                 "OIDC_CLIENT_SECRET": "secret_app1",
                 "LOGIN_URI_CALLBACK": "/callback",
                 "POST_LOGOUT_REDIRECT_URI": "/test-success",
@@ -182,8 +181,8 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
                 "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-logout-done",
                 "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "LOGIN_FUNCTION": "tests_e2e.test_app.callback:login_callback",
-                "LOGOUT_FUNCTION": "tests_e2e.test_app.callback:logout_callback",
+                "HOOK_USER_LOGIN": "tests_e2e.test_app.callback:login_callback",
+                "HOOK_USER_LOGOUT": "tests_e2e.test_app.callback:logout_callback",
             },
         },
     )
@@ -230,8 +229,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
             "sso1": {
                 "OIDC_CLIENT_ID": "bad_client_id",
                 "CACHE_DJANGO_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
                 "OIDC_CLIENT_SECRET": "secret_app1",
                 "LOGIN_URI_CALLBACK": "/callback",
                 "POST_LOGOUT_REDIRECT_URI": "/test-success",
@@ -272,8 +270,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
             "sso1": {
                 "OIDC_CLIENT_ID": "app1",
                 "CACHE_DJANGO_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
                 "OIDC_CLIENT_SECRET": "secret_app1",
                 "LOGIN_URI_CALLBACK": "/callback",
                 "POST_LOGOUT_REDIRECT_URI": "/test-success",
@@ -323,8 +320,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
             "sso1": {
                 "OIDC_CLIENT_ID": "app1",
                 "CACHE_DJANGO_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
                 "OIDC_CLIENT_SECRET": "secret_app1",
                 "LOGIN_URI_CALLBACK": "/callback",
                 "POST_LOGOUT_REDIRECT_URI": "/test-success",

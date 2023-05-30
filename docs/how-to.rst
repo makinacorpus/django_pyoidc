@@ -29,7 +29,7 @@ Add in those two functions :
 
 
 Next, we plug those functions in the library configuration. In your ``settings.py`` you should set the
-:ref:`LOGIN_FUNCTION` and :ref:`LOGOUT_FUNCTION` to point to those two functions.
+:ref:`HOOK_USER_LOGIN` and :ref:`HOOK_USER_LOGOUT` to point to those two functions.
 
 If you used a provider, the best way to achieve that is by modifying the configuration value as such :
 
@@ -40,7 +40,7 @@ If you used a provider, the best way to achieve that is by modifying the configu
     }
 
     DJANGO_PYOIDC[my_oidc_provider.op_name]["LOGIN_FUNCTION"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["LOGOUT_FUNCTION"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGOUT"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
 
 
 If you configured your settings manually, juste add the LOGIN/LOGOUT function keys to your configuration. See

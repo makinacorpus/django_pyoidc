@@ -98,7 +98,7 @@ So for example, if you were to have a module named ``oidc.py`` next to your proj
 .. note::
     All those settings are optional
 
-LOGOUT_FUNCTION
+HOOK_USER_LOGOUT
 ***************
 
 Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
@@ -110,7 +110,7 @@ This function takes two arguments :
 
 If the user was logged in, you can get the user using ``request.user``.
 
-LOGIN_FUNCTION
+HOOK_USER_LOGIN
 **************
 
 Calls the provided function on user login. The functions is called if the login is successful.

@@ -30,8 +30,7 @@ class NotReadyException(Exception):
         "sso1": {
             "OIDC_CLIENT_ID": "app1",
             "CACHE_DJANGO_BACKEND": "default",
-            "URI_PROVIDER": "http://localhost:8080/auth",
-            "URI_CONFIG": "realms/realm1",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
             "OIDC_CLIENT_SECRET": "secret_app1",
             "LOGIN_URI_CALLBACK": "/callback",
             "POST_LOGOUT_REDIRECT_URI": "/test-success",

@@ -52,11 +52,10 @@ DATABASES = {
 }
 DJANGO_PYOIDC = {
     "test": {
-        "PROVIDER_URI": "http://oidc.test/",
         "REDIRECT_URI": "http://oidc.test/callback",
         "OIDC_CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
         "OIDC_CLIENT_ID": "full",
-        "CONFIG_URI": "/auth/realms/Demo",
+        "OIDC_PROVIDER_DISCOVERY_URI": "http://oidc.test/auth/realms/Demo",
         "REDIRECT_FAILURE_URI": "http://oidc.test/",
         "REDIRECT_LOGOUT_URI": "http://oidc.test/",
         "REDIRECT_SUCCESS_DEFAULT_URI": "http://oidc.test/",
