@@ -22,7 +22,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_no_next_params(self, *args):
         """
-        Test that without a next parameter we are redirected to 'URI_DEFAULT_SUCCESS'
+        Test that without a next parameter we are redirected to 'POST_LOGOUT_REDIRECT_URI'
         """
         response = self.client.get(
             reverse("test_login"),
@@ -43,7 +43,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_to_samesite(self, *args):
         """
-        Test that redirecting to a site allowed in 'REDIRECT_ALLOWED_HOSTS' works
+        Test that redirecting to a site allowed in 'LOGIN_URIS_REDIRECT_ALLOWED_HOSTS' works
         """
         response = self.client.get(
             reverse("test_login"),
@@ -95,7 +95,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_to_disallowed_site(self, *args):
         """
-        Test that trying to redirect to a site not allowed in 'REDIRECT_ALLOWED_HOSTS' results in HTTP 400
+        Test that trying to redirect to a site not allowed in 'LOGIN_URIS_REDIRECT_ALLOWED_HOSTS' results in HTTP 400
         """
         response = self.client.get(
             reverse("test_login"),
