@@ -30,7 +30,7 @@ DATABASES = {
     }
 }
 DJANGO_PYOIDC = {
-    "test": {
+    "client1": {
         "PROVIDER_URI": "http://oidc.test/auth/realms/Demo",
         "REDIRECT_URI": "http://oidc.test/callback",
         "OIDC_CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
