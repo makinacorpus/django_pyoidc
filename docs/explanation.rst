@@ -212,7 +212,7 @@ logout link, you should have several settings available to alter this link. Vari
 
 On this library, to use a direct SSO logout you need to use the ``OIDCLogoutView``, by default it is connected to ``<module route prefix if any>/logout``.
 This view will destroy the local Django session and the local OIDC session elements, and then generates a browser redirect to the SSO server logout url.
-You can extend this view by defining a **LOGOUT_FUNCTION** which runs just before these deletions and redirects.
+You can extend this view by defining a **HOOK_USER_LOGOUT** which runs just before these deletions and redirects.
 
 Back-channel logout
 ~~~~~~~~~~~~~~~~~~~
