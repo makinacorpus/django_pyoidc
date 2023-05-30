@@ -47,7 +47,7 @@ def get_user(userinfo_token, id_token):
             raise RuntimeError("Unknown type for audience claim")
 
     # Perform audience check
-    if audiences and settings.DJANGO_PYOIDC["sso1"]["CLIENT_ID"] not in audiences:
+    if audiences and settings.DJANGO_PYOIDC["sso1"]["OIDC_CLIENT_ID"] not in audiences:
         logger.error("Failed audience check in id_token")
         raise PermissionDenied("You do not have access to this application.")
 
