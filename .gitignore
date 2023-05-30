@@ -5,3 +5,4 @@ build/
 .env
 docs/_build
 geckodriver.log
+.python-version
