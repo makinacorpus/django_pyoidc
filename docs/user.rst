@@ -50,7 +50,7 @@ URI_CONFIG
 
 This settings configures the path to your OIDC configuration. **TODO : example**.
 
-LOGIN_URI_CALLBACK
+OIDC_CALLBACK_PATH
 *************
 
 This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.

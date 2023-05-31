@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
             "CACHE_DJANGO_BACKEND": "default",
             "OIDC_PROVIDER_DISCOVERY_URI": "",
             "OIDC_CLIENT_SECRET": "",
-            "LOGIN_URI_CALLBACK": "/callback",
+            "OIDC_CALLBACK_PATH": "/callback",
             "POST_LOGIN_URI_SUCCESS_DEFAULT": "/default/success",
             "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["test.django-pyoidc.notatld"],
             "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": True,
