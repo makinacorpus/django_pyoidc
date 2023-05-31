@@ -125,6 +125,7 @@ class OIDCView(View, OIDCMixin):
         Adapted from https://github.com/mozilla/mozilla-django-oidc/blob/71e4af8283a10aa51234de705d34cd298e927f97/mozilla_django_oidc/views.py#L132
         """
         next_url = request.GET.get(redirect_field_name)
+        print(f"{next_url=}")
         if next_url:
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
@@ -158,7 +159,7 @@ class OIDCLoginView(OIDCView):
 
         client = OIDClient(self.op_name)
         client.consumer.consumer_config["authz_page"] = self.get_settings(
-            "LOGIN_URI_CALLBACK"
+            "OIDC_CALLBACK_PATH"
         )
         redirect_uri = self.get_next_url(request, "next")
 

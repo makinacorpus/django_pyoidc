@@ -32,7 +32,7 @@ class NotReadyException(Exception):
             "CACHE_DJANGO_BACKEND": "default",
             "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
             "OIDC_CLIENT_SECRET": "secret_app1",
-            "LOGIN_URI_CALLBACK": "/callback",
+            "OIDC_CALLBACK_PATH": "/callback",
             "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
             "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
             "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
@@ -229,7 +229,6 @@ class OIDCE2ETestCase(LiveServerTestCase):
                 gApp1,
             ],
         )
-        # time.sleep(60)
 
     @classmethod
     def tearDownClass(cls):
