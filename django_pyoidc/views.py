@@ -227,6 +227,14 @@ class OIDCLogoutView(OIDCView):
             "client_id": get_settings_for_sso_op(self.op_name)["OIDC_CLIENT_ID"],
         }
 
+        # Allow some more parameters for some actors
+        extra_logout_args = get_setting_for_sso_op(
+            self.op_name,
+            "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT",
+            {},
+        )
+        request_args.update(extra_logout_args)
+
         if sid:
             try:
                 client = OIDClient(self.op_name, session_id=sid)
