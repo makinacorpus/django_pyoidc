@@ -39,7 +39,7 @@ If you used a provider, the best way to achieve that is by modifying the configu
         **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
     }
 
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["LOGIN_FUNCTION"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGIN"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
     DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGOUT"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
 
 
