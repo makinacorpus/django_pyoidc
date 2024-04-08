@@ -13,13 +13,13 @@ from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import WebDriverWait
 
-from tests_e2e.utils import OIDCE2ETestCase, wrap_class
+from tests_e2e.utils import OIDCE2EKeycloakTestCase, wrap_class
 
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
 
 
-class KeycloakTestCase(OIDCE2ETestCase):
+class KeycloakTestCase(OIDCE2EKeycloakTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -198,7 +198,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
-        # previous test detroyed the SSO session, we need to reconnect
+        # previous test destroyed the SSO session, we need to reconnect
         self._selenium_sso_login(
             start_url, middle_url, "user1", "passwd1", active_sso_session=False
         )
