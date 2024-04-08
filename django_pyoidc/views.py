@@ -147,9 +147,9 @@ class OIDCLoginView(OIDCView):
 
     The redirection behaviour is configured with the following settings :
 
-    * :ref:`REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
-    * :ref:`REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
-    * :ref:`URI_DEFAULT_SUCCESS` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
+    * :ref:`LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
+    * :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
+    * :ref:`POST_LOGIN_URI_SUCCESS_DEFAULT` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
     """
 
     http_method_names = ["get"]
@@ -186,7 +186,7 @@ class OIDCLogoutView(OIDCView):
 
     It supports both ``GET`` and ``POST`` http methods.
 
-    The response is a redirection to the SSO logout endpoint, if a provider configuration :ref:`URI_LOGOUT` exists it as used as
+    The response is a redirection to the SSO logout endpoint, if a provider configuration :ref:`POST_LOGOUT_REDIRECT_URI` exists it as used as
     post logout redirection argument on the SSO redirection link.
 
     """
