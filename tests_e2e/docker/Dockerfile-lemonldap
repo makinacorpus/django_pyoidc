@@ -1,0 +1,64 @@
+FROM coudot/lemonldap-ng
+
+# COPY ./docker-entrypoint-lemonldap.sh /docker-entrypoint.sh
+# RUN chmod u+x /docker-entrypoint.sh
+ARG PORTAL_HOSTNAME=localhost:8070
+ENV PORTAL_HOSTNAME=${PORTAL_HOSTNAME}
+ARG MANAGER_HOSTNAME=localhost:8071
+ENV MANAGER_HOSTNAME=${MANAGER_HOSTNAME}
+ARG HANDLER_HOSTNAME=localhost:8072
+ENV HANDLER_HOSTNAME=${HANDLER_HOSTNAME}
+ARG TEST1_HOSTNAME=localhost:8073
+ENV TEST1_HOSTNAME=${TEST1_HOSTNAME}
+ARG TEST2_HOSTNAME=localhost.localdomain:8073
+ENV TEST2_HOSTNAME=${TEST2_HOSTNAME}
+
+RUN bash -c ' set -ex \
+ && echo : "Replace names and ports in nginx confs" \
+ && PORTAL_HOSTNAME_WITHOUT_PORT=$(echo ${PORTAL_HOSTNAME}| cut -d ":" -f 1) \
+ && echo $PORTAL_HOSTNAME_WITHOUT_PORT \
+ && MANAGER_HOSTNAME_WITHOUT_PORT=$(echo ${MANAGER_HOSTNAME}| cut -d ":" -f 1) \
+ && echo $MANAGER_HOSTNAME_WITHOUT_PORT \
+ && HANDLER_HOSTNAME_WITHOUT_PORT=$(echo ${HANDLER_HOSTNAME}| cut -d ":" -f 1) \
+ && echo $HANDLER_HOSTNAME_WITHOUT_PORT \
+ && TEST1_HOSTNAME_WITHOUT_PORT=$(echo ${TEST1_HOSTNAME}| cut -d ":" -f 1) \
+ && echo $TEST1_HOSTNAME_WITHOUT_PORT \
+ && TEST2_HOSTNAME_WITHOUT_PORT=$(echo ${TEST2_HOSTNAME}| cut -d ":" -f 1) \
+ && echo $TEST2_HOSTNAME_WITHOUT_PORT \
+ && sed -i -e "s/auth.example.com/${PORTAL_HOSTNAME_WITHOUT_PORT}/g" /etc/lemonldap-ng/*-nginx* \
+ && sed -i -e "s/manager.example.com/${MANAGER_HOSTNAME_WITHOUT_PORT}/g" /etc/lemonldap-ng/*-nginx* \
+ && sed -i -e "s/reload.example.com/${HANDLER_HOSTNAME_WITHOUT_PORT}/g" /etc/lemonldap-ng/*-nginx* \
+ && sed -i -e "s/test1.example.com/${TEST1_HOSTNAME_WITHOUT_PORT}/g" /etc/lemonldap-ng/*-nginx* \
+ && sed -i -e "s/test2.example.com/${TEST2_HOSTNAME_WITHOUT_PORT}/g" /etc/lemonldap-ng/*-nginx* \
+ && sed -i -e "s/listen 80;/listen 8070;/g" /etc/lemonldap-ng/portal-nginx.conf \
+ && sed -i -e "s/listen \[::\]:80;/listen \[::\]:8070;/g" /etc/lemonldap-ng/portal-nginx.conf \
+ && sed -i -e "s/listen 80;/listen 8071;/g" /etc/lemonldap-ng/manager-nginx.conf \
+ && sed -i -e "s/listen \[::\]:80;/listen \[::\]:8071;/g" /etc/lemonldap-ng/manager-nginx.conf \
+ && sed -i -e "s/listen 80;/listen 8072;/g" /etc/lemonldap-ng/handler-nginx.conf \
+ && sed -i -e "s/listen \[::\]:80;/listen \[::\]:8072;/g" /etc/lemonldap-ng/handler-nginx.conf \
+ && sed -i -e "s/listen 80;/listen 8073;/g" /etc/lemonldap-ng/test-nginx.conf \
+ && sed -i -e "s/listen \[::\]:80;/listen \[::\]:8073;/g" /etc/lemonldap-ng/test-nginx.conf \
+ && cat /etc/lemonldap-ng/portal-nginx.conf \
+'
+
+RUN bash -c ' set -ex \
+ && echo : "Remove the test which prevents usage of ports in vhosts"\
+ && sed -i "s#/:/#/~/#g" /usr/share/perl5/Lemonldap/NG/Manager/Conf/Tests.pm \
+'
+
+#docker run \
+# --detach --rm -it \
+# -p 8070:8070 \
+# -p 8071:8071 \
+# -p 8072:8072 \
+# -p 8073:8073 \
+# -p 8999:9000 \
+# -e SSODOMAIN=localhost \
+# -e LOGLEVEL=debug \
+# -e PORTAL_HOSTNAME=localhost:8070 \
+# -e MANAGER_HOSTNAME=localhost:8071 \
+# -e HANDLER_HOSTNAME=localhost:8072 \
+# -e TEST1_HOSTNAME=localhost:8073 \
+# -e TEST2_HOSTNAME=localhost.localdomain:8073 \
+# oidc-test-lemonldap-image \
+

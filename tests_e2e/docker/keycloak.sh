@@ -43,9 +43,11 @@ else
 fi
 
 if [ "x${KEYCLOAK_IMPORT_ONLY-0}" == "x1" ]; then
+    # Keycloak 22 requires --optimized for import/export
     OPT="\
       --dir /config \
       --override true \
+      --optimized \
     "
   echo " * Starting keycloak in IMPORT mode"
   echo " * Using /opt/keycloak/bin/kc.sh import with theses options:"
