@@ -35,7 +35,7 @@ LOGOUT_URI_SUCCESS_DEFAULT
 
 This setting configures where a user is redirected after successful SSO logout.
 
-POST_LOGIN_URI_SUCCESS_DEFAULT
+POST_LOGIN_URI_SUCCESS
 *******************
 
 This setting configures the default redirection URI on login success
