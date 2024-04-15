@@ -23,7 +23,7 @@ def get_user(userinfo_token, access_token, id_token_claims):
 
     print("++++++++++++++++++++++++")
     print("userinfo_token")
-    print(type(userinfo_token))  # <class 'oic.oic.message.OpenIDSchema'>
+    print(type(userinfo_token))  # dict
     print(userinfo_token)
     print("access_token")
     print(type(access_token))  # <class 'str'>
