@@ -29,22 +29,6 @@ DATABASES = {
         "PORT": config("POSTGRES_PORT", default=5432),
     }
 }
-DJANGO_PYOIDC = {
-    "test": {
-        "PROVIDER_URI": "http://oidc.test/",
-        "REDIRECT_URI": "http://oidc.test/callback",
-        "CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
-        "CLIENT_ID": "full",
-        "CONFIG_URI": "/auth/realms/Demo",
-        "REDIRECT_FAILURE_URI": "http://oidc.test/",
-        "REDIRECT_LOGOUT_URI": "http://oidc.test/",
-        "REDIRECT_SUCCESS_DEFAULT_URI": "http://oidc.test/",
-        "REDIRECT_REQUIRES_HTTPS": False,
-        "REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
-        "SCOPE": "full-dedicated",
-        "CACHE_BACKEND": "default",
-    }
-}
 
 
 ROOT_URLCONF = "tests.urls"

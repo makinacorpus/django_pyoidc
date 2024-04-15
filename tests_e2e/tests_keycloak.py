@@ -135,6 +135,9 @@ class KeycloakTestCase(OIDCE2ETestCase):
         self.assertTrue("OIDC-LOGOUT-LINK" in bodyText)
 
     def test_02_selenium_sso_login_and_logout(self, *args):
+        """
+        FIXME : Make this test independant of test #1
+        """
         timeout = 5
         login_url = reverse("test_login")
         success_url = reverse("test_sucess")
@@ -171,19 +174,18 @@ class KeycloakTestCase(OIDCE2ETestCase):
     @override_settings(
         DJANGO_PYOIDC={
             "sso1": {
-                "CLIENT_ID": "app1",
-                "CACHE_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
-                "CLIENT_SECRET": "secret_app1",
-                "CALLBACK_PATH": "/callback",
-                "URI_DEFAULT_SUCCESS": "/test-success",
-                "REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "URI_LOGOUT": "/test-logout-done",
-                "URI_FAILURE": "/test-failure",
-                "LOGIN_FUNCTION": "tests_e2e.test_app.callback:login_callback",
-                "LOGOUT_FUNCTION": "tests_e2e.test_app.callback:logout_callback",
+                "OIDC_CLIENT_ID": "app1",
+                "CACHE_DJANGO_BACKEND": "default",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+                "OIDC_CLIENT_SECRET": "secret_app1",
+                "OIDC_CALLBACK_PATH": "/callback",
+                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+                "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+                "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-success",
+                "POST_LOGIN_URI_FAILURE": "/test-failure",
+                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+                "HOOK_USER_LOGIN": "tests_e2e.test_app.callback:login_callback",
+                "HOOK_USER_LOGOUT": "tests_e2e.test_app.callback:logout_callback",
             },
         },
     )
@@ -228,17 +230,16 @@ class KeycloakTestCase(OIDCE2ETestCase):
     @override_settings(
         DJANGO_PYOIDC={
             "sso1": {
-                "CLIENT_ID": "bad_client_id",
-                "CACHE_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
-                "CLIENT_SECRET": "secret_app1",
-                "CALLBACK_PATH": "/callback",
-                "URI_DEFAULT_SUCCESS": "/test-success",
-                "REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "URI_LOGOUT": "/test-logout-done",
-                "URI_FAILURE": "/test-failure",
+                "OIDC_CLIENT_ID": "bad_client_id",
+                "CACHE_DJANGO_BACKEND": "default",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+                "OIDC_CLIENT_SECRET": "secret_app1",
+                "OIDC_CALLBACK_PATH": "/callback",
+                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+                "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+                "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-success",
+                "POST_LOGIN_URI_FAILURE": "/test-failure",
             },
         },
     )
@@ -270,22 +271,24 @@ class KeycloakTestCase(OIDCE2ETestCase):
     @override_settings(
         DJANGO_PYOIDC={
             "sso1": {
-                "CLIENT_ID": "app1",
-                "CACHE_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
-                "CLIENT_SECRET": "secret_app1",
-                "CALLBACK_PATH": "/callback",
-                "URI_DEFAULT_SUCCESS": "/test-success",
-                "REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "URI_LOGOUT": "/test-logout-done",
-                "URI_FAILURE": "/test-failure",
-                "USER_FUNCTION": "tests_e2e.test_app.callback:get_user",
+                "OIDC_CLIENT_ID": "app1",
+                "CACHE_DJANGO_BACKEND": "default",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+                "OIDC_CLIENT_SECRET": "secret_app1",
+                "OIDC_CALLBACK_PATH": "/callback",
+                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+                "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+                "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-success",
+                "POST_LOGIN_URI_FAILURE": "/test-failure",
+                "HOOK_GET_USER": "tests_e2e.test_app.callback:get_user",
             },
         },
     )
     def test_05_selenium_audience_checks(self, *args):
+        """
+        FIXME : make this test independant of test #3
+        """
         timeout = 5
         login_url = reverse("test_login")
         success_url = reverse("test_sucess")
@@ -321,18 +324,17 @@ class KeycloakTestCase(OIDCE2ETestCase):
     @override_settings(
         DJANGO_PYOIDC={
             "sso1": {
-                "CLIENT_ID": "app1",
-                "CACHE_BACKEND": "default",
-                "URI_PROVIDER": "http://localhost:8080/auth",
-                "URI_CONFIG": "realms/realm1",
-                "CLIENT_SECRET": "secret_app1",
-                "CALLBACK_PATH": "/callback",
-                "URI_DEFAULT_SUCCESS": "/test-success",
-                "REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "URI_LOGOUT": "/test-logout-done",
-                "URI_FAILURE": "/test-failure",
-                "USER_FUNCTION": "tests_e2e.test_app.callback:get_user",
+                "OIDC_CLIENT_ID": "app1",
+                "CACHE_DJANGO_BACKEND": "default",
+                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+                "OIDC_CLIENT_SECRET": "secret_app1",
+                "OIDC_CALLBACK_PATH": "/callback",
+                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+                "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+                "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-success",
+                "POST_LOGIN_URI_FAILURE": "/test-failure",
+                "HOOK_GET_USER": "tests_e2e.test_app.callback:get_user",
             },
         },
     )
@@ -351,6 +353,8 @@ class KeycloakTestCase(OIDCE2ETestCase):
         i.e. keys client_registration and provider_info in
         ["srv_discovery_url", "client_info", "client_registration", "provider_info"].
         "srv_discovery_url" should only be used when no cache data is available.
+
+        FIXME : make this test independant of test #3
         """
         timeout = 5
 

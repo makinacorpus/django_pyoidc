@@ -25,17 +25,17 @@ You should define them as a nested dictionary. The key to this dictionary is cal
         }
     }
 
-URI_FAILURE
+POST_LOGIN_URI_FAILURE
 ***********
 
 This setting configures where a user is redirected on login failure.
 
-URI_LOGOUT
+LOGOUT_URI_SUCCESS_DEFAULT
 **********
 
 This setting configures where a user is redirected after successful SSO logout.
 
-URI_DEFAULT_SUCCESS
+POST_LOGIN_URI_SUCCESS_DEFAULT
 *******************
 
 This setting configures the default redirection URI on login success
@@ -50,32 +50,32 @@ URI_CONFIG
 
 This settings configures the path to your OIDC configuration. **TODO : example**.
 
-CALLBACK_PATH
+OIDC_CALLBACK_PATH
 *************
 
 This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
 
-REDIRECT_REQUIRES_HTTPS
+LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS
 ***********************
 
 This setting configures if dynamic login redirection URI must have the ``https`` scheme.
 
-REDIRECT_ALLOWED_HOSTS
+LOGIN_URIS_REDIRECT_ALLOWED_HOSTS
 **********************
 
 This setting configures the list of allowed host in dynamic URI redirections.
 
-CLIENT_SECRET
+OIDC_CLIENT_SECRET
 *************
 
 This setting configures the client secret used to authentify your application with an identity provider.
 
-CLIENT_ID
+OIDC_CLIENT_ID
 *********
 
 This setting configures the client id used to authentify your application with an identity provider.
 
-CACHE_BACKEND
+CACHE_DJANGO_BACKEND
 *************
 
 This setting configures the cache backend that is used to store sessions details.
@@ -98,7 +98,7 @@ So for example, if you were to have a module named ``oidc.py`` next to your proj
 .. note::
     All those settings are optional
 
-LOGOUT_FUNCTION
+HOOK_USER_LOGOUT
 ***************
 
 Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
@@ -110,7 +110,7 @@ This function takes two arguments :
 
 If the user was logged in, you can get the user using ``request.user``.
 
-LOGIN_FUNCTION
+HOOK_USER_LOGIN
 **************
 
 Calls the provided function on user login. The functions is called if the login is successful.

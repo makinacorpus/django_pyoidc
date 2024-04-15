@@ -22,7 +22,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_no_next_params(self, *args):
         """
-        Test that without a next parameter we are redirected to 'URI_DEFAULT_SUCCESS'
+        Test that without a next parameter we are redirected to 'POST_LOGOUT_REDIRECT_URI'
         """
         response = self.client.get(
             reverse("test_login"),
@@ -33,7 +33,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["URI_DEFAULT_SUCCESS"],
+            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS_DEFAULT"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -43,13 +43,13 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_to_samesite(self, *args):
         """
-        Test that redirecting to a site allowed in 'REDIRECT_ALLOWED_HOSTS' works
+        Test that redirecting to a site allowed in 'LOGIN_URIS_REDIRECT_ALLOWED_HOSTS' works
         """
         response = self.client.get(
             reverse("test_login"),
             data={
                 "next": "https://"
-                + settings.DJANGO_PYOIDC["sso1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -75,7 +75,7 @@ class LoginViewTestCase(OIDCTestCase):
             reverse("test_login"),
             data={
                 "next": "http://"
-                + settings.DJANGO_PYOIDC["sso1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -85,7 +85,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["URI_DEFAULT_SUCCESS"],
+            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS_DEFAULT"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -95,7 +95,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_to_disallowed_site(self, *args):
         """
-        Test that trying to redirect to a site not allowed in 'REDIRECT_ALLOWED_HOSTS' results in HTTP 400
+        Test that trying to redirect to a site not allowed in 'LOGIN_URIS_REDIRECT_ALLOWED_HOSTS' results in HTTP 400
         """
         response = self.client.get(
             reverse("test_login"),
@@ -113,7 +113,7 @@ class LoginViewTestCase(OIDCTestCase):
             reverse("test_login"),
             data={
                 "next": "https://"
-                + settings.DJANGO_PYOIDC["sso1"]["REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",

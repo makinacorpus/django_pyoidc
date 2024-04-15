@@ -32,7 +32,7 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
 
     def __init__(self, op_name):
         self.storage: BaseCache = caches[
-            get_settings_for_sso_op(op_name)["CACHE_BACKEND"]
+            get_settings_for_sso_op(op_name)["CACHE_DJANGO_BACKEND"]
         ]
         self.op_name = op_name
 

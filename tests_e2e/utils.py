@@ -28,17 +28,16 @@ class NotReadyException(Exception):
     ],
     DJANGO_PYOIDC={
         "sso1": {
-            "CLIENT_ID": "app1",
-            "CACHE_BACKEND": "default",
-            "URI_PROVIDER": "http://localhost:8080/auth",
-            "URI_CONFIG": "realms/realm1",
-            "CLIENT_SECRET": "secret_app1",
-            "CALLBACK_PATH": "/callback",
-            "URI_DEFAULT_SUCCESS": "/test-success",
-            "REDIRECT_ALLOWED_HOSTS": ["testserver"],
-            "REDIRECT_REQUIRES_HTTPS": False,
-            "URI_LOGOUT": "/test-logout-done",
-            "URI_FAILURE": "/test-failure",
+            "OIDC_CLIENT_ID": "app1",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+            "OIDC_CLIENT_SECRET": "secret_app1",
+            "OIDC_CALLBACK_PATH": "/callback",
+            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+            "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+            "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-success",
+            "POST_LOGIN_URI_FAILURE": "/test-failure",
         },
     },
 )
@@ -230,7 +229,6 @@ class OIDCE2ETestCase(LiveServerTestCase):
                 gApp1,
             ],
         )
-        # time.sleep(60)
 
     @classmethod
     def tearDownClass(cls):

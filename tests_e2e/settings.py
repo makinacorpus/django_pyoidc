@@ -52,18 +52,17 @@ DATABASES = {
 }
 DJANGO_PYOIDC = {
     "test": {
-        "PROVIDER_URI": "http://oidc.test/",
-        "REDIRECT_URI": "http://oidc.test/callback",
-        "CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
-        "CLIENT_ID": "full",
-        "CONFIG_URI": "/auth/realms/Demo",
+        "OIDC_CALLBACK_PATH": "/callback",
+        "OIDC_CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
+        "OIDC_CLIENT_ID": "full",
+        "OIDC_PROVIDER_DISCOVERY_URI": "http://oidc.test/auth/realms/Demo",
         "REDIRECT_FAILURE_URI": "http://oidc.test/",
         "REDIRECT_LOGOUT_URI": "http://oidc.test/",
         "REDIRECT_SUCCESS_DEFAULT_URI": "http://oidc.test/",
-        "REDIRECT_REQUIRES_HTTPS": False,
-        "REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
+        "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+        "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
         "SCOPE": "full-dedicated",
-        "CACHE_BACKEND": "default",
+        "CACHE_DJANGO_BACKEND": "default",
     }
 }
 
