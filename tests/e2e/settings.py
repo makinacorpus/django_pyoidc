@@ -10,7 +10,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "django.contrib.sessions",
-    "tests_e2e.test_app",
+    "tests.e2e.test_app",
     "django_pyoidc",
 ]
 
@@ -67,7 +67,7 @@ DJANGO_PYOIDC = {
 }
 
 
-ROOT_URLCONF = "tests_e2e.urls"
+ROOT_URLCONF = "tests.e2e.urls"
 
 CACHES = {
     "default": {
