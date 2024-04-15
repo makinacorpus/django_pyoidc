@@ -86,8 +86,12 @@ class OIDCView(View, OIDCMixin):
                 "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
             )  # FIXME
 
+    # FIXME: remove all occurence, get_setting() with None default
     def get_settings(self, name):
         return get_settings_for_sso_op(self.op_name)[name]
+
+    def get_setting(self, name, default):
+        return get_setting_for_sso_op(self.op_name, name, default)
 
     def call_function(self, setting_name, *args, **kwargs):
         function_path = get_settings_for_sso_op(self.op_name).get(setting_name)
@@ -95,15 +99,18 @@ class OIDCView(View, OIDCMixin):
             func = _import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_get_user_function(self, info_token, access_token_jwt, id_token):
+    def call_get_user_function(self, info_token, access_token_jwt, id_token_claims):
         user_function_setting_name = "HOOK_GET_USER"
         if user_function_setting_name in get_settings_for_sso_op(self.op_name):
             logger.debug("OIDC, Calling user hook on get_user")
             return self.call_function(
-                user_function_setting_name, info_token, access_token_jwt, id_token
+                user_function_setting_name,
+                info_token,
+                access_token_jwt,
+                id_token_claims,
             )
         else:
-            return get_user_by_email(info_token, id_token)
+            return get_user_by_email(info_token, id_token_claims)
 
     def call_callback_function(self, request, user):
         logger.debug("OIDC, Calling user hook on login")
@@ -166,7 +173,9 @@ class OIDCLoginView(OIDCView):
         redirect_uri = self.get_next_url(request, "next")
 
         if not redirect_uri:
-            redirect_uri = self.get_settings("POST_LOGIN_URI_SUCCESS")
+            redirect_uri = self.get_setting(
+                "POST_LOGIN_URI_SUCCESS", request.build_absolute_uri("/")
+            )
 
         request.session["oidc_login_next"] = redirect_uri
 
@@ -365,8 +374,10 @@ class OIDCCallbackView(OIDCView):
         next_url = self.request.session.get("oidc_login_next", None)
         return next_url or resolve_url(self.get_settings("POST_LOGIN_URI_SUCCESS"))
 
-    def login_failure(self):
-        return redirect(self.get_settings("POST_LOGIN_URI_FAILURE"))
+    def login_failure(self, request):
+        return redirect(
+            self.get_setting("POST_LOGIN_URI_FAILURE", request.build_absolute_uri("/"))
+        )
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
@@ -389,7 +400,7 @@ class OIDCCallbackView(OIDCView):
                     logger.error(
                         "OIDC login process failure; cannot end login protocol."
                     )
-                    return self.login_failure()
+                    return self.login_failure(request)
 
                 # Collect data from userinfo endpoint
                 try:
@@ -399,34 +410,34 @@ class OIDCCallbackView(OIDCView):
                     logger.error(
                         "OIDC login process failure; Cannot retrieve userinfo."
                     )
-                    return self.login_failure()
+                    return self.login_failure(request)
 
                 # TODO: add a setting to allow/disallow session storage of the tokens
                 # Call user hook
-                # TODO: use id_token and not access_token has variable name
+                # TODO: use id_token and not access_token as variable name
                 access_token_jwt = (
                     tokens["access_token"] if "access_token" in tokens else None
                 )
-                # FIXME: token instropsection for access_token deserialization?
+                # FIXME: token introspection for access_token deserialization?
                 id_token_claims = (
                     tokens["id_token"].to_dict() if "id_token" in tokens else None
                 )
                 # id_token_jwt = (
                 #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
                 # )
-                userinfo_claims = userinfo.to_dict()
+                userinfo_claims = userinfo
 
                 user = self.call_get_user_function(
                     info_token=userinfo_claims,
                     access_token_jwt=access_token_jwt,
-                    id_token=id_token_claims,
+                    id_token_claims=id_token_claims,
                 )
 
                 if not user or not user.is_authenticated:
                     logger.error(
                         "OIDC login process failure. Cannot set active authenticated user."
                     )
-                    return self.login_failure()
+                    return self.login_failure(request)
                 else:
                     auth.login(request, user)
                     OIDCSession.objects.create(
@@ -448,4 +459,4 @@ class OIDCCallbackView(OIDCView):
             logger.warning(
                 "OIDC login process failure. No OIDC sid state in user session for a request on the OIDC callback."
             )
-            return self.login_failure()
+            return self.login_failure(request)

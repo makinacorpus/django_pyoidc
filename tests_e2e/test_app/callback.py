@@ -19,40 +19,45 @@ def logout_callback(request, logout_request_args):
     return logout_request_args
 
 
-# def get_user(userinfo_token, access_token, id_token):
-def get_user(userinfo_token, id_token):
-    # print("userinfo_token")
-    # print(type(userinfo_token))
-    # print(userinfo_token)
-    # print("access_token")
-    # print(type(access_token))
-    # print(access_token)
-    # print("id_token")
-    # print(type(id_token))
-    # print(id_token.to_dict())
+def get_user(userinfo_token, access_token, id_token_claims):
 
-    audiences = None
-    if "aud" in id_token:
-        if type(id_token["aud"]) is str:
+    print("++++++++++++++++++++++++")
+    print("userinfo_token")
+    print(type(userinfo_token))  # <class 'oic.oic.message.OpenIDSchema'>
+    print(userinfo_token)
+    print("access_token")
+    print(type(access_token))  # <class 'str'>
+    print(access_token)
+    print("id_token")
+    print(type(id_token_claims))  # dict
+    print(id_token_claims)
+
+    access_token_claims = (
+        {}
+    )  # FIXME: get access_token as dict here, from introspection maybe.
+    audiences = []
+    if "aud" in access_token_claims:
+        if type(access_token_claims["aud"]) is str:
             audiences = [
-                id_token["aud"],
+                access_token_claims["aud"],
             ]
-        elif type(id_token["aud"]) is bytes:
+        elif type(access_token_claims["aud"]) is bytes:
             audiences = [
-                id_token["aud"].decode("ascii"),
+                access_token_claims["aud"].decode("ascii"),
             ]
-        elif type(id_token["aud"]) is list:
-            audiences = id_token["aud"]
+        elif type(access_token_claims["aud"]) is list:
+            audiences = access_token_claims["aud"]
         else:
             raise RuntimeError("Unknown type for audience claim")
 
+    print(audiences)
+    print("++++++++++++++++++++++++")
     # Perform audience check
     if audiences and settings.DJANGO_PYOIDC["sso1"]["OIDC_CLIENT_ID"] not in audiences:
         logger.error("Failed audience check in id_token")
         raise PermissionDenied("You do not have access to this application.")
 
     username = ""
-    id_token_claims = id_token.to_dict()
 
     if "preferred_username" in id_token_claims:
         username = id_token_claims["preferred_username"]

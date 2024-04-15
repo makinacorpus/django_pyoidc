@@ -1,14 +1,12 @@
 from typing import Dict
 
 from django.contrib.auth import get_user_model
-from oic.oic import IdToken
 
 
-def get_user_by_email(userinfo_token: Dict[str, str], id_token: IdToken):
+def get_user_by_email(userinfo_token: Dict[str, str], id_token_claims: Dict):
     User = get_user_model()
 
     username = ""
-    id_token_claims = id_token.to_dict()
 
     if "preferred_username" in id_token_claims:
         username = id_token_claims["preferred_username"]
