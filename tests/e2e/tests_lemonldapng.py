@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import WebDriverWait
 
-from tests_e2e.utils import OIDCE2ELemonLdapNgTestCase
+from tests.e2e.utils import OIDCE2ELemonLdapNgTestCase
 
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
@@ -184,8 +184,8 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
                 "POST_LOGIN_URI_SUCCESS": "/test-success",
                 "POST_LOGIN_URI_FAILURE": "/test-failure",
                 "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-                "HOOK_USER_LOGIN": "tests_e2e.test_app.callback:login_callback",
-                "HOOK_USER_LOGOUT": "tests_e2e.test_app.callback:logout_callback",
+                "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+                "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
                 "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT": {"confirm": 1},
             },
         },

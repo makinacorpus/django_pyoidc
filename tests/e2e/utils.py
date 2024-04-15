@@ -56,8 +56,8 @@ class OIDCE2ETestCase(LiveServerTestCase):
             "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
             "POST_LOGIN_URI_SUCCESS": "/test-success",
             "POST_LOGIN_URI_FAILURE": "/test-failure",
-            "HOOK_USER_LOGIN": "tests_e2e.test_app.callback:login_callback",
-            "HOOK_USER_LOGOUT": "tests_e2e.test_app.callback:logout_callback",
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
             "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT": {"confirm": 1},
         },
     },
@@ -70,7 +70,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
 
         cls.workdir = os.getcwd()
         print(f"Current workdir: {cls.workdir} ...")
-        cls.docker_workdir = f"{cls.workdir}/tests_e2e/docker"
+        cls.docker_workdir = f"{cls.workdir}/tests/e2e/docker"
         os.chdir(cls.docker_workdir)
         cls.docker_id = None
         try:
@@ -332,8 +332,8 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "POST_LOGIN_URI_SUCCESS": "/test-success",
             "POST_LOGIN_URI_FAILURE": "/test-failure",
             "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-            "HOOK_USER_LOGIN": "tests_e2e.test_app.callback:login_callback",
-            "HOOK_USER_LOGOUT": "tests_e2e.test_app.callback:logout_callback",
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
         },
         "sso2": {
             "OIDC_CLIENT_ID": "app1",
@@ -357,7 +357,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
         cls.workdir = os.getcwd()
         print(f"Current workdir: {cls.workdir} ...")
-        cls.docker_workdir = f"{cls.workdir}/tests_e2e/docker"
+        cls.docker_workdir = f"{cls.workdir}/tests/e2e/docker"
         os.chdir(cls.docker_workdir)
         cls.docker_id = None
         try:

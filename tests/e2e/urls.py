@@ -6,7 +6,7 @@ from django_pyoidc.views import (
     OIDCLoginView,
     OIDCLogoutView,
 )
-from tests_e2e.test_app.views import (
+from tests.e2e.test_app.views import (
     OIDCTestFailureView,
     OIDCTestLogoutView,
     OIDCTestSuccessView,
