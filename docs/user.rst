@@ -55,7 +55,7 @@ OIDC_CALLBACK_PATH
 
 This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
 
-LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS
+LOGIN_REDIRECTION_REQUIRES_HTTPS
 ***********************
 
 This setting configures if dynamic login redirection URI must have the ``https`` scheme.

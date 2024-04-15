@@ -69,7 +69,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_follows_https_requires(self, *args):
         """
-        Test that trying to redirect to a non https site when LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS is set to True does not work
+        Test that trying to redirect to a non https site when LOGIN_REDIRECTION_REQUIRES_HTTPS is set to True does not work
         """
         response = self.client.get(
             reverse("test_login"),
