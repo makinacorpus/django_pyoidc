@@ -52,7 +52,7 @@ class OIDClient:
         }
 
         client_config = {
-            "client_id": get_settings_for_sso_op(op_name)["OIDC_CLIENT_ID"],
+            "client_id": get_setting_for_sso_op(op_name, "OIDC_CLIENT_ID"),
             "client_authn_method": CLIENT_AUTHN_METHOD,
         }
 
@@ -62,17 +62,17 @@ class OIDClient:
             client_config=client_config,
         )
 
-        provider_info_uri = get_settings_for_sso_op(op_name)[
-            "OIDC_PROVIDER_DISCOVERY_URI"
-        ]
+        provider_info_uri = get_setting_for_sso_op(
+            op_name, "OIDC_PROVIDER_DISCOVERY_URI"
+        )
 
         if session_id:
             self.consumer.restore(session_id)
         else:
             self.consumer.provider_config(provider_info_uri)
-            self.consumer.client_secret = get_settings_for_sso_op(op_name)[
-                "OIDC_CLIENT_SECRET"
-            ]
+            self.consumer.client_secret = get_setting_for_sso_op(
+                op_name, "OIDC_CLIENT_SECRET"
+            )
 
 
 class OIDCMixin:
@@ -86,25 +86,20 @@ class OIDCView(View, OIDCMixin):
                 "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
             )  # FIXME
 
-    # FIXME: remove all occurence, get_setting() with None default
-    def get_settings(self, name):
-        return get_settings_for_sso_op(self.op_name)[name]
-
-    def get_setting(self, name, default):
+    def get_setting(self, name, default=None):
         return get_setting_for_sso_op(self.op_name, name, default)
 
     def call_function(self, setting_name, *args, **kwargs):
-        function_path = get_settings_for_sso_op(self.op_name).get(setting_name)
+        function_path = get_setting_for_sso_op(self.op_name, setting_name)
         if function_path:
             func = _import_object(function_path, "")
             return func(*args, **kwargs)
 
     def call_get_user_function(self, info_token, access_token_jwt, id_token_claims):
-        user_function_setting_name = "HOOK_GET_USER"
-        if user_function_setting_name in get_settings_for_sso_op(self.op_name):
+        if "HOOK_GET_USER" in get_settings_for_sso_op(self.op_name):
             logger.debug("OIDC, Calling user hook on get_user")
             return self.call_function(
-                user_function_setting_name,
+                "HOOK_GET_USER",
                 info_token,
                 access_token_jwt,
                 id_token_claims,
@@ -138,8 +133,10 @@ class OIDCView(View, OIDCMixin):
         if next_url:
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
-                allowed_hosts=self.get_settings("LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"),
-                require_https=self.get_settings("LOGIN_REDIRECTION_REQUIRES_HTTPS"),
+                allowed_hosts=self.get_setting("LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"),
+                require_https=self.get_setting(
+                    "LOGIN_REDIRECTION_REQUIRES_HTTPS", True
+                ),
             )
             if is_safe:
                 return request.build_absolute_uri(next_url)
@@ -167,7 +164,7 @@ class OIDCLoginView(OIDCView):
         super().get(request, *args, **kwargs)
 
         client = OIDClient(self.op_name)
-        client.consumer.consumer_config["authz_page"] = self.get_settings(
+        client.consumer.consumer_config["authz_page"] = self.get_setting(
             "OIDC_CALLBACK_PATH"
         )
         redirect_uri = self.get_next_url(request, "next")
@@ -204,19 +201,20 @@ class OIDCLogoutView(OIDCView):
 
     http_method_names = ["get", "post"]
 
-    @property
-    def post_logout_url(self):
+    def post_logout_url(self, request):
         """Return the post logout url defined in settings."""
-        return self.get_settings("POST_LOGOUT_REDIRECT_URI")
+        return self.get_setting(
+            "POST_LOGOUT_REDIRECT_URI", request.build_absolute_uri("/")
+        )
 
     def get(self, request):
         return self.post(request)
 
     def post(self, request):
         """Log out the user."""
-        url = self.post_logout_url
+        url = self.post_logout_url(request)
         # If this url is not already an absolute url
-        # we  make it absolute using the current domain
+        # we make it absolute using the current domain
         if not url[:7] in ["http://", "https:/"]:
             post_logout_url = request.build_absolute_uri(url)
         else:
@@ -228,19 +226,17 @@ class OIDCLogoutView(OIDCView):
         client = None
         sid = request.session.get("oidc_sid")
 
-        redirect_arg_name = get_setting_for_sso_op(
-            self.op_name,
+        redirect_arg_name = self.get_setting(
             "LOGOUT_QUERY_STRING_REDIRECT_PARAMETER",
             "post_logout_redirect_uri",
         )
         request_args = {
             redirect_arg_name: post_logout_url,
-            "client_id": get_settings_for_sso_op(self.op_name)["OIDC_CLIENT_ID"],
+            "client_id": self.get_setting("OIDC_CLIENT_ID"),
         }
 
         # Allow some more parameters for some actors
-        extra_logout_args = get_setting_for_sso_op(
-            self.op_name,
+        extra_logout_args = self.get_setting(
             "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT",
             {},
         )
@@ -367,12 +363,13 @@ class OIDCCallbackView(OIDCView):
 
     http_method_names = ["get"]
 
-    @property
-    def success_url(self):
+    def success_url(self, request):
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
-        return next_url or resolve_url(self.get_settings("POST_LOGIN_URI_SUCCESS"))
+        return next_url or resolve_url(
+            self.get_setting("POST_LOGIN_URI_SUCCESS", request.build_absolute_uri("/"))
+        )
 
     def login_failure(self, request):
         return redirect(
@@ -446,7 +443,8 @@ class OIDCCallbackView(OIDCView):
                         session_state=session_state,
                     )
                     self.call_callback_function(request, user)
-                    return redirect(self.success_url)
+                    redir = self.success_url(request)
+                    return redirect(redir)
             else:
                 logger.warning(
                     "OIDC login process failure. OIDC state does not match session sid."
