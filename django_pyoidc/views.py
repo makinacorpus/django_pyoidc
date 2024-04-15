@@ -132,7 +132,7 @@ class OIDCView(View, OIDCMixin):
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
                 allowed_hosts=self.get_settings("LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"),
-                require_https=self.get_settings("LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS"),
+                require_https=self.get_settings("LOGIN_REDIRECTION_REQUIRES_HTTPS"),
             )
             if is_safe:
                 return request.build_absolute_uri(next_url)
@@ -149,7 +149,7 @@ class OIDCLoginView(OIDCView):
 
     The redirection behaviour is configured with the following settings :
 
-    * :ref:`LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS` controls if non https URIs are accepted.
+    * :ref:`LOGIN_REDIRECTION_REQUIRES_HTTPS` controls if non https URIs are accepted.
     * :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
     * :ref:`POST_LOGIN_URI_SUCCESS_DEFAULT` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
     """

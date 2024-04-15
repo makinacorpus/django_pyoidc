@@ -59,7 +59,7 @@ DJANGO_PYOIDC = {
         "REDIRECT_FAILURE_URI": "http://oidc.test/",
         "REDIRECT_LOGOUT_URI": "http://oidc.test/",
         "REDIRECT_SUCCESS_DEFAULT_URI": "http://oidc.test/",
-        "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+        "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
         "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
         "SCOPE": "full-dedicated",
         "CACHE_DJANGO_BACKEND": "default",

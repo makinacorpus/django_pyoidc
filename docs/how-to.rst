@@ -242,7 +242,7 @@ Here is an example of a login button redirecting the user to the page named "pro
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
 
-However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS` and :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS`.
+However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`LOGIN_REDIRECTION_REQUIRES_HTTPS` and :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS`.
 
 TODO: RedirectDemo now exists, where do I connect it?
 
