@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
             "OIDC_PROVIDER_DISCOVERY_URI": "",
             "OIDC_CLIENT_SECRET": "",
             "OIDC_CALLBACK_PATH": "/callback",
-            "POST_LOGIN_URI_SUCCESS_DEFAULT": "/default/success",
+            "POST_LOGIN_URI_SUCCESS": "/default/success",
             "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["test.django-pyoidc.notatld"],
             "LOGIN_REDIRECTION_REQUIRES_HTTPS": True,
             "POST_LOGOUT_REDIRECT_URI": "/logoutdone",

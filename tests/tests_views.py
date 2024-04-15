@@ -33,7 +33,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS_DEFAULT"],
+            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -85,7 +85,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS_DEFAULT"],
+            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")

@@ -151,7 +151,7 @@ class OIDCLoginView(OIDCView):
 
     * :ref:`LOGIN_REDIRECTION_REQUIRES_HTTPS` controls if non https URIs are accepted.
     * :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
-    * :ref:`POST_LOGIN_URI_SUCCESS_DEFAULT` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
+    * :ref:`POST_LOGIN_URI_SUCCESS` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
     """
 
     http_method_names = ["get"]
@@ -166,7 +166,7 @@ class OIDCLoginView(OIDCView):
         redirect_uri = self.get_next_url(request, "next")
 
         if not redirect_uri:
-            redirect_uri = self.get_settings("POST_LOGIN_URI_SUCCESS_DEFAULT")
+            redirect_uri = self.get_settings("POST_LOGIN_URI_SUCCESS")
 
         request.session["oidc_login_next"] = redirect_uri
 
@@ -363,9 +363,7 @@ class OIDCCallbackView(OIDCView):
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
-        return next_url or resolve_url(
-            self.get_settings("POST_LOGIN_URI_SUCCESS_DEFAULT")
-        )
+        return next_url or resolve_url(self.get_settings("POST_LOGIN_URI_SUCCESS"))
 
     def login_failure(self):
         return redirect(self.get_settings("POST_LOGIN_URI_FAILURE"))
