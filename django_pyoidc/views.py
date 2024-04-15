@@ -413,20 +413,19 @@ class OIDCCallbackView(OIDCView):
                     return self.login_failure(request)
 
                 # TODO: add a setting to allow/disallow session storage of the tokens
-                # Call user hook
-                # TODO: use id_token and not access_token as variable name
+                # FIXME: token introspection for access_token deserialization?
                 access_token_jwt = (
                     tokens["access_token"] if "access_token" in tokens else None
                 )
-                # FIXME: token introspection for access_token deserialization?
                 id_token_claims = (
                     tokens["id_token"].to_dict() if "id_token" in tokens else None
                 )
                 # id_token_jwt = (
                 #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
                 # )
-                userinfo_claims = userinfo
+                userinfo_claims = userinfo.to_dict()
 
+                # Call user hook
                 user = self.call_get_user_function(
                     info_token=userinfo_claims,
                     access_token_jwt=access_token_jwt,

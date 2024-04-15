@@ -7,6 +7,7 @@ from django.contrib.auth import SESSION_KEY, get_user_model
 from django.urls import reverse
 from jwt import JWT, jwk_from_dict
 from oic.oic import IdToken
+from oic.oic.message import OpenIDSchema
 
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.views import OIDClient
@@ -228,7 +229,9 @@ class CallbackViewTestCase(OIDCTestCase):
         return_value=({"state": "test_id_12345"}, None, None),
     )
     @mock.patch("django_pyoidc.views.get_user_by_email", return_value=None)
-    @mock.patch("django_pyoidc.views.Consumer.get_user_info", return_value={})
+    @mock.patch(
+        "django_pyoidc.views.Consumer.get_user_info", return_value=OpenIDSchema()
+    )
     @mock.patch(
         "django_pyoidc.views.Consumer.complete",
         return_value={"id_token": IdToken(iss="fake")},
@@ -297,7 +300,8 @@ class CallbackViewTestCase(OIDCTestCase):
         session["oidc_sid"] = state
         session.save()
 
-        user_info = {"sub": "aaaaaeeee"}
+        user_info = OpenIDSchema(sub="aaaaaeeee")
+        user_info_dict = {"sub": "aaaaaeeee"}
         mocked_get_user_info.return_value = user_info
 
         dummy_user = self.user
@@ -311,7 +315,7 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info, {"iss": "fake"})
+        mocked_get_user.assert_called_once_with(user_info_dict, {"iss": "fake"})
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
@@ -322,7 +326,7 @@ class CallbackViewTestCase(OIDCTestCase):
             session = OIDCSession.objects.all().first()
 
             self.assertEqual(session.session_state, None)
-            self.assertEqual(session.sub, user_info["sub"])
+            self.assertEqual(session.sub, user_info_dict["sub"])
             self.assertEqual(session.state, state)
             self.assertEqual(session.cache_session_key, self.client.session.session_key)
         mocked_call_callback_function.assert_called_once()
@@ -358,7 +362,8 @@ class CallbackViewTestCase(OIDCTestCase):
         session["oidc_sid"] = state
         session.save()
 
-        user_info = {"sub": "aaaaaeeee"}
+        user_info = OpenIDSchema(sub="aaaaaeeee")
+        user_info_dict = {"sub": "aaaaaeeee"}
         mocked_get_user_info.return_value = user_info
 
         authz = {"state": state, "session_state": session_state}
@@ -377,7 +382,7 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info, {"iss": "fake"})
+        mocked_get_user.assert_called_once_with(user_info_dict, {"iss": "fake"})
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
