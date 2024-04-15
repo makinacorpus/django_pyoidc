@@ -170,8 +170,8 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "REDIRECT_REQUIRES_HTTPS": False,
                 "URI_LOGOUT": "/test-logout-done",
                 "URI_FAILURE": "/test-failure",
-                "LOGIN_FUNCTION": "makina_django_oidc.tests.callbacks:login_callback",
-                "LOGOUT_FUNCTION": "makina_django_oidc.tests.callbacks:logout_callback",
+                "LOGIN_FUNCTION": "tests_e2e.test_app.callbacks:login_callback",
+                "LOGOUT_FUNCTION": "tests_e2e.test_app.callbacks:logout_callback",
             },
         },
     )
@@ -269,7 +269,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "REDIRECT_REQUIRES_HTTPS": False,
                 "URI_LOGOUT": "/test-logout-done",
                 "URI_FAILURE": "/test-failure",
-                "HOOK_GET_USER": "makina_django_oidc.tests.callbacks:get_user",
+                "HOOK_GET_USER": "django_pyoidc.tests.callbacks:get_user",
             },
         },
     )

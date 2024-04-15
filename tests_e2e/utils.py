@@ -518,15 +518,15 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             ],
         )
         cls.registerUser(
-            "user_app2",
+            "user_limit_app2",
             "passwd2",
             groups=[
                 gApp2,
             ],
         )
         cls.registerUser(
-            "user_app3",
-            "passwd3",
+            "user_limit_app1",
+            "passwd1",
             groups=[
                 gApp1,
             ],
