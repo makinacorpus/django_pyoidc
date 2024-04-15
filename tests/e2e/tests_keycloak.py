@@ -269,7 +269,7 @@ class KeycloakTestCase(OIDCE2ETestCase):
                 "REDIRECT_REQUIRES_HTTPS": False,
                 "URI_LOGOUT": "/test-logout-done",
                 "URI_FAILURE": "/test-failure",
-                "USER_FUNCTION": "makina_django_oidc.tests.callbacks:get_user",
+                "HOOK_GET_USER": "makina_django_oidc.tests.callbacks:get_user",
             },
         },
     )

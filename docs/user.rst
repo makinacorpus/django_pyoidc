@@ -122,7 +122,7 @@ This function takes two arguments :
 
 Since the user wasn't logged in, it is not yet attached to the request instance at this stage. As such trying to access ``request.user`` will return an unauthenticated user.
 
-USER_FUNCTION
+HOOK_GET_USER
 *************
 
 Calls the provided function on user login. It takes two arguments :
