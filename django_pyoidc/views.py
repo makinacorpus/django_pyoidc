@@ -1,10 +1,13 @@
+import datetime
+import hashlib
 import logging
 from importlib import import_module
 
 # import oic
 from django.conf import settings
-from django.contrib import auth
-from django.core.exceptions import SuspiciousOperation
+from django.contrib import auth, messages
+from django.core.cache import caches
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http import HttpResponse
 from django.shortcuts import redirect, resolve_url
 from django.utils.decorators import method_decorator
@@ -13,6 +16,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwt import JWT
 from jwt.exceptions import JWTDecodeError
+from oic.extension.client import Client as ClientExtension
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
@@ -61,18 +65,21 @@ class OIDClient:
             consumer_config=consumer_config,
             client_config=client_config,
         )
+        # used in token introspection
+        self.client_extension = ClientExtension(**client_config)
 
         provider_info_uri = get_setting_for_sso_op(
             op_name, "OIDC_PROVIDER_DISCOVERY_URI"
         )
+        client_secret = get_setting_for_sso_op(op_name, "OIDC_CLIENT_SECRET")
+        # self.client_extension.provider_config(provider_info_uri)
+        self.client_extension.client_secret = client_secret
 
         if session_id:
             self.consumer.restore(session_id)
         else:
             self.consumer.provider_config(provider_info_uri)
-            self.consumer.client_secret = get_setting_for_sso_op(
-                op_name, "OIDC_CLIENT_SECRET"
-            )
+            self.consumer.client_secret = client_secret
 
 
 class OIDCMixin:
@@ -95,17 +102,14 @@ class OIDCView(View, OIDCMixin):
             func = _import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_get_user_function(self, info_token, access_token_jwt, id_token_claims):
+    def call_get_user_function(self, tokens={}):
         if "HOOK_GET_USER" in get_settings_for_sso_op(self.op_name):
             logger.debug("OIDC, Calling user hook on get_user")
-            return self.call_function(
-                "HOOK_GET_USER",
-                info_token,
-                access_token_jwt,
-                id_token_claims,
-            )
+            return self.call_function("HOOK_GET_USER", tokens)
         else:
-            return get_user_by_email(info_token, id_token_claims)
+            return get_user_by_email(
+                tokens["info_token_claims"], tokens["id_token_claims"]
+            )
 
     def call_callback_function(self, request, user):
         logger.debug("OIDC, Calling user hook on login")
@@ -376,84 +380,153 @@ class OIDCCallbackView(OIDCView):
             self.get_setting("POST_LOGIN_URI_FAILURE", request.build_absolute_uri("/"))
         )
 
+    def _introspect_access_token(self, access_token_jwt):
+        """
+        Perform a cached intropesction call to extract claims from encoded jwt of the access_token
+        """
+        # FIXME: allow a non-cached mode by global settings
+        access_token_claims = None
+
+        # FIXME: in what case could we not have an access token available?
+        # should we raise an error then?
+        if access_token_jwt is not None:
+            cache = caches[self.get_setting("CACHE_DJANGO_BACKEND")]
+            h = hashlib.new("sha256")
+            h.update(access_token_jwt.encode())
+            cache_key = h.hexdigest()
+
+            access_token_claims = cache.get("cache_key")
+
+            if access_token_claims is None:
+                # CACHE MISS
+
+                # RFC 7662: token introspection: ask SSO to validate and render the jwt as json
+                # this means a slow web call
+                request_args = {
+                    "token": access_token_jwt,
+                    "token_type_hint": "access_token",
+                }
+                client_auth_method = self.client.consumer.registration_response.get(
+                    "introspection_endpoint_auth_method", "client_secret_basic"
+                )
+                introspection = self.client.client_extension.do_token_introspection(
+                    request_args=request_args,
+                    authn_method=client_auth_method,
+                    endpoint=self.client.consumer.introspection_endpoint,
+                )
+                access_token_claims = introspection.to_dict()
+
+                # store it in cache
+                current = datetime.datetime.now().strftime("%s")
+                if "exp" not in access_token_claims:
+                    raise RuntimeError("No expiry set on the access token.")
+                access_token_expiry = access_token_claims["exp"]
+                print("**********************")
+                print(current)
+                print(access_token_expiry)
+                exp = int(access_token_expiry) - int(current)
+                print(exp)
+                cache.set(cache_key, access_token_claims, exp)
+        return access_token_claims
+
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
-        if "oidc_sid" in request.session:
-            client = OIDClient(self.op_name, session_id=request.session["oidc_sid"])
-
-            aresp, atr, idt = client.consumer.parse_authz(query=request.GET.urlencode())
-
-            if aresp["state"] == request.session["oidc_sid"]:
-                state = aresp["state"]
-                session_state = aresp.get("session_state")
-
-                # pyoidc will make the next steps in OIDC login protocol
-                try:
-                    tokens = client.consumer.complete(
-                        state=state, session_state=session_state
-                    )
-                except Exception as e:
-                    logger.exception(e)
-                    logger.error(
-                        "OIDC login process failure; cannot end login protocol."
-                    )
-                    return self.login_failure(request)
-
-                # Collect data from userinfo endpoint
-                try:
-                    userinfo = client.consumer.get_user_info(state=state)
-                except Exception as e:
-                    logger.exception(e)
-                    logger.error(
-                        "OIDC login process failure; Cannot retrieve userinfo."
-                    )
-                    return self.login_failure(request)
-
-                # TODO: add a setting to allow/disallow session storage of the tokens
-                # FIXME: token introspection for access_token deserialization?
-                access_token_jwt = (
-                    tokens["access_token"] if "access_token" in tokens else None
-                )
-                id_token_claims = (
-                    tokens["id_token"].to_dict() if "id_token" in tokens else None
-                )
-                # id_token_jwt = (
-                #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
-                # )
-                userinfo_claims = userinfo.to_dict()
-
-                # Call user hook
-                user = self.call_get_user_function(
-                    info_token=userinfo_claims,
-                    access_token_jwt=access_token_jwt,
-                    id_token_claims=id_token_claims,
+        try:
+            if "oidc_sid" in request.session:
+                self.client = OIDClient(
+                    self.op_name, session_id=request.session["oidc_sid"]
                 )
 
-                if not user or not user.is_authenticated:
-                    logger.error(
-                        "OIDC login process failure. Cannot set active authenticated user."
+                aresp, atr, idt = self.client.consumer.parse_authz(
+                    query=request.GET.urlencode()
+                )
+
+                if aresp["state"] == request.session["oidc_sid"]:
+                    state = aresp["state"]
+                    session_state = aresp.get("session_state")
+
+                    # pyoidc will make the next steps in OIDC login protocol
+                    try:
+                        tokens = self.client.consumer.complete(
+                            state=state, session_state=session_state
+                        )
+                    except Exception as e:
+                        logger.exception(e)
+                        logger.error(
+                            "OIDC login process failure; cannot end login protocol."
+                        )
+                        return self.login_failure(request)
+
+                    # Collect data from userinfo endpoint
+                    try:
+                        userinfo = self.client.consumer.get_user_info(state=state)
+                    except Exception as e:
+                        logger.exception(e)
+                        logger.error(
+                            "OIDC login process failure; Cannot retrieve userinfo."
+                        )
+                        return self.login_failure(request)
+
+                    # TODO: add a setting to allow/disallow session storage of the tokens
+                    # FIXME: token introspection for access_token deserialization?
+                    access_token_jwt = (
+                        tokens["access_token"] if "access_token" in tokens else None
                     )
-                    return self.login_failure(request)
+
+                    access_token_claims = self._introspect_access_token(
+                        access_token_jwt
+                    )
+
+                    id_token_claims = (
+                        tokens["id_token"].to_dict() if "id_token" in tokens else None
+                    )
+                    # id_token_jwt = (
+                    #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
+                    # )
+                    userinfo_claims = userinfo.to_dict()
+
+                    # Call user hook
+                    user = self.call_get_user_function(
+                        tokens={
+                            "info_token_claims": userinfo_claims,
+                            "access_token_jwt": access_token_jwt,
+                            "access_token_claims": access_token_claims,
+                            "id_token_claims": id_token_claims,
+                        }
+                    )
+
+                    if not user or not user.is_authenticated:
+                        logger.error(
+                            "OIDC login process failure. Cannot set active authenticated user."
+                        )
+                        return self.login_failure(request)
+                    else:
+                        auth.login(request, user)
+                        OIDCSession.objects.create(
+                            state=state,
+                            sub=userinfo["sub"],
+                            cache_session_key=request.session.session_key,
+                            session_state=session_state,
+                        )
+                        self.call_callback_function(request, user)
+                        redir = self.success_url(request)
+                        return redirect(redir)
                 else:
-                    auth.login(request, user)
-                    OIDCSession.objects.create(
-                        state=state,
-                        sub=userinfo["sub"],
-                        cache_session_key=request.session.session_key,
-                        session_state=session_state,
+                    logger.warning(
+                        "OIDC login process failure. OIDC state does not match session sid."
                     )
-                    self.call_callback_function(request, user)
-                    redir = self.success_url(request)
-                    return redirect(redir)
+                    raise SuspiciousOperation(
+                        "Login process: OIDC state does not match session sid."
+                    )
             else:
                 logger.warning(
-                    "OIDC login process failure. OIDC state does not match session sid."
+                    "OIDC login process failure. No OIDC sid state in user session for a request on the OIDC callback."
                 )
-                raise SuspiciousOperation(
-                    "Login process: OIDC state does not match session sid."
-                )
-        else:
-            logger.warning(
-                "OIDC login process failure. No OIDC sid state in user session for a request on the OIDC callback."
-            )
+                return self.login_failure(request)
+        except PermissionDenied as exc:
+            logger.exception(exc)
+            messages.error(request, "Permission Denied.")
             return self.login_failure(request)
+        # except Exception as exc:
+        #    logger.exception(exc)
+        #    return self.login_failure(request)

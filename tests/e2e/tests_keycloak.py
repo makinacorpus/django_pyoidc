@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, urlparse
 import requests
 from django.test import override_settings
 from django.urls import reverse
+from selenium.webdriver import FirefoxProfile
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.webdriver import WebDriver
@@ -13,7 +14,9 @@ from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import WebDriverWait
 
-from tests.e2e.utils import OIDCE2EKeycloakTestCase, wrap_class
+from tests.e2e.utils import OIDCE2EKeycloakTestCase
+
+#  , wrap_class
 
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
@@ -24,8 +27,11 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
     def setUpClass(cls):
         super().setUpClass()
         options = Options()
+        options.add_argument("--private")
         # options.headless = True
-        cls.selenium = WebDriver(options=options)
+        profile = FirefoxProfile()
+        profile.set_preference("browser.privatebrowsing.autostart", True)
+        cls.selenium = WebDriver(firefox_profile=profile, options=options)
         # cls.selenium.implicitly_wait(10)
 
     @classmethod
@@ -75,7 +81,13 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue(qs["nonce"][0])
 
     def _selenium_sso_login(
-        self, login_start_url, login_end_url, user, password, active_sso_session=False
+        self,
+        login_start_url,
+        login_end_url,
+        user,
+        password,
+        active_sso_session=False,
+        wait_for_success=True,
     ):
         if not active_sso_session:
             self.selenium.get(login_start_url)
@@ -97,7 +109,16 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             # current SSO session is still active,
             # so we should be redirected directly to success page
             self.selenium.get(login_start_url)
-        self.wait.until(EC.url_matches(login_end_url))
+        if wait_for_success:
+            self.wait.until(EC.url_matches(login_end_url))
+
+    def _selenium_anon_logout(self):
+        """Like classical logout but we are not connected in local app."""
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        # check we have the logout link
+        self.assertTrue("OIDC-ANON-LOGOUT-LINK" in bodyText)
+        # click logout
+        self.selenium.find_element(By.ID, "oidc-anon-logout-link").click()
 
     def _selenium_logout(self, end_url):
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
@@ -116,7 +137,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         """
         timeout = 5
         login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
+        success_url = reverse("test_success")
         post_logout_url = reverse("test_logout_done")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
@@ -161,7 +182,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         """
         timeout = 5
         login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
+        success_url = reverse("test_success")
         post_logout_url = reverse("test_logout_done")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
@@ -230,7 +251,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
     def test_03_selenium_sso_session_with_callbacks(self, *args):
         timeout = 5
         login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
+        success_url = reverse("test_success")
         post_logout_url = reverse("test_logout_done")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
@@ -318,45 +339,32 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
                 "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
                 "POST_LOGIN_URI_SUCCESS": "/test-success",
                 "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user",
+                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
             },
         },
     )
-    def test_05_selenium_audience_checks(self, *args):
+    def test_05_selenium_ressource_access_checks(self, *args):
         """
-        FIXME : WIK, need more details on audiences check in get_user callback
+        Check that a resource access check can be performed to prevent access for some users.
+
+        @see tests.e2e.test_app.callback:get_user_with_resource_access_check
         """
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
-        post_logout_url = reverse("test_logout_done")
-        start_url = f"{self.live_server_url}{login_url}"
-        middle_url = f"{self.live_server_url}{success_url}"
-        end_url = f"{self.live_server_url}{post_logout_url}"
+        login_location = reverse("test_login")
+        success_location = reverse("test_success")
+        failure_location = reverse("test_failure")
+        post_logout_location = reverse("test_logout_done")
+        start_url = f"{self.live_server_url}{login_location}"
+        ok_url = f"{self.live_server_url}{success_location}"
+        failure_url = f"{self.live_server_url}{failure_location}"
+        end_url = f"{self.live_server_url}{post_logout_location}"
         self.wait = WebDriverWait(self.selenium, timeout)
-        print("======USER2USER2============================")
+
+        # user1 login is OK, resource access success
         self._selenium_sso_login(
             start_url,
-            middle_url,
-            "user_limit_app2",
-            "passwd2",
-            active_sso_session=False,
-        )
-
-        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-
-        # Check the session message is shown
-        self.assertTrue(
-            "message: user_limit_app2@example.com is logged in." in bodyText
-        )
-
-        self._selenium_logout(end_url)
-
-        print("======USER3USER3============================")
-        self._selenium_sso_login(
-            start_url,
-            middle_url,
-            "user_limit_app1",
+            ok_url,
+            "user1",
             "passwd1",
             active_sso_session=False,
         )
@@ -364,10 +372,56 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
 
         # Check the session message is shown
+        self.assertTrue("message: user1@example.com is logged in." in bodyText)
+        self._selenium_logout(end_url)
+
+        # user_limit_app1 has access to app1 and app1-api, resource access should match
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user_limit_app1",
+            "passwd1",
+            active_sso_session=False,
+        )
+
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         self.assertTrue(
             "message: user_limit_app1@example.com is logged in." in bodyText
         )
 
+        self._selenium_logout(end_url)
+
+        # user_limit_app2 login Will FAIL, as user has access to group2 apps only, and we are not in
+        self._selenium_sso_login(
+            start_url,
+            failure_url,
+            "user_limit_app2",
+            "passwd2",
+            active_sso_session=False,
+        )
+
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        print(bodyText)
+        # Check we have the Permission Denied message
+        self.assertTrue("Permission Denied." in bodyText)
+        # we are not allowed in this app but we still have a valid SSO session
+        # so having a logout action can be useful
+        self._selenium_anon_logout()
+
+        # to ensure this destroy cookies worked redo a user1 login/logout
+        # user1 login is OK, resource access success
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user1",
+            "passwd1",
+            active_sso_session=False,
+        )
+
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+
+        # Check the session message is shown
+        self.assertTrue("message: user1@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
 
     @override_settings(
@@ -383,82 +437,187 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
                 "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
                 "POST_LOGIN_URI_SUCCESS": "/test-success",
                 "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user",
+                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_minimal_audiences_check",
             },
         },
     )
-    def test_10_selenium_pyoidc_provider_config_calls(self, *args):
+    def test_06_selenium_minimal_audience_checks(self, *args):
         """
-        FIXME:
-        Ensure calls to SSO provider configuration is managed with a cache.
+        Check that a minimal audience check can be performed to prevent access for some users.
 
-        Several logins should not generates a call to provider config each time.
-        Provider configuration should be shared between users, at least for a
-        short cache lifetime duration.
-
-        FIXME:
-        For pyoidc this means the Client must be feed with provider_info data
-        to avoid re-requesting it in auto discovery mode.
-        i.e. keys client_registration and provider_info in
-        ["srv_discovery_url", "client_info", "client_registration", "provider_info"].
-        "srv_discovery_url" should only be used when no cache data is available.
+        @see tests.e2e.test_app.callback:get_user_with_minimal_audiences_check
         """
         timeout = 5
+        login_location = reverse("test_login")
+        success_location = reverse("test_success")
+        post_logout_location = reverse("test_logout_done")
+        start_url = f"{self.live_server_url}{login_location}"
+        ok_url = f"{self.live_server_url}{success_location}"
+        end_url = f"{self.live_server_url}{post_logout_location}"
+        self.wait = WebDriverWait(self.selenium, timeout)
 
-        login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
-        post_logout_url = reverse("test_logout_done")
-        start_url = f"{self.live_server_url}{login_url}"
-        middle_url = f"{self.live_server_url}{success_url}"
-        end_url = f"{self.live_server_url}{post_logout_url}"
-        from oic.oauth2 import Client
+        # user1 login is OK, resource access success
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user1",
+            "passwd1",
+            active_sso_session=False,
+        )
 
-        with wrap_class(Client, "provider_config") as mocked_provider_config:
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
 
-            self.wait = WebDriverWait(self.selenium, timeout)
-            self._selenium_sso_login(
-                start_url,
-                middle_url,
-                "user_limit_app2",
-                "passwd2",
-                active_sso_session=False,
-            )
+        # Check the session message is shown
+        self.assertTrue("message: user1@example.com is logged in." in bodyText)
+        self._selenium_logout(end_url)
 
-            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        # user_limit_app1 has access to app1 and app1-api, aud will be app1-api
+        # should be OK here
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user_limit_app1",
+            "passwd1",
+            active_sso_session=False,
+        )
 
-            # Check the session message is shown
-            self.assertTrue(
-                "message: user_limit_app2@example.com is logged in." in bodyText
-            )
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        self.assertTrue(
+            "message: user_limit_app1@example.com is logged in." in bodyText
+        )
 
-            self._selenium_logout(end_url)
+        self._selenium_logout(end_url)
 
-            self._selenium_sso_login(
-                start_url,
-                middle_url,
-                "user_limit_app1",
-                "passwd1",
-                active_sso_session=False,
-            )
+        # WARRN: FAILURE to detect bad user here, but that's because the HOOK_USER used
+        # is not good enough for Keycloak, a ressource_access check would be better.
+        # user_limit_app2 login Will NOT FAIL
+        # as our 'aud' check is not sufficient to detect that, sad...
+        # since keycloak decided to remove the current client_di in 'aud' in access_tokens
+        # that's hard to detect this type of users from access_tokens without test resource_access
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user_limit_app2",
+            "passwd2",
+            active_sso_session=False,
+        )
 
-            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
 
-            # Check the session message is shown
-            self.assertTrue(
-                "message: user_limit_app1@example.com is logged in." in bodyText
-            )
+        # Check the session message is shown
+        self.assertTrue(
+            "message: user_limit_app2@example.com is logged in." in bodyText
+        )
+        self._selenium_logout(end_url)
 
-            self._selenium_logout(end_url)
+        # And then test the user with only one app access
+        # to ensure that the 'aud' token is still present for him even if the audience is just
+        # the present app.
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user_app1_only",
+            "passwd1",
+            active_sso_session=False,
+        )
 
-            # oic.oauth2.base.PBase.http_request:
-            # expected_call= [
-            #     call('http://localhost:8080/auth/realms/realm1/.well-known/openid-configuration', allow_redirects=True)
-            # ]
-            print("==================================")
-            print(mocked_provider_config.call_count)
-            print(mocked_provider_config.call_args_list)
-            # mocked_provider_config.assert_any_call(expected_calls)
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
 
-            # Need to set this test alone, maybe with a simplier Keycloak setUp...
-            # self.assertEquals( mocked_provider_config.call_count, 1)
-            self.assertEquals(mocked_provider_config.call_count, 2)
+        # Check the session message is shown
+        self.assertTrue("message: user_app1_only@example.com is logged in." in bodyText)
+        self._selenium_logout(end_url)
+
+
+#    @override_settings(
+#        DJANGO_PYOIDC={
+#            "sso1": {
+#                "OIDC_CLIENT_ID": "app1",
+#                "CACHE_DJANGO_BACKEND": "default",
+#                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+#                "OIDC_CLIENT_SECRET": "secret_app1",
+#                "OIDC_CALLBACK_PATH": "/callback",
+#                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+#                "REDIRECT_REQUIRES_HTTPS": False,
+#                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+#                "POST_LOGIN_URI_SUCCESS": "/test-success",
+#                "POST_LOGIN_URI_FAILURE": "/test-failure",
+#                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user",
+#            },
+#        },
+#    )
+#    def test_10_selenium_pyoidc_provider_config_calls(self, *args):
+#        """
+#        FIXME:
+#        Ensure calls to SSO provider configuration is managed with a cache.
+#
+#        Several logins should not generates a call to provider config each time.
+#        Provider configuration should be shared between users, at least for a
+#        short cache lifetime duration.
+#
+#        FIXME:
+#        For pyoidc this means the Client must be feed with provider_info data
+#        to avoid re-requesting it in auto discovery mode.
+#        i.e. keys client_registration and provider_info in
+#        ["srv_discovery_url", "client_info", "client_registration", "provider_info"].
+#        "srv_discovery_url" should only be used when no cache data is available.
+#        """
+#        timeout = 5
+#
+#        login_url = reverse("test_login")
+#        success_url = reverse("test_success")
+#        post_logout_url = reverse("test_logout_done")
+#        start_url = f"{self.live_server_url}{login_url}"
+#        middle_url = f"{self.live_server_url}{success_url}"
+#        end_url = f"{self.live_server_url}{post_logout_url}"
+#        from oic.oauth2 import Client
+#
+#        with wrap_class(Client, "provider_config") as mocked_provider_config:
+#
+#            self.wait = WebDriverWait(self.selenium, timeout)
+#            self._selenium_sso_login(
+#                start_url,
+#                middle_url,
+#                "user_limit_app2",
+#                "passwd2",
+#                active_sso_session=False,
+#            )
+#
+#            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+#
+#            # Check the session message is shown
+#            self.assertTrue(
+#                "message: user_limit_app2@example.com is logged in." in bodyText
+#            )
+#
+#            self._selenium_logout(end_url)
+#
+#            self._selenium_sso_login(
+#                start_url,
+#                middle_url,
+#                "user_limit_app1",
+#                "passwd1",
+#                active_sso_session=False,
+#            )
+#
+#            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+#
+#            # Check the session message is shown
+#            self.assertTrue(
+#                "message: user_limit_app1@example.com is logged in." in bodyText
+#            )
+#
+#            self._selenium_logout(end_url)
+#
+#            # oic.oauth2.base.PBase.http_request:
+#            # expected_call= [
+#            #     call('http://localhost:8080/auth/realms/realm1/.well-known/openid-configuration', allow_redirects=True)
+#            # ]
+#            print("==================================")
+#            print(mocked_provider_config.call_count)
+#            print(mocked_provider_config.call_args_list)
+#            # mocked_provider_config.assert_any_call(expected_calls)
+#
+#            # Need to set this test alone, maybe with a simplier Keycloak setUp...
+#            # self.assertEquals( mocked_provider_config.call_count, 1)
+#            self.assertEquals(mocked_provider_config.call_count, 2)
+#

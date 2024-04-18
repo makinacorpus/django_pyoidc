@@ -210,7 +210,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
         print(" + Create client applications.")
         cls.registerClient("app1", "secret_app1", cls.live_server_url)
         cls.registerClient(
-            "app1-bis", "secret_app1-bis", cls.live_server_url, bearerOnly=True
+            "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
         )
         cls.registerClient("app2-foo", "secret_app2-foo", cls.live_server_url)
         cls.registerClient(
@@ -341,11 +341,11 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/auth/realms/realm1",
             "OIDC_CLIENT_SECRET": "secret_app1",
             "OIDC_CALLBACK_PATH": "/callback",
+            "POST_LOGIN_URI_SUCCESS": "/test-success",
+            "POST_LOGIN_URI_FAILURE": "/test-failure",
             "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
             "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
             "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
-            "POST_LOGIN_URI_SUCCESS": "/test-success",
-            "POST_LOGIN_URI_FAILURE": "/test-failure",
         },
     },
 )
@@ -449,8 +449,11 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
         print(" + Create client applications.")
         app1_id = cls.registerClient("app1", "secret_app1", cls.live_server_url)
-        app1_bis_id = cls.registerClient(
-            "app1-bis", "secret_app1-bis", cls.live_server_url, bearerOnly=True
+        app1_api_id = cls.registerClient(
+            "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
+        )
+        app1_front_id = cls.registerClient(
+            "app1-front", None, cls.live_server_url, bearerOnly=False
         )
         app2_foo_id = cls.registerClient(
             "app2-foo", "secret_app2-foo", cls.live_server_url
@@ -461,14 +464,19 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
         print(" + Create client applications access roles.")
         app1_role = cls.registerClientRole(app1_id, "AccessApp1")
-        app1_bis_role = cls.registerClientRole(app1_bis_id, "AccessApp1Bis")
+        app1_bis_role = cls.registerClientRole(app1_api_id, "AccessApp1API")
+        app1_front_role = cls.registerClientRole(app1_front_id, "AccessApp1Front")
         app2_foo_role = cls.registerClientRole(app2_foo_id, "AccessApp2Foo")
         app2_bar_role = cls.registerClientRole(app2_bar_id, "AccessApp2Bar")
 
         print(" + Create Client Scopes.")
         id_zone_app1 = cls.registerClientScope(
             "zone-app1",
-            [{app1_id: app1_role}, {app1_bis_id: app1_bis_role}],
+            [
+                {app1_id: app1_role},
+                {app1_api_id: app1_bis_role},
+                {app1_front_id: app1_front_role},
+            ],
         )
         id_zone_app2 = cls.registerClientScope(
             "zone-app2",
@@ -480,7 +488,8 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
         print(" + Update applications client scopes")
         cls.addClientScopeForClient(app1_id, id_zone_app1)
-        cls.addClientScopeForClient(app1_bis_id, id_zone_app1)
+        cls.addClientScopeForClient(app1_api_id, id_zone_app1)
+        cls.addClientScopeForClient(app1_front_id, id_zone_app1)
         cls.addClientScopeForClient(app2_foo_id, id_zone_app2)
         cls.addClientScopeForClient(app2_bar_id, id_zone_app2)
 
@@ -489,7 +498,8 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             "App1",
             [
                 {"app1": "AccessApp1"},
-                {"app1-bis": "AccessApp1Bis"},
+                {"app1-api": "AccessApp1API"},
+                {"app1-front": "AccessApp1Front"},
             ],
         )
         gApp2 = cls.registerGroup(
@@ -499,11 +509,18 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
                 {"app2-bar": "AccessApp2Bar"},
             ],
         )
+        gApp1Restricted = cls.registerGroup(
+            "App1Restricted",
+            [
+                {"app1": "AccessApp1"},
+            ],
+        )
         gAppAll = cls.registerGroup(
             "AllApps",
             [
                 {"app1": "AccessApp1"},
-                {"app1-bis": "AccessApp1Bis"},
+                {"app1-api": "AccessApp1API"},
+                {"app1-front": "AccessApp1Front"},
                 {"app2-foo": "AccessApp2Foo"},
                 {"app2-bar": "AccessApp2Bar"},
             ],
@@ -530,6 +547,11 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             groups=[
                 gApp1,
             ],
+        )
+        cls.registerUser(
+            "user_app1_only",
+            "passwd1",
+            groups=[gApp1Restricted],
         )
 
     @classmethod
@@ -608,7 +630,16 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         redirectUris = "[ ]" if bearerOnly else f'[ "{url}/*" ]'
         bBearerOnly = "true" if bearerOnly else "false"
         bStandardFlowEnabled = "false" if bearerOnly else "true"
-
+        if secret is None:
+            public_line = '"publicClient" : true,'
+            secret_line = ""
+            frontch_line = '"frontchannelLogout" : true,'
+        else:
+            public_line = '"publicClient" : false,'
+            frontch_line = '"frontchannelLogout" : false,'
+            secret_line = (
+                f'"clientAuthenticatorType" : "client-secret", "secret" : "{secret}",'
+            )
         output = cls.docker_keycloak_command(
             f"""bin/kcadm.sh create clients -r realm1 -f - << EOF
 {{
@@ -621,8 +652,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
     "surrogateAuthRequired" : false,
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
-    "clientAuthenticatorType" : "client-secret",
-    "secret" : "{secret}",
+    {secret_line}
     "redirectUris" : {redirectUris},
     "webOrigins" : [ "+" ],
     "notBefore" : 0,
@@ -632,8 +662,8 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
     "implicitFlowEnabled" : false,
     "directAccessGrantsEnabled" : false,
     "serviceAccountsEnabled" : false,
-    "publicClient" : false,
-    "frontchannelLogout" : false,
+    {public_line}
+    {frontch_line}
     "protocol" : "openid-connect",
     "attributes" : {{
       "oidc.ciba.grant.enabled" : "false",
