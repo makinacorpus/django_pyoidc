@@ -116,7 +116,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         """
         timeout = 5
         login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
+        success_url = reverse("test_success")
         start_url = f"{self.live_server_url}{login_url}"
         end_url = f"{self.live_server_url}{success_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
@@ -139,7 +139,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         """
         timeout = 5
         login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
+        success_url = reverse("test_success")
         post_logout_url = reverse("test_logout_done")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
@@ -193,7 +193,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
     def test_03_selenium_sso_session_with_callbacks(self, *args):
         timeout = 5
         login_url = reverse("test_login")
-        success_url = reverse("test_sucess")
+        success_url = reverse("test_success")
         post_logout_url = reverse("test_logout_done")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"

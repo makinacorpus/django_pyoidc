@@ -32,7 +32,7 @@ urlpatterns = [
     path(
         "test-success/",
         OIDCTestSuccessView.as_view(op_name="sso1"),
-        name="test_sucess",
+        name="test_success",
     ),
     path(
         "test-logout-done/",
