@@ -1,12 +1,10 @@
 import datetime
-import hashlib
 import logging
 from importlib import import_module
 
 # import oic
 from django.conf import settings
 from django.contrib import auth, messages
-from django.core.cache import caches
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http import HttpResponse
 from django.shortcuts import redirect, resolve_url
@@ -23,7 +21,11 @@ from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 from django_pyoidc import get_user_by_email
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.session import OIDCCacheSessionBackendForDjango
-from django_pyoidc.utils import get_setting_for_sso_op, get_settings_for_sso_op
+from django_pyoidc.utils import (
+    OIDCCacheBackendForDjango,
+    get_setting_for_sso_op,
+    get_settings_for_sso_op,
+)
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -48,7 +50,8 @@ class OIDClient:
     def __init__(self, op_name, session_id=None):
         self._op_name = op_name
 
-        self.cache_backend = OIDCCacheSessionBackendForDjango(self._op_name)
+        self.session_cache_backend = OIDCCacheSessionBackendForDjango(self._op_name)
+        self.general_cache_backend = OIDCCacheBackendForDjango(self._op_name)
 
         consumer_config = {
             # "debug": True,
@@ -61,7 +64,7 @@ class OIDClient:
         }
 
         self.consumer = Consumer(
-            session_db=self.cache_backend,
+            session_db=self.session_cache_backend,
             consumer_config=consumer_config,
             client_config=client_config,
         )
@@ -72,13 +75,22 @@ class OIDClient:
             op_name, "OIDC_PROVIDER_DISCOVERY_URI"
         )
         client_secret = get_setting_for_sso_op(op_name, "OIDC_CLIENT_SECRET")
-        # self.client_extension.provider_config(provider_info_uri)
         self.client_extension.client_secret = client_secret
 
         if session_id:
             self.consumer.restore(session_id)
         else:
-            self.consumer.provider_config(provider_info_uri)
+
+            cache_key = self.general_cache_backend.generate_hashed_cache_key(
+                provider_info_uri
+            )
+            try:
+                config = self.general_cache_backend[cache_key]
+            except KeyError:
+                config = self.consumer.provider_config(provider_info_uri)
+                # shared microcache for provider config
+                # FIXME: Setting for duration
+                self.general_cache_backend.set(cache_key, config, 60)
             self.consumer.client_secret = client_secret
 
 
@@ -367,6 +379,10 @@ class OIDCCallbackView(OIDCView):
 
     http_method_names = ["get"]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
+
     def success_url(self, request):
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
@@ -390,14 +406,12 @@ class OIDCCallbackView(OIDCView):
         # FIXME: in what case could we not have an access token available?
         # should we raise an error then?
         if access_token_jwt is not None:
-            cache = caches[self.get_setting("CACHE_DJANGO_BACKEND")]
-            h = hashlib.new("sha256")
-            h.update(access_token_jwt.encode())
-            cache_key = h.hexdigest()
-
-            access_token_claims = cache.get("cache_key")
-
-            if access_token_claims is None:
+            cache_key = self.general_cache_backend.generate_hashed_cache_key(
+                access_token_jwt
+            )
+            try:
+                access_token_claims = self.general_cache_backend["cache_key"]
+            except KeyError:
                 # CACHE MISS
 
                 # RFC 7662: token introspection: ask SSO to validate and render the jwt as json
@@ -426,7 +440,7 @@ class OIDCCallbackView(OIDCView):
                 print(access_token_expiry)
                 exp = int(access_token_expiry) - int(current)
                 print(exp)
-                cache.set(cache_key, access_token_claims, exp)
+                self.general_cache_backend.set(cache_key, access_token_claims, exp)
         return access_token_claims
 
     def get(self, request, *args, **kwargs):

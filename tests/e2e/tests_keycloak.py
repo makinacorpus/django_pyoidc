@@ -16,8 +16,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from tests.e2e.utils import OIDCE2EKeycloakTestCase
 
-#  , wrap_class
-
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
 
@@ -526,98 +524,3 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # Check the session message is shown
         self.assertTrue("message: user_app1_only@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
-
-
-#    @override_settings(
-#        DJANGO_PYOIDC={
-#            "sso1": {
-#                "OIDC_CLIENT_ID": "app1",
-#                "CACHE_DJANGO_BACKEND": "default",
-#                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-#                "OIDC_CLIENT_SECRET": "secret_app1",
-#                "OIDC_CALLBACK_PATH": "/callback",
-#                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-#                "REDIRECT_REQUIRES_HTTPS": False,
-#                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-#                "POST_LOGIN_URI_SUCCESS": "/test-success",
-#                "POST_LOGIN_URI_FAILURE": "/test-failure",
-#                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user",
-#            },
-#        },
-#    )
-#    def test_10_selenium_pyoidc_provider_config_calls(self, *args):
-#        """
-#        FIXME:
-#        Ensure calls to SSO provider configuration is managed with a cache.
-#
-#        Several logins should not generates a call to provider config each time.
-#        Provider configuration should be shared between users, at least for a
-#        short cache lifetime duration.
-#
-#        FIXME:
-#        For pyoidc this means the Client must be feed with provider_info data
-#        to avoid re-requesting it in auto discovery mode.
-#        i.e. keys client_registration and provider_info in
-#        ["srv_discovery_url", "client_info", "client_registration", "provider_info"].
-#        "srv_discovery_url" should only be used when no cache data is available.
-#        """
-#        timeout = 5
-#
-#        login_url = reverse("test_login")
-#        success_url = reverse("test_success")
-#        post_logout_url = reverse("test_logout_done")
-#        start_url = f"{self.live_server_url}{login_url}"
-#        middle_url = f"{self.live_server_url}{success_url}"
-#        end_url = f"{self.live_server_url}{post_logout_url}"
-#        from oic.oauth2 import Client
-#
-#        with wrap_class(Client, "provider_config") as mocked_provider_config:
-#
-#            self.wait = WebDriverWait(self.selenium, timeout)
-#            self._selenium_sso_login(
-#                start_url,
-#                middle_url,
-#                "user_limit_app2",
-#                "passwd2",
-#                active_sso_session=False,
-#            )
-#
-#            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-#
-#            # Check the session message is shown
-#            self.assertTrue(
-#                "message: user_limit_app2@example.com is logged in." in bodyText
-#            )
-#
-#            self._selenium_logout(end_url)
-#
-#            self._selenium_sso_login(
-#                start_url,
-#                middle_url,
-#                "user_limit_app1",
-#                "passwd1",
-#                active_sso_session=False,
-#            )
-#
-#            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-#
-#            # Check the session message is shown
-#            self.assertTrue(
-#                "message: user_limit_app1@example.com is logged in." in bodyText
-#            )
-#
-#            self._selenium_logout(end_url)
-#
-#            # oic.oauth2.base.PBase.http_request:
-#            # expected_call= [
-#            #     call('http://localhost:8080/auth/realms/realm1/.well-known/openid-configuration', allow_redirects=True)
-#            # ]
-#            print("==================================")
-#            print(mocked_provider_config.call_count)
-#            print(mocked_provider_config.call_args_list)
-#            # mocked_provider_config.assert_any_call(expected_calls)
-#
-#            # Need to set this test alone, maybe with a simplier Keycloak setUp...
-#            # self.assertEquals( mocked_provider_config.call_count, 1)
-#            self.assertEquals(mocked_provider_config.call_count, 2)
-#
