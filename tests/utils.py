@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 @override_settings(
     DJANGO_PYOIDC={
         "sso1": {
+            "OIDC_CACHE_PROVIDER_METADATA": False,
             "OIDC_CLIENT_ID": "1",
             "CACHE_DJANGO_BACKEND": "default",
             "OIDC_PROVIDER_DISCOVERY_URI": "",
@@ -20,9 +21,24 @@ logger = logging.getLogger(__name__)
             "POST_LOGIN_URI_FAILURE": "/logout_failure",
         },
         "sso2": {
+            "OIDC_CACHE_PROVIDER_METADATA": False,
             "OIDC_CLIENT_ID": "2",
             "CACHE_DJANGO_BACKEND": "default",
             "OIDC_PROVIDER_DISCOVERY_URI": "",
+            "OIDC_CLIENT_SECRET": "",
+        },
+        "sso3": {
+            "OIDC_CACHE_PROVIDER_METADATA": True,
+            "OIDC_CLIENT_ID": "3",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://sso3/uri",
+            "OIDC_CLIENT_SECRET": "",
+        },
+        "sso4": {
+            "OIDC_CACHE_PROVIDER_METADATA": True,
+            "OIDC_CLIENT_ID": "4",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://sso4/uri",
             "OIDC_CLIENT_SECRET": "",
         },
     }
