@@ -10,6 +10,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "django.contrib.sessions",
+    "rest_framework",
     "tests.e2e.test_app",
     "django_pyoidc",
 ]
@@ -61,11 +62,24 @@ DJANGO_PYOIDC = {
         "POST_LOGIN_URI_SUCCESS": "http://oidc.test/",
         "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
         "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
-        "SCOPE": "full-dedicated",
         "CACHE_DJANGO_BACKEND": "default",
-    }
+    },
+    "test-api": {
+        "OIDC_CLIENT_SECRET": "AbzehoOpdl8794Kwsbvhsz965sssmmqkQ",
+        "OIDC_CLIENT_ID": "api",
+        "OIDC_PROVIDER_DISCOVERY_URI": "http://oidc.test/auth/realms/Demo",
+        "CACHE_DJANGO_BACKEND": "default",
+    },
 }
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "django_pyoidc.drf.authentication.OIDCBearerAuthentication",
+    ],
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.DjangoModelPermissions"],
+}
 
 ROOT_URLCONF = "tests.e2e.urls"
 

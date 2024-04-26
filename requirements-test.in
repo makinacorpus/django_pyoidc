@@ -7,3 +7,4 @@ sphinx-autobuild
 isort
 pre-commit
 selenium
+djangorestframework>=3.15
