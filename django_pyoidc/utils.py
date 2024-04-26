@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from importlib import import_module
 from typing import Dict, Union
 
 from django.conf import settings
@@ -17,6 +18,16 @@ def get_setting_for_sso_op(op_name: str, key: str, default=None):
 
 def get_settings_for_sso_op(op_name: str):
     return settings.DJANGO_PYOIDC[op_name]
+
+
+def import_object(path, def_name):
+    try:
+        mod, cls = path.split(":", 1)
+    except ValueError:
+        mod = path
+        cls = def_name
+
+    return getattr(import_module(mod), cls)
 
 
 class OIDCCacheBackendForDjango:

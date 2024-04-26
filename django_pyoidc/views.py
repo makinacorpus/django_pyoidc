@@ -1,4 +1,3 @@
-import datetime
 import logging
 from importlib import import_module
 
@@ -18,13 +17,13 @@ from oic.extension.client import Client as ClientExtension
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
-from django_pyoidc import get_user_by_email
+from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.session import OIDCCacheSessionBackendForDjango
 from django_pyoidc.utils import (
     OIDCCacheBackendForDjango,
     get_setting_for_sso_op,
-    get_settings_for_sso_op,
+    import_object,
 )
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
@@ -34,16 +33,6 @@ logger = logging.getLogger(__name__)
 
 class InvalidSIDException(Exception):
     pass
-
-
-def _import_object(path, def_name):
-    try:
-        mod, cls = path.split(":", 1)
-    except ValueError:
-        mod = path
-        cls = def_name
-
-    return getattr(import_module(mod), cls)
 
 
 class OIDClient:
@@ -111,17 +100,8 @@ class OIDCView(View, OIDCMixin):
     def call_function(self, setting_name, *args, **kwargs):
         function_path = get_setting_for_sso_op(self.op_name, setting_name)
         if function_path:
-            func = _import_object(function_path, "")
+            func = import_object(function_path, "")
             return func(*args, **kwargs)
-
-    def call_get_user_function(self, tokens={}):
-        if "HOOK_GET_USER" in get_settings_for_sso_op(self.op_name):
-            logger.debug("OIDC, Calling user hook on get_user")
-            return self.call_function("HOOK_GET_USER", tokens)
-        else:
-            return get_user_by_email(
-                tokens["info_token_claims"], tokens["id_token_claims"]
-            )
 
     def call_callback_function(self, request, user):
         logger.debug("OIDC, Calling user hook on login")
@@ -385,7 +365,7 @@ class OIDCCallbackView(OIDCView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
+        self.engine = OIDCEngine(self.op_name)
 
     def success_url(self, request):
         # Pull the next url from the session or settings --we don't need to
@@ -408,48 +388,7 @@ class OIDCCallbackView(OIDCView):
         """
         Perform a cached intropesction call to extract claims from encoded jwt of the access_token
         """
-        # FIXME: allow a non-cached mode by global settings
-        access_token_claims = None
-
-        # FIXME: in what case could we not have an access token available?
-        # should we raise an error then?
-        if access_token_jwt is not None:
-            cache_key = self.general_cache_backend.generate_hashed_cache_key(
-                access_token_jwt
-            )
-            try:
-                access_token_claims = self.general_cache_backend["cache_key"]
-            except KeyError:
-                # CACHE MISS
-
-                # RFC 7662: token introspection: ask SSO to validate and render the jwt as json
-                # this means a slow web call
-                request_args = {
-                    "token": access_token_jwt,
-                    "token_type_hint": "access_token",
-                }
-                client_auth_method = self.client.consumer.registration_response.get(
-                    "introspection_endpoint_auth_method", "client_secret_basic"
-                )
-                introspection = self.client.client_extension.do_token_introspection(
-                    request_args=request_args,
-                    authn_method=client_auth_method,
-                    endpoint=self.client.consumer.introspection_endpoint,
-                )
-                access_token_claims = introspection.to_dict()
-
-                # store it in cache
-                current = datetime.datetime.now().strftime("%s")
-                if "exp" not in access_token_claims:
-                    raise RuntimeError("No expiry set on the access token.")
-                access_token_expiry = access_token_claims["exp"]
-                print("**********************")
-                print(current)
-                print(access_token_expiry)
-                exp = int(access_token_expiry) - int(current)
-                print(exp)
-                self.general_cache_backend.set(cache_key, access_token_claims, exp)
-        return access_token_claims
+        return
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
@@ -495,8 +434,8 @@ class OIDCCallbackView(OIDCView):
                         tokens["access_token"] if "access_token" in tokens else None
                     )
 
-                    access_token_claims = self._introspect_access_token(
-                        access_token_jwt
+                    access_token_claims = self.engine.introspect_access_token(
+                        access_token_jwt, self.client
                     )
 
                     id_token_claims = (
@@ -508,7 +447,7 @@ class OIDCCallbackView(OIDCView):
                     userinfo_claims = userinfo.to_dict()
 
                     # Call user hook
-                    user = self.call_get_user_function(
+                    user = self.engine.call_get_user_function(
                         tokens={
                             "info_token_claims": userinfo_claims,
                             "access_token_jwt": access_token_jwt,
