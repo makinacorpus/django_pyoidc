@@ -13,18 +13,11 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwt import JWT
 from jwt.exceptions import JWTDecodeError
-from oic.extension.client import Client as ClientExtension
-from oic.oic.consumer import Consumer
-from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.session import OIDCCacheSessionBackendForDjango
-from django_pyoidc.utils import (
-    OIDCCacheBackendForDjango,
-    get_setting_for_sso_op,
-    import_object,
-)
+from django_pyoidc.utils import get_setting_for_sso_op, import_object
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -33,54 +26,6 @@ logger = logging.getLogger(__name__)
 
 class InvalidSIDException(Exception):
     pass
-
-
-class OIDClient:
-    def __init__(self, op_name, session_id=None):
-        self._op_name = op_name
-
-        self.session_cache_backend = OIDCCacheSessionBackendForDjango(self._op_name)
-        self.general_cache_backend = OIDCCacheBackendForDjango(self._op_name)
-
-        consumer_config = {
-            # "debug": True,
-            "response_type": "code"
-        }
-
-        client_config = {
-            "client_id": get_setting_for_sso_op(op_name, "OIDC_CLIENT_ID"),
-            "client_authn_method": CLIENT_AUTHN_METHOD,
-        }
-
-        self.consumer = Consumer(
-            session_db=self.session_cache_backend,
-            consumer_config=consumer_config,
-            client_config=client_config,
-        )
-        # used in token introspection
-        self.client_extension = ClientExtension(**client_config)
-
-        provider_info_uri = get_setting_for_sso_op(
-            op_name, "OIDC_PROVIDER_DISCOVERY_URI"
-        )
-        client_secret = get_setting_for_sso_op(op_name, "OIDC_CLIENT_SECRET")
-        self.client_extension.client_secret = client_secret
-
-        if session_id:
-            self.consumer.restore(session_id)
-        else:
-
-            cache_key = self.general_cache_backend.generate_hashed_cache_key(
-                provider_info_uri
-            )
-            try:
-                config = self.general_cache_backend[cache_key]
-            except KeyError:
-                config = self.consumer.provider_config(provider_info_uri)
-                # shared microcache for provider config
-                # FIXME: Setting for duration
-                self.general_cache_backend.set(cache_key, config, 60)
-            self.consumer.client_secret = client_secret
 
 
 class OIDCMixin:
@@ -159,9 +104,9 @@ class OIDCLoginView(OIDCView):
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
 
-        client = OIDClient(self.op_name)
-        client.consumer.consumer_config["authz_page"] = str(
-            self.get_setting("OIDC_CALLBACK_PATH")
+        client = OIDCClient(self.op_name)
+        client.consumer.consumer_config["authz_page"] = self.get_setting(
+            "OIDC_CALLBACK_PATH"
         )
         redirect_uri = self.get_next_url(request, "next")
 
@@ -244,7 +189,7 @@ class OIDCLogoutView(OIDCView):
 
         if sid:
             try:
-                client = OIDClient(self.op_name, session_id=sid)
+                client = OIDCClient(self.op_name, session_id=sid)
             except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
                 logger.error("OIDC Logout call error when loading OIDC state: ")
                 logger.exception(e)
@@ -296,7 +241,7 @@ class OIDCBackChannelLogoutView(OIDCView):
 
     http_method_names = ["post"]
 
-    def logout_sessions_by_sid(self, client: OIDClient, sid: str, body):
+    def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body):
         validated_sid = client.consumer.backchannel_logout(
             request_args={"logout_token": body}
         )
@@ -306,7 +251,7 @@ class OIDCBackChannelLogoutView(OIDCView):
         for session in sessions:
             self._logout_session(session)
 
-    def logout_sessions_by_sub(self, client: OIDClient, sub: str, body):
+    def logout_sessions_by_sub(self, client: OIDCClient, sub: str, body):
         sessions = OIDCSession.objects.filter(sub=sub)
         for session in sessions:
             client.consumer.backchannel_logout(request_args={"logout_token": body})
@@ -330,10 +275,10 @@ class OIDCBackChannelLogoutView(OIDCView):
             sub = decoded.get("sub")
             if sub:
                 # Authorization server wants to kill all sessions
-                client = OIDClient(self.op_name)
+                client = OIDCClient(self.op_name)
                 self.logout_sessions_by_sub(client, sub, body)
             elif sid:
-                client = OIDClient(self.op_name, session_id=sid)
+                client = OIDCClient(self.op_name, session_id=sid)
                 try:
                     self.logout_sessions_by_sid(client, sid, body)
                 except InvalidSIDException as e:
@@ -394,7 +339,7 @@ class OIDCCallbackView(OIDCView):
         super().get(request, *args, **kwargs)
         try:
             if "oidc_sid" in request.session:
-                self.client = OIDClient(
+                self.client = OIDCClient(
                     self.op_name, session_id=request.session["oidc_sid"]
                 )
 

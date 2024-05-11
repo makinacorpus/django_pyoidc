@@ -2,12 +2,12 @@ import datetime
 import logging
 
 from django_pyoidc import get_user_by_email
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.utils import (
     OIDCCacheBackendForDjango,
     get_setting_for_sso_op,
     import_object,
 )
-from django_pyoidc.views import OIDClient
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class OIDCEngine:
         else:
             return get_user_by_email(tokens)
 
-    def introspect_access_token(self, access_token_jwt: str, client: OIDClient):
+    def introspect_access_token(self, access_token_jwt: str, client: OIDCClient):
         """
         Perform a cached intropesction call to extract claims from encoded jwt of the access_token
         """

@@ -9,8 +9,8 @@ from jwt import JWT, jwk_from_dict
 from oic.oic import IdToken
 from oic.oic.message import OpenIDSchema
 
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.views import OIDClient
 from tests.utils import OIDCTestCase
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
@@ -123,7 +123,7 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertEqual(response.status_code, 302)
         sid = self.client.session["oidc_sid"]
         self.assertIsNotNone(sid)
-        client = OIDClient(op_name="sso1", session_id=sid)
+        client = OIDCClient(op_name="sso1", session_id=sid)
         self.assertEqual(client.consumer.client_id, "1")
 
 

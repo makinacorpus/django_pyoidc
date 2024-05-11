@@ -3,9 +3,9 @@ import logging
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication
 
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.utils import OIDCCacheBackendForDjango, get_setting_for_sso_op
-from django_pyoidc.views import OIDClient
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
         # may let us know if any client in the list would be better suited
         self.op_name = "test-api"
         self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
-        self.client = OIDClient(self.op_name)
+        self.client = OIDCClient(self.op_name)
         self.engine = OIDCEngine(self.op_name)
 
     def extract_access_token(self, request) -> str:

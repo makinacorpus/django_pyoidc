@@ -1,8 +1,8 @@
 from unittest import mock
 from unittest.mock import call
 
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.utils import OIDCCacheBackendForDjango
-from django_pyoidc.views import OIDClient
 from tests.utils import OIDCTestCase
 
 
@@ -12,8 +12,8 @@ class SessionTestCase(OIDCTestCase):
         """
         Test that different SSO providers using same SID do not conflict
         """
-        sso1 = OIDClient(op_name="sso1")
-        sso2 = OIDClient(op_name="sso2")
+        sso1 = OIDCClient(op_name="sso1")
+        sso2 = OIDCClient(op_name="sso2")
 
         mocked_provider_config.assert_has_calls([call(""), call("")])
         assert 2 == mocked_provider_config.call_count
@@ -25,10 +25,10 @@ class SessionTestCase(OIDCTestCase):
         mocked_provider_config.assert_has_calls([call(""), call("")])
         assert 2 == mocked_provider_config.call_count
 
-        client1 = OIDClient(op_name="sso1", session_id="1234")
+        client1 = OIDCClient(op_name="sso1", session_id="1234")
         self.assertEqual(client1.consumer.client_id, "1")
 
-        client2 = OIDClient(op_name="sso2", session_id="1234")
+        client2 = OIDCClient(op_name="sso2", session_id="1234")
 
         # no more calls
         mocked_provider_config.assert_has_calls([call(""), call("")])
@@ -51,11 +51,11 @@ class SessionTestCase(OIDCTestCase):
         cache1.clear()
         cache2.clear()
 
-        sso1 = OIDClient(op_name="sso3")
+        sso1 = OIDCClient(op_name="sso3")
         mocked_provider_config.assert_has_calls([call("http://sso3/uri")])
         assert 1 == mocked_provider_config.call_count
 
-        sso2 = OIDClient(op_name="sso4")
+        sso2 = OIDCClient(op_name="sso4")
         mocked_provider_config.assert_has_calls(
             [call("http://sso3/uri"), call("http://sso4/uri")]
         )
@@ -64,10 +64,10 @@ class SessionTestCase(OIDCTestCase):
         sso1.consumer._backup(sid="1234")
         sso2.consumer._backup(sid="1234")
 
-        client1 = OIDClient(op_name="sso3", session_id="1234")
+        client1 = OIDCClient(op_name="sso3", session_id="1234")
         self.assertEqual(client1.consumer.client_id, "3")
 
-        client2 = OIDClient(op_name="sso4", session_id="1234")
+        client2 = OIDCClient(op_name="sso4", session_id="1234")
         self.assertEqual(client2.consumer.client_id, "4")
 
         mocked_provider_config.assert_has_calls(
