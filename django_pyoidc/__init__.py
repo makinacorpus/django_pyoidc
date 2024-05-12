@@ -14,9 +14,7 @@ def get_user_by_email(tokens: Dict):
     elif "id_token_claims" in tokens and "email" in tokens["id_token_claims"]:
         email = tokens["id_token_claims"]["email"]
     elif "access_token_claims" and "email" in tokens["access_token_claims"]:
-        email = tokens["info_token_claims"]["email"]
-    else:
-        email = tokens["info_token_claims"]["email"]
+        email = tokens["access_token_claims"]["email"]
 
     if (
         "id_token_claims" in tokens
@@ -32,7 +30,7 @@ def get_user_by_email(tokens: Dict):
         "access_token_claims" in tokens
         and "preferred_username" in tokens["access_token_claims"]
     ):
-        username = tokens["info_token_claims"]["preferred_username"]
+        username = tokens["access_token_claims"]["preferred_username"]
     else:
         username = email
 

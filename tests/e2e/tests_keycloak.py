@@ -1,5 +1,6 @@
 import http.client as http_client
 import logging
+import time
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -10,11 +11,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
-
-# from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import WebDriverWait
 
 from tests.e2e.utils import OIDCE2EKeycloakTestCase
+
+logger = logging.getLogger(__name__)
+
 
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
@@ -77,6 +79,31 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertEqual(qs["scope"][0], "openid")
         self.assertTrue(qs["state"][0])
         self.assertTrue(qs["nonce"][0])
+
+    def _selenium_front_sso_login(self, user, password):
+        front_url = "http://localhost:9999"
+        self.selenium.get(front_url)
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "loginBtn"))
+        ).click()
+        # self.selenium.find_element(By.ID, "loginBtn").click()
+        self.wait.until(EC.url_changes(front_url))
+        username_input = self.selenium.find_element(By.NAME, "username")
+        username_input.send_keys(user)
+        password_input = self.selenium.find_element(By.NAME, "password")
+        password_input.send_keys(password)
+        self.selenium.find_element(By.ID, "kc-login").click()
+        self.wait.until(EC.url_matches(front_url))
+
+    def _selenium_front_logout(self):
+        front_url = "http://localhost:9999"
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "logoutBtn"))
+        ).click()
+        self.wait.until(EC.url_matches(front_url))
+        bodyText = self.selenium.find_element(By.ID, "message").text
+        # check we are NOT logged in
+        self.assertEqual("", bodyText)
 
     def _selenium_sso_login(
         self,
@@ -524,3 +551,41 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # Check the session message is shown
         self.assertTrue("message: user_app1_only@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
+
+    def test_101_selenium_front_app_api_call(self, *args):
+        """
+        Check that a test front app can make an OIDC API call.
+        """
+        timeout = 60
+        self.wait = WebDriverWait(self.selenium, timeout)
+
+        # user1 login is OK, resource access success
+        self._selenium_front_sso_login("user1", "passwd1")
+        # let the page reloads after login fill the user session stuff
+        time.sleep(3)
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
+            "innerHTML"
+        )
+        self.assertTrue("User: user1" in bodyText)
+
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "securedBtn"))
+        ).click()
+
+        # let the ajax stuff behave
+        time.sleep(3)
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
+            "innerHTML"
+        )
+        # logger.error(bodyText)
+        self.assertTrue("user1@example.com" in bodyText)
+
+        # FIXME: there a selenium issue in the logout btn selection...
+        #  self._selenium_front_logout()
+        #
+        #  # After logout, launch unauthorized ajax call
+        #  WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "securedBtn"))).click()
+        #  # let the ajax stuff behave
+        #  time.sleep(3)
+        #  bodyText = self.selenium.find_element(By.ID, "message").get_attribute('innerHTML')
+        #  self.assertTrue("Request Forbidden" in bodyText)

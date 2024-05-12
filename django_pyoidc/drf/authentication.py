@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication
 
@@ -13,16 +14,34 @@ logger = logging.getLogger(__name__)
 class OIDCBearerAuthentication(BaseAuthentication):
     def __init__(self, *args, **kwargs):
         super(OIDCBearerAuthentication, self).__init__(*args, **kwargs)
-        # FIXME: OUCH!
-        # FIXME: need to handle potential multiple SSO-oidc configs available
-        # for DRF integration, maybe a list of 'drf-enabled' sso op_names
-        # giving a list of of clients, and then trying to validate the token on each one
-        # note, that extracting minimal infos from the jwt may reveal the 'iss' key which
-        # may let us know if any client in the list would be better suited
-        self.op_name = "test-api"
+        self.op_name = self.extract_drf_opname()
         self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
         self.client = OIDCClient(self.op_name)
         self.engine = OIDCEngine(self.op_name)
+
+    def extract_drf_opname(self):
+        """
+        Given a list of opnames and setting in DJANGO_PYOIDC conf, extract the one having USED_BY_REST_FRAMEWORK=True.
+        """
+        op = None
+        found = False
+        for op_name, configs in settings.DJANGO_PYOIDC.items():
+            if (
+                "USED_BY_REST_FRAMEWORK" in configs
+                and configs["USED_BY_REST_FRAMEWORK"]
+            ):
+                if found:
+                    raise RuntimeError(
+                        "Several DJANGO_PYOIDC sections are declared as USED_BY_REST_FRAMEWORK, only one should be used."
+                    )
+                found = True
+                op = op_name
+        if found:
+            return op
+        else:
+            raise RuntimeError(
+                "No DJANGO_PYOIDC sections are declared with USED_BY_REST_FRAMEWORK configuration option."
+            )
 
     def extract_access_token(self, request) -> str:
         val = request.headers.get("Authorization")

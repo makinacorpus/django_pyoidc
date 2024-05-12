@@ -66,5 +66,5 @@ urlpatterns = [
         OIDCTestFailureView.as_view(op_name="sso1"),
         name="test_failure",
     ),
-    path("api", include(apirouter.urls)),
+    path("api/", include(apirouter.urls)),
 ]

@@ -11,6 +11,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     "rest_framework",
+    "corsheaders",
     "tests.e2e.test_app",
     "django_pyoidc",
 ]
@@ -19,8 +20,10 @@ ALLOWED_HOSTS = ["test.django-pyoidc.notatld"]
 
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
 ]
 
 TEMPLATES = [
@@ -51,26 +54,10 @@ DATABASES = {
         "PORT": config("POSTGRES_PORT", default=5432),
     }
 }
-DJANGO_PYOIDC = {
-    "test": {
-        "OIDC_CALLBACK_PATH": "/callback",
-        "OIDC_CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
-        "OIDC_CLIENT_ID": "full",
-        "OIDC_PROVIDER_DISCOVERY_URI": "http://oidc.test/auth/realms/Demo",
-        "POST_LOGIN_URI_FAILURE": "http://oidc.test/",
-        "POST_LOGOUT_REDIRECT_URI": "http://oidc.test/",
-        "POST_LOGIN_URI_SUCCESS": "http://oidc.test/",
-        "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
-        "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
-        "CACHE_DJANGO_BACKEND": "default",
-    },
-    "test-api": {
-        "OIDC_CLIENT_SECRET": "AbzehoOpdl8794Kwsbvhsz965sssmmqkQ",
-        "OIDC_CLIENT_ID": "api",
-        "OIDC_PROVIDER_DISCOVERY_URI": "http://oidc.test/auth/realms/Demo",
-        "CACHE_DJANGO_BACKEND": "default",
-    },
-}
+
+# DJANGO_PYOIDC settings are defined in tests overrides
+# we keep this one very short.
+DJANGO_PYOIDC = {}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -80,6 +67,10 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.DjangoModelPermissions"],
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:9999",
+]
 
 ROOT_URLCONF = "tests.e2e.urls"
 

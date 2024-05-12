@@ -7,7 +7,7 @@ from tests.utils import OIDCTestCase
 
 
 class SessionTestCase(OIDCTestCase):
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_session_isolation_between_providers(self, mocked_provider_config):
         """
         Test that different SSO providers using same SID do not conflict
@@ -37,7 +37,7 @@ class SessionTestCase(OIDCTestCase):
         self.assertEqual(client2.consumer.client_id, "2")
 
     @mock.patch(
-        "django_pyoidc.views.Consumer.provider_config",
+        "django_pyoidc.client.Consumer.provider_config",
         return_value=('[{"foo": "bar"}]'),
     )
     def test_session_isolation_between_providers_cached(self, mocked_provider_config):

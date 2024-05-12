@@ -316,6 +316,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
     STATIC_URL="/static",
     MIDDLEWARE=[
         "django.contrib.sessions.middleware.SessionMiddleware",
+        "corsheaders.middleware.CorsMiddleware",
         "django.middleware.common.CommonMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
@@ -346,6 +347,13 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
             "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
             "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
+        },
+        "apisso": {
+            "OIDC_CLIENT_ID": "app1-api",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+            "OIDC_CLIENT_SECRET": "secret_app1-api",
+            "USED_BY_REST_FRAMEWORK": True,
         },
     },
 )
@@ -386,6 +394,31 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             )
             cls.docker_id = res.stdout.partition("\n")[0]
             print(cls.docker_id)
+
+            cls.docker_front_workdir = f"{cls.workdir}/tests/e2e/front_test_app"
+            os.chdir(cls.docker_front_workdir)
+            print("Building front docker image...")
+            subprocess.run(
+                [
+                    "docker",
+                    "build",
+                    "-f",
+                    "Dockerfile",
+                    "-t",
+                    "oidc-test-front-image",
+                    ".",
+                ]
+            )
+            command = (
+                "docker run"
+                " --detach --rm -it"
+                " -p 9999:9999"
+                f" -e KEYCLOAK_URL=http://localhost:8080/auth -e BACKEND_URL={cls.live_server_url}"
+                " oidc-test-front-image"
+            )
+            subprocess.run(
+                command, shell=True, text=True, check=True, capture_output=True
+            )
         except subprocess.CalledProcessError as e:
             print(
                 f"Error while launching keycloak docker container. errcode: {e.returncode}."
@@ -398,10 +431,13 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
                 print(" +----------\  /--------------------------+ ")  # noqa
                 print(" +-----------\/---------------------------+ ")  # noqa
                 print(
-                    "   + Try removing any previous Keycloak image running using this command:"
+                    "   + Try removing any previous Keycloak and front images running using these commands:"
                 )
                 print(
                     '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-keycloak-image --format="{{.ID}}")'
+                )
+                print(
+                    '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-front-image --format="{{.ID}}")'
                 )
                 print("   + Check also you have no service running on localhost:8080.")
                 print(" +---------------------------------------+ ")
@@ -453,7 +489,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
         )
         app1_front_id = cls.registerClient(
-            "app1-front", None, cls.live_server_url, bearerOnly=False
+            "app1-front", None, "http://localhost:9999", bearerOnly=False
         )
         app2_foo_id = cls.registerClient(
             "app2-foo", "secret_app2-foo", cls.live_server_url
@@ -584,7 +620,20 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             print(f"Error stopping keycloak container: {e.returncode}.")
             print(e.stderr)
         finally:
-            os.chdir(cls.workdir)
+            os.chdir(cls.docker_front_workdir)
+            print("Removing front docker image...")
+            try:
+                cmd = (
+                    "docker stop $("
+                    'docker ps -a -q --filter ancestor=oidc-test-front-image --format="{{.ID}}"'
+                    ")"
+                )
+                subprocess.run(cmd, shell=True, text=True, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Error stopping front container: {e.returncode}.")
+                print(e.stderr)
+            finally:
+                os.chdir(cls.workdir)
 
     @classmethod
     def docker_keycloak_command(cls, command: str):
