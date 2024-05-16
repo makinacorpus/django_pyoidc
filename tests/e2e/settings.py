@@ -10,7 +10,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "django.contrib.sessions",
-    "tests_e2e.test_app",
+    "tests.e2e.test_app",
     "django_pyoidc",
 ]
 
@@ -56,10 +56,10 @@ DJANGO_PYOIDC = {
         "OIDC_CLIENT_SECRET": "EnSAdFDlM78HejQ5EQATtlvXgRzfNww4",
         "OIDC_CLIENT_ID": "full",
         "OIDC_PROVIDER_DISCOVERY_URI": "http://oidc.test/auth/realms/Demo",
-        "REDIRECT_FAILURE_URI": "http://oidc.test/",
-        "REDIRECT_LOGOUT_URI": "http://oidc.test/",
-        "REDIRECT_SUCCESS_DEFAULT_URI": "http://oidc.test/",
-        "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
+        "POST_LOGIN_URI_FAILURE": "http://oidc.test/",
+        "POST_LOGOUT_REDIRECT_URI": "http://oidc.test/",
+        "POST_LOGIN_URI_SUCCESS": "http://oidc.test/",
+        "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
         "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["oidc.test"],
         "SCOPE": "full-dedicated",
         "CACHE_DJANGO_BACKEND": "default",
@@ -67,7 +67,7 @@ DJANGO_PYOIDC = {
 }
 
 
-ROOT_URLCONF = "tests_e2e.urls"
+ROOT_URLCONF = "tests.e2e.urls"
 
 CACHES = {
     "default": {

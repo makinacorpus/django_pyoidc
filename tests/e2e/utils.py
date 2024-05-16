@@ -17,30 +17,6 @@ class NotReadyException(Exception):
     pass
 
 
-@override_settings(
-    ALLOWED_HOSTS=["testserver"],
-    STATIC_URL="/static",
-    MIDDLEWARE=[
-        "django.contrib.sessions.middleware.SessionMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.contrib.messages.middleware.MessageMiddleware",
-    ],
-    DJANGO_PYOIDC={
-        "sso1": {
-            "OIDC_CLIENT_ID": "app1",
-            "CACHE_DJANGO_BACKEND": "default",
-            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-            "OIDC_CLIENT_SECRET": "secret_app1",
-            "OIDC_CALLBACK_PATH": "/callback",
-            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-            "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": False,
-            "POST_LOGIN_URI_SUCCESS_DEFAULT": "/test-success",
-            "POST_LOGIN_URI_FAILURE": "/test-failure",
-        },
-    },
-)
 class OIDCE2ETestCase(LiveServerTestCase):
 
     docker_id = None
@@ -58,19 +34,345 @@ class OIDCE2ETestCase(LiveServerTestCase):
 
     server_thread_class = VerboseLiveServerThread
 
+
+@override_settings(
+    ALLOWED_HOSTS=["testserver"],
+    STATIC_URL="/static",
+    MIDDLEWARE=[
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.middleware.common.CommonMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+    ],
+    DJANGO_PYOIDC={
+        "sso1": {
+            "OIDC_CLIENT_ID": "app1",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/",
+            "OIDC_CLIENT_SECRET": "secret_app1",
+            "OIDC_CALLBACK_PATH": "/callback",
+            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
+            "POST_LOGIN_URI_SUCCESS": "/test-success",
+            "POST_LOGIN_URI_FAILURE": "/test-failure",
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT": {"confirm": 1},
+        },
+    },
+)
+class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
     @classmethod
     def setUpClass(cls):
-        print(" *** Live Server Test Case Setup ***")
+        print(" *** Live Server Test Case Setup (LemonLdap::Ng) ***")
         super().setUpClass()
 
         cls.workdir = os.getcwd()
         print(f"Current workdir: {cls.workdir} ...")
-        cls.docker_workdir = f"{cls.workdir}/tests_e2e/docker"
+        cls.docker_workdir = f"{cls.workdir}/tests/e2e/docker"
+        os.chdir(cls.docker_workdir)
+        cls.docker_id = None
+        try:
+            print("Building LemonLdap docker image...")
+            subprocess.run(
+                [
+                    "docker",
+                    "buildx",
+                    "build",
+                    "-f",
+                    "Dockerfile-lemonldap",
+                    "-t",
+                    "oidc-test-lemonldap-image",
+                    ".",
+                ]
+            )
+            print("Running LemonLdap docker image...")
+            command = (
+                "docker run"
+                " --detach --rm -it"
+                " -p 8070:8070"
+                " -p 8071:8071"
+                " -p 8072:8072"
+                " -p 8073:8073"
+                " -p 8999:9000"
+                " -e SSODOMAIN=localhost"
+                " -e LOGLEVEL=debug"
+                " -e PORTAL_HOSTNAME=localhost:8070"
+                " -e MANAGER_HOSTNAME=localhost:8071"
+                " -e HANDLER_HOSTNAME=localhost:8072"
+                " -e TEST1_HOSTNAME=localhost:8073"
+                " -e TEST2_HOSTNAME=localhost.localdomain:8073"
+                " oidc-test-lemonldap-image"
+            )
+            res = subprocess.run(
+                command, shell=True, text=True, check=True, capture_output=True
+            )
+            cls.docker_id = res.stdout.partition("\n")[0]
+            print(cls.docker_id)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"Error while launching LemonLdap docker container. errcode: {e.returncode}."
+            )
+            print(e.stderr)
+            if e.returncode == 125:
+                print(" +----------|  |--------------------------+ ")
+                print(" +---------_|  |_-------------------------+ ")
+                print(" +---------\    /-------------------------+ ")  # noqa
+                print(" +----------\  /--------------------------+ ")  # noqa
+                print(" +-----------\/---------------------------+ ")  # noqa
+                print(
+                    "   + Try removing any previous LemonLdap image running using this command:"
+                )
+                print(
+                    '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-lemonldap-image --format="{{.ID}}")'
+                )
+                print(
+                    "   + Check also you have no service running on localhost port 8070, 8071, 8072 and 8073."
+                )
+                print(" +---------------------------------------+ ")
+                print(" +---------------------------------------+ ")
+                print(" +---------------------------------------+ ")
+        finally:
+            os.chdir(cls.workdir)
+        if cls.docker_id:
+            cls.loadLemonLDAPFixtures()
+        else:
+            raise RuntimeError("Cannot build the context environnement with docker.")
+
+    @classmethod
+    def loadLemonLDAPFixtures(cls):
+        print(f"Running Django on {cls.live_server_url}")
+
+        print(" + get LemonLDAP info (testing it's up)")
+        retry = 0
+        ok = False
+        while retry < 15 and not ok:
+            try:
+                cls.docker_lemonldap_command(
+                    "/usr/share/lemonldap-ng/bin/lemonldap-ng-cli info"
+                )
+                ok = True
+            except NotReadyException:
+                print("   ->  waiting for lemonldap startup...")
+                time.sleep(2)
+            finally:
+                retry += 1
+
+        if retry == 15:
+            print(" Aborting, seems LemonLdap-ng is not starting fast enough.")
+            raise RuntimeError("Cannot reach lemonldap via cli in time.")
+
+        print(" + Set Global Configuration.")
+        cls.docker_lemonldap_command(
+            """/usr/share/lemonldap-ng/bin/lemonldap-ng-cli\
+    -yes 1 \
+    -safe 1\
+      set \
+        portal http://localhost:8070/ \
+        mailUrl http://localhost:8070/resetpwd \
+        registerUrl http://localhost:8070/register \
+        https 0 \
+        securedCookie 0 """
+        )
+
+        print(" + Enable OIDC.")
+        cls.docker_lemonldap_command(
+            """/usr/share/lemonldap-ng/bin/lemonldap-ng-cli \
+    -yes 1 \
+    -safe 1\
+    set \
+        issuerDBOpenIDConnectActivation 1 \
+        issuerDBOpenIDConnectPath '^/oauth2/' """
+        )
+
+        print(" + Create RSA key")
+        cls.docker_lemonldap_command(
+            """rm -f /tmp/oidc*.key \
+    && openssl genrsa -out /tmp/oidc.key 4096 \
+    && openssl rsa -pubout \
+        -in /tmp/oidc.key \
+        -out /tmp/oidc_pub.key \
+    && ls -alh /tmp/ \
+    && PRIVATE=$(cat /tmp/oidc.key) \
+    && PUBLIC=$(cat /tmp/oidc_pub.key) \
+    && /usr/share/lemonldap-ng/bin/lemonldap-ng-cli -yes 1 \
+      set \
+        oidcServicePrivateKeySig "${PRIVATE}" \
+    && /usr/share/lemonldap-ng/bin/lemonldap-ng-cli -yes 1 \
+      set \
+        oidcServicePublicKeySig "${PUBLIC}" \
+    && /usr/share/lemonldap-ng/bin/lemonldap-ng-cli -yes 1 \
+      set \
+        oidcServiceKeyIdSig "somethingsomething" """
+        )
+
+        print(" + Create client applications.")
+        cls.registerClient("app1", "secret_app1", cls.live_server_url)
+        cls.registerClient(
+            "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
+        )
+        cls.registerClient("app2-foo", "secret_app2-foo", cls.live_server_url)
+        cls.registerClient(
+            "app2-bar", "secret_app2-bar", cls.live_server_url, bearerOnly=True
+        )
+        # Default demo users:
+        # rtyler :: rtyler
+        # msmith :: msmith
+        # dwho :: dwho (administrator)
+
+    @classmethod
+    def tearDownClass(cls):
+        print(" *** Live Server Test Case : Teardown ***")
+
+        # print(" + Debug LemonLdap conf.")
+        # conf = cls.docker_lemonldap_command("/usr/share/lemonldap-ng/bin/lemonldap-ng-cli save > /tmp/conf && cat /tmp/conf")
+        # print(conf.stdout)
+
+        print("Removing lemonldap docker image...")
+
+        os.chdir(cls.docker_workdir)
+        try:
+            cmd = (
+                "docker stop $("
+                'docker ps -a -q --filter ancestor=oidc-test-lemonldap-image --format="{{.ID}}"'
+                ")"
+            )
+            subprocess.run(cmd, shell=True, text=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error stopping lemonldap container: {e.returncode}.")
+            print(e.stderr)
+        finally:
+            os.chdir(cls.workdir)
+
+    @classmethod
+    def docker_lemonldap_command(cls, command: str):
+        logger.debug(f"Docker LemonLDAP command: {command}")
+        # TEMP
+        print(f"Docker LemonLDAP command: {command}")
+        cmd_prefix = f"docker exec -i {cls.docker_id}"
+        # command = command.replace('"', '"')
+        final_command = f"{cmd_prefix} /bin/bash <<'EOF'\n{command}\nEOF"
+        # print(final_command)
+        os.chdir(cls.docker_workdir)
+        output = ""
+        try:
+            output = subprocess.run(
+                final_command,
+                shell=True,
+                text=True,
+                check=True,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            errors = e.stderr.split("\n")
+            last_error = errors[-1:][0]
+            if last_error == "" and len(errors) > 1:
+                last_error = errors[-2:-1][0]
+            # print(f"Last Error: >{last_error}<")
+            print(
+                f"Error while launching command on the keycloak container. errcode: {e.returncode}."
+            )
+            print(e.stderr)
+        finally:
+            os.chdir(cls.workdir)
+        return output
+
+    @classmethod
+    def registerClient(cls, name, secret, url, bearerOnly=False):
+        redirectUris = "''" if bearerOnly else f"'{url}/callback'"
+        logoutRedirectUris = "''" if bearerOnly else f"'{url}/test-logout-done'"
+
+        cls.docker_lemonldap_command(
+            f"""usr/share/lemonldap-ng/bin/lemonldap-ng-cli -yes 1 \
+    addKey \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsClientID {name} \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsClientSecret {secret} \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsPublic 0 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsRedirectUris {redirectUris} \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsPostLogoutRedirectUris '{logoutRedirectUris}' \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsIDTokenSignAlg RS512 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsIDTokenExpiration 3600 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsAccessTokenExpiration 3600 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsAllowClientCredentialsGrant 0 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsAllowPasswordGrant 0 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsoidcRPMetaDataOptionsRefreshToken 1 \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsLogoutType front \
+        oidcRPMetaDataOptions/{name} oidcRPMetaDataOptionsBypassConsent 1 \
+           """
+        )
+        cls.docker_lemonldap_command(
+            f""" /usr/share/lemonldap-ng/bin/lemonldap-ng-cli -yes 1 \
+    addKey \
+        oidcRPMetaDataExportedVars/{name} email mail \
+        oidcRPMetaDataExportedVars/{name} family_name sn \
+        oidcRPMetaDataExportedVars/{name} name cn \
+           """
+        )
+
+
+@override_settings(
+    ALLOWED_HOSTS=["testserver"],
+    STATIC_URL="/static",
+    MIDDLEWARE=[
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.middleware.common.CommonMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+    ],
+    DJANGO_PYOIDC={
+        "sso1": {
+            "OIDC_CLIENT_ID": "app1",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
+            "OIDC_CLIENT_SECRET": "secret_app1",
+            "OIDC_CALLBACK_PATH": "/callback",
+            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
+            "POST_LOGIN_URI_SUCCESS": "/test-success",
+            "POST_LOGIN_URI_FAILURE": "/test-failure",
+            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+        },
+        "sso2": {
+            "OIDC_CLIENT_ID": "app1",
+            "CACHE_DJANGO_BACKEND": "default",
+            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/auth/realms/realm1",
+            "OIDC_CLIENT_SECRET": "secret_app1",
+            "OIDC_CALLBACK_PATH": "/callback",
+            "POST_LOGIN_URI_SUCCESS": "/test-success",
+            "POST_LOGIN_URI_FAILURE": "/test-failure",
+            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
+            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
+        },
+    },
+)
+class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
+    @classmethod
+    def setUpClass(cls):
+        print(" *** Live Server Test Case Setup (Keycloak) ***")
+        super().setUpClass()
+
+        cls.workdir = os.getcwd()
+        print(f"Current workdir: {cls.workdir} ...")
+        cls.docker_workdir = f"{cls.workdir}/tests/e2e/docker"
         os.chdir(cls.docker_workdir)
         cls.docker_id = None
         try:
             print("Building keycloak docker image...")
-            subprocess.run(["docker", "build", "-t", "oidc-test-keycloak-image", "."])
+            subprocess.run(
+                [
+                    "docker",
+                    "build",
+                    "-f",
+                    "Dockerfile-keycloak",
+                    "-t",
+                    "oidc-test-keycloak-image",
+                    ".",
+                ]
+            )
             print("Running keycloak docker image...")
             command = (
                 "docker run"
@@ -147,8 +449,11 @@ class OIDCE2ETestCase(LiveServerTestCase):
 
         print(" + Create client applications.")
         app1_id = cls.registerClient("app1", "secret_app1", cls.live_server_url)
-        app1_bis_id = cls.registerClient(
-            "app1-bis", "secret_app1-bis", cls.live_server_url, bearerOnly=True
+        app1_api_id = cls.registerClient(
+            "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
+        )
+        app1_front_id = cls.registerClient(
+            "app1-front", None, cls.live_server_url, bearerOnly=False
         )
         app2_foo_id = cls.registerClient(
             "app2-foo", "secret_app2-foo", cls.live_server_url
@@ -159,14 +464,19 @@ class OIDCE2ETestCase(LiveServerTestCase):
 
         print(" + Create client applications access roles.")
         app1_role = cls.registerClientRole(app1_id, "AccessApp1")
-        app1_bis_role = cls.registerClientRole(app1_bis_id, "AccessApp1Bis")
+        app1_bis_role = cls.registerClientRole(app1_api_id, "AccessApp1API")
+        app1_front_role = cls.registerClientRole(app1_front_id, "AccessApp1Front")
         app2_foo_role = cls.registerClientRole(app2_foo_id, "AccessApp2Foo")
         app2_bar_role = cls.registerClientRole(app2_bar_id, "AccessApp2Bar")
 
         print(" + Create Client Scopes.")
         id_zone_app1 = cls.registerClientScope(
             "zone-app1",
-            [{app1_id: app1_role}, {app1_bis_id: app1_bis_role}],
+            [
+                {app1_id: app1_role},
+                {app1_api_id: app1_bis_role},
+                {app1_front_id: app1_front_role},
+            ],
         )
         id_zone_app2 = cls.registerClientScope(
             "zone-app2",
@@ -178,7 +488,8 @@ class OIDCE2ETestCase(LiveServerTestCase):
 
         print(" + Update applications client scopes")
         cls.addClientScopeForClient(app1_id, id_zone_app1)
-        cls.addClientScopeForClient(app1_bis_id, id_zone_app1)
+        cls.addClientScopeForClient(app1_api_id, id_zone_app1)
+        cls.addClientScopeForClient(app1_front_id, id_zone_app1)
         cls.addClientScopeForClient(app2_foo_id, id_zone_app2)
         cls.addClientScopeForClient(app2_bar_id, id_zone_app2)
 
@@ -187,7 +498,8 @@ class OIDCE2ETestCase(LiveServerTestCase):
             "App1",
             [
                 {"app1": "AccessApp1"},
-                {"app1-bis": "AccessApp1Bis"},
+                {"app1-api": "AccessApp1API"},
+                {"app1-front": "AccessApp1Front"},
             ],
         )
         gApp2 = cls.registerGroup(
@@ -197,11 +509,18 @@ class OIDCE2ETestCase(LiveServerTestCase):
                 {"app2-bar": "AccessApp2Bar"},
             ],
         )
+        gApp1Restricted = cls.registerGroup(
+            "App1Restricted",
+            [
+                {"app1": "AccessApp1"},
+            ],
+        )
         gAppAll = cls.registerGroup(
             "AllApps",
             [
                 {"app1": "AccessApp1"},
-                {"app1-bis": "AccessApp1Bis"},
+                {"app1-api": "AccessApp1API"},
+                {"app1-front": "AccessApp1Front"},
                 {"app2-foo": "AccessApp2Foo"},
                 {"app2-bar": "AccessApp2Bar"},
             ],
@@ -216,18 +535,23 @@ class OIDCE2ETestCase(LiveServerTestCase):
             ],
         )
         cls.registerUser(
-            "user_app2",
+            "user_limit_app2",
             "passwd2",
             groups=[
                 gApp2,
             ],
         )
         cls.registerUser(
-            "user_app3",
-            "passwd3",
+            "user_limit_app1",
+            "passwd1",
             groups=[
                 gApp1,
             ],
+        )
+        cls.registerUser(
+            "user_app1_only",
+            "passwd1",
+            groups=[gApp1Restricted],
         )
 
     @classmethod
@@ -287,6 +611,7 @@ class OIDCE2ETestCase(LiveServerTestCase):
                 last_error = errors[-2:-1][0]
             # print(f"Last Error: >{last_error}<")
             if e.returncode == 1 and last_error in [
+                "Failed to send request - Connect to 127.0.0.1:8080 [/127.0.0.1] failed: Connection refused",
                 "Failed to send request - Connect to 127.0.0.1:8080 [/127.0.0.1] failed: Connection refused (Connection refused)",
                 "Invalid user credentials [invalid_grant]",
             ]:
@@ -305,7 +630,16 @@ class OIDCE2ETestCase(LiveServerTestCase):
         redirectUris = "[ ]" if bearerOnly else f'[ "{url}/*" ]'
         bBearerOnly = "true" if bearerOnly else "false"
         bStandardFlowEnabled = "false" if bearerOnly else "true"
-
+        if secret is None:
+            public_line = '"publicClient" : true,'
+            secret_line = ""
+            frontch_line = '"frontchannelLogout" : true,'
+        else:
+            public_line = '"publicClient" : false,'
+            frontch_line = '"frontchannelLogout" : false,'
+            secret_line = (
+                f'"clientAuthenticatorType" : "client-secret", "secret" : "{secret}",'
+            )
         output = cls.docker_keycloak_command(
             f"""bin/kcadm.sh create clients -r realm1 -f - << EOF
 {{
@@ -318,8 +652,7 @@ class OIDCE2ETestCase(LiveServerTestCase):
     "surrogateAuthRequired" : false,
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
-    "clientAuthenticatorType" : "client-secret",
-    "secret" : "{secret}",
+    {secret_line}
     "redirectUris" : {redirectUris},
     "webOrigins" : [ "+" ],
     "notBefore" : 0,
@@ -329,8 +662,8 @@ class OIDCE2ETestCase(LiveServerTestCase):
     "implicitFlowEnabled" : false,
     "directAccessGrantsEnabled" : false,
     "serviceAccountsEnabled" : false,
-    "publicClient" : false,
-    "frontchannelLogout" : false,
+    {public_line}
+    {frontch_line}
     "protocol" : "openid-connect",
     "attributes" : {{
       "oidc.ciba.grant.enabled" : "false",

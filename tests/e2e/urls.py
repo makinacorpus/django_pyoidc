@@ -6,6 +6,11 @@ from django_pyoidc.views import (
     OIDCLoginView,
     OIDCLogoutView,
 )
+from tests.e2e.test_app.views import (
+    OIDCTestFailureView,
+    OIDCTestLogoutView,
+    OIDCTestSuccessView,
+)
 
 urlpatterns = [
     path("login/", OIDCLoginView.as_view(op_name="sso1"), name="test_login"),
@@ -23,5 +28,20 @@ urlpatterns = [
         "back_channel_logout/",
         OIDCBackChannelLogoutView.as_view(op_name="sso1"),
         name="test_blogout",
+    ),
+    path(
+        "test-success/",
+        OIDCTestSuccessView.as_view(op_name="sso1"),
+        name="test_success",
+    ),
+    path(
+        "test-logout-done/",
+        OIDCTestLogoutView.as_view(op_name="sso1"),
+        name="test_logout_done",
+    ),
+    path(
+        "test-failure/",
+        OIDCTestFailureView.as_view(op_name="sso1"),
+        name="test_failure",
     ),
 ]

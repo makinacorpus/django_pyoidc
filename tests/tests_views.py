@@ -6,6 +6,8 @@ from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.urls import reverse
 from jwt import JWT, jwk_from_dict
+from oic.oic import IdToken
+from oic.oic.message import OpenIDSchema
 
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.views import OIDClient
@@ -33,7 +35,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS_DEFAULT"],
+            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -69,7 +71,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_follows_https_requires(self, *args):
         """
-        Test that trying to redirect to a non https site when REDIRECT_REQUIRES_HTTPS is set to True does not work
+        Test that trying to redirect to a non https site when LOGIN_REDIRECTION_REQUIRES_HTTPS is set to True does not work
         """
         response = self.client.get(
             reverse("test_login"),
@@ -85,7 +87,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS_DEFAULT"],
+            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
         )
 
     @mock.patch("django_pyoidc.views.Consumer.provider_config")
@@ -227,9 +229,12 @@ class CallbackViewTestCase(OIDCTestCase):
         return_value=({"state": "test_id_12345"}, None, None),
     )
     @mock.patch("django_pyoidc.views.get_user_by_email", return_value=None)
-    @mock.patch("django_pyoidc.views.Consumer.get_user_info", return_value={})
     @mock.patch(
-        "django_pyoidc.views.Consumer.complete", return_value={"id_token": "1234"}
+        "django_pyoidc.views.Consumer.get_user_info", return_value=OpenIDSchema()
+    )
+    @mock.patch(
+        "django_pyoidc.views.Consumer.complete",
+        return_value={"id_token": IdToken(iss="fake")},
     )
     @mock.patch("django_pyoidc.views.Consumer.restore")
     def test_callback_no_session_state_provided_invalid_user(
@@ -257,7 +262,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_complete.assert_called_once_with(state=state, session_state=None)
         mocked_parse_authz.assert_called_once()
         mocked_get_user_info.assert_called_once_with(state=state)
-        mocked_get_user.assert_called_once_with({}, "1234")
+        mocked_get_user.assert_called_once_with({}, {"iss": "fake"})
 
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
         self.assertEqual(OIDCSession.objects.all().count(), 0)
@@ -270,7 +275,8 @@ class CallbackViewTestCase(OIDCTestCase):
     @mock.patch("django_pyoidc.views.get_user_by_email")
     @mock.patch("django_pyoidc.views.Consumer.get_user_info")
     @mock.patch(
-        "django_pyoidc.views.Consumer.complete", return_value={"id_token": "1234"}
+        "django_pyoidc.views.Consumer.complete",
+        return_value={"id_token": IdToken(iss="fake")},
     )
     @mock.patch("django_pyoidc.views.Consumer.restore")
     def test_callback_no_session_state_provided_valid_user(
@@ -294,7 +300,8 @@ class CallbackViewTestCase(OIDCTestCase):
         session["oidc_sid"] = state
         session.save()
 
-        user_info = {"sub": "aaaaaeeee"}
+        user_info = OpenIDSchema(sub="aaaaaeeee")
+        user_info_dict = {"sub": "aaaaaeeee"}
         mocked_get_user_info.return_value = user_info
 
         dummy_user = self.user
@@ -308,7 +315,7 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info, "1234")
+        mocked_get_user.assert_called_once_with(user_info_dict, {"iss": "fake"})
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
@@ -319,7 +326,7 @@ class CallbackViewTestCase(OIDCTestCase):
             session = OIDCSession.objects.all().first()
 
             self.assertEqual(session.session_state, None)
-            self.assertEqual(session.sub, user_info["sub"])
+            self.assertEqual(session.sub, user_info_dict["sub"])
             self.assertEqual(session.state, state)
             self.assertEqual(session.cache_session_key, self.client.session.session_key)
         mocked_call_callback_function.assert_called_once()
@@ -329,7 +336,8 @@ class CallbackViewTestCase(OIDCTestCase):
     @mock.patch("django_pyoidc.views.get_user_by_email")
     @mock.patch("django_pyoidc.views.Consumer.get_user_info")
     @mock.patch(
-        "django_pyoidc.views.Consumer.complete", return_value={"id_token": "1234"}
+        "django_pyoidc.views.Consumer.complete",
+        return_value={"id_token": IdToken(iss="fake")},
     )
     @mock.patch("django_pyoidc.views.Consumer.restore")
     def test_callback_with_session_state_provided_valid_user(
@@ -354,7 +362,8 @@ class CallbackViewTestCase(OIDCTestCase):
         session["oidc_sid"] = state
         session.save()
 
-        user_info = {"sub": "aaaaaeeee"}
+        user_info = OpenIDSchema(sub="aaaaaeeee")
+        user_info_dict = {"sub": "aaaaaeeee"}
         mocked_get_user_info.return_value = user_info
 
         authz = {"state": state, "session_state": session_state}
@@ -373,7 +382,7 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info, "1234")
+        mocked_get_user.assert_called_once_with(user_info_dict, {"iss": "fake"})
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False

@@ -7,9 +7,9 @@ from django.conf import settings
 from django.test.utils import get_runner
 
 if __name__ == "__main__":
-    os.environ["DJANGO_SETTINGS_MODULE"] = "tests_e2e.settings"
+    os.environ["DJANGO_SETTINGS_MODULE"] = "tests.e2e.settings"
     django.setup()
     TestRunner = get_runner(settings)
     test_runner = TestRunner()
-    failures = test_runner.run_tests(["tests_e2e"])
+    failures = test_runner.run_tests(["tests", "tests/e2e"])
     sys.exit(bool(failures))

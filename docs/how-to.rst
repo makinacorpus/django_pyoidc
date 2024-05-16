@@ -39,7 +39,7 @@ If you used a provider, the best way to achieve that is by modifying the configu
         **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
     }
 
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["LOGIN_FUNCTION"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGIN"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
     DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGOUT"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
 
 
@@ -57,7 +57,7 @@ Customize how token data is mapped to User attributes
 
 By default, this library only uses the **email** field in a userinfo token to retrieve/create users.
 
-However you can implement more complex behaviour by specifying a :ref:`USER_FUNCTION` in your provider
+However you can implement more complex behaviour by specifying a :ref:`HOOK_GET_USER` in your provider
 configuration. In this guide we will look at the ``groups`` attribute in a userinfo token and set the
 :attr:`is_staff <django.contrib.auth.models.User.is_staff>` attribute depending on the value.
 
@@ -115,7 +115,7 @@ We can see that here we want to lookup the ``groups`` key and test if ``admins``
         return user
 
 
-To have this function called instead of the default one, you need to modify your settings so that :ref:`USER_FUNCTION` points to the function that we just wrote.
+To have this function called instead of the default one, you need to modify your settings so that :ref:`HOOK_GET_USER` points to the function that we just wrote.
 
 The value of this setting should be : ``<my_app>.oidc:login_function`` (see :ref:`Hook settings` for more information on this syntax).
 
@@ -129,7 +129,7 @@ Using a provider, edith your configuration like this :
         **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
     }
 
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["USER_FUNCTION"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
+    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_GET_USER"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
 
 
 
@@ -138,7 +138,7 @@ Add application-wide access control rules based on audiences
 
 Open ID Connect supports a system of audience which can be used to indicate the list of applications a user has access to.
 
-In order to implement access control based on the audience, you need to hook the :ref:`USER_FUNCTION` to add your own logic.
+In order to implement access control based on the audience, you need to hook the :ref:`HOOK_GET_USER` to add your own logic.
 
 In this guide, we will start from what we did in :ref:`Customize how token data is mapped to User attributes` and add audience based access control.
 
@@ -179,7 +179,7 @@ Django provides a rich authentication system that handles groups and permissions
 In this guide we will map Keycloak groups to Django groups. This allows one to manage group level permissions using Django system,
 while keeping all the advantages of an Identity Provider to manage a user base.
 
-In order to add users to groups on login, you need to hook the :ref:`USER_FUNCTION`.
+In order to add users to groups on login, you need to hook the :ref:`HOOK_GET_USER`.
 
 We will start from what we did in :ref:`Customize how token data is mapped to User attributes` and add group management.
 
@@ -242,7 +242,7 @@ Here is an example of a login button redirecting the user to the page named "pro
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
 
-However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS` and :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS`.
+However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`LOGIN_REDIRECTION_REQUIRES_HTTPS` and :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS`.
 
 TODO: RedirectDemo now exists, where do I connect it?
 
@@ -296,5 +296,5 @@ Here is an example of such a configuration :
 You can then use those view names to redirect a user to one or the other provider.
 TODO: what are the 'different' view names here?
 
-Since settings are local to a provider, you can also provide different :ref:`USER_FUNCTION` for each to implement custom
+Since settings are local to a provider, you can also provide different :ref:`HOOK_GET_USER` for each to implement custom
 behaviours based on which identity provider a user is coming from.

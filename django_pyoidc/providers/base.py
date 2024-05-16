@@ -55,15 +55,15 @@ class Provider:
         return {
             self.op_name: {
                 "POST_LOGIN_URI_FAILURE": self.failure_redirect,
-                "POST_LOGIN_URI_SUCCESS_DEFAULT": self.success_redirect,
+                "POST_LOGIN_URI_SUCCESS": self.success_redirect,
                 "POST_LOGOUT_REDIRECT_URI": self.logout_redirect,
                 "OIDC_CALLBACK_PATH": reverse_lazy(self.callback_uri_name),
-                "LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS": self.redirect_requires_https,
+                "REDIRECT_REQUIRES_HTTPS": self.redirect_requires_https,
                 "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": allowed_hosts,
                 "OIDC_CLIENT_SECRET": self.client_secret,
                 "OIDC_CLIENT_ID": self.client_id,
                 "OIDC_PROVIDER_DISCOVERY_URI": self.provider_discovery_uri,
-                "OIDC_LOGOUT_QUERY_STRING_REDIRECT_PARAMETER": None,
+                "OIDC_LOGOUT_REDIRECT_PARAMETER_NAME": None,
                 "CACHE_DJANGO_BACKEND": cache_backend,
             }
         }

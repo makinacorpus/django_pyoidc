@@ -28,17 +28,18 @@ You should define them as a nested dictionary. The key to this dictionary is cal
 POST_LOGIN_URI_FAILURE
 ***********
 
-This setting configures where a user is redirected on login failure.
+This setting configures where a user is redirected on login failure, defaults to Django base url.
 
-LOGOUT_URI_SUCCESS_DEFAULT
-**********
-
-This setting configures where a user is redirected after successful SSO logout.
-
-POST_LOGIN_URI_SUCCESS_DEFAULT
+POST_LOGIN_URI_SUCCESS
 *******************
 
-This setting configures the default redirection URI on login success
+This setting configures the default redirection URI on login success, defaults to Django base url.
+
+
+POST_LOGOUT_REDIRECT_URI
+**********
+
+This setting configures where a user is redirected after successful SSO logout, defaults to Django base url.
 
 URI_PROVIDER
 ************
@@ -55,7 +56,7 @@ OIDC_CALLBACK_PATH
 
 This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
 
-LOGIN_ENABLE_REDIRECT_REQUIRES_HTTPS
+LOGIN_REDIRECTION_REQUIRES_HTTPS
 ***********************
 
 This setting configures if dynamic login redirection URI must have the ``https`` scheme.
@@ -122,7 +123,7 @@ This function takes two arguments :
 
 Since the user wasn't logged in, it is not yet attached to the request instance at this stage. As such trying to access ``request.user`` will return an unauthenticated user.
 
-USER_FUNCTION
+HOOK_GET_USER
 *************
 
 Calls the provided function on user login. It takes two arguments :
