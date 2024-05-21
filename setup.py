@@ -7,18 +7,14 @@ from setuptools import find_packages, setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(HERE, "README.md")) as readme_file, open(
-    os.path.join(HERE, "CHANGES.md")
-) as changes_file, open(os.path.join(HERE, "django_pyoidc", "VERSION")) as version_file:
-    README = readme_file.read()
-    CHANGES = changes_file.read()
+with open(os.path.join(HERE, "django_pyoidc", "VERSION")) as version_file:
     VERSION = version_file.read().strip()
 
 # from distutils.core import setup
 
 setup(
     name="django-pyoidc",
-    version="0.1",
+    version=VERSION,
     description="Authenticate your users using OpenID Connect (OIDC)",
     author="Makina Corpus",
     author_email="django_pyoidc@makina-corpus.net",
@@ -26,7 +22,7 @@ setup(
     python_requires=">=3.7",
     packages=find_packages(),
     install_requires=[
-        "oic==1.6.0",
+        "oic==1.7.0",
         "django>=3.2",
         "jsonpickle",
         "jwt",
@@ -40,7 +36,6 @@ setup(
         "Framework :: Django",
         "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

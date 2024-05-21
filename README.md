@@ -3,7 +3,7 @@
 
 <p align="center">
 <a href="https://django-pyoidc.readthedocs.io">
-        <img src="https://img.shields.io/readthedocs/django-pyoidc" />
+        <img src="https://readthedocs.org/projects/django-pyoidc/badge/?version=main" />
 </a>
 </p>
 

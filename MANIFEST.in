@@ -1,0 +1,3 @@
+include LICENSE
+include django_pyoidc/VERSION
+include django_pyoidc/**/*.py
