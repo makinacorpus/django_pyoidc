@@ -1,8 +1,40 @@
 license = {file = "LICENSE"}
 readme = "README.md" # Optional
 
+[project]
+name="django-pyoidc"
+authors=[
+    {name="Régis Leroy (Makina Corpus)", email="django_pyoidc@makina-corpus.net"},
+    {name="Paul Florence (Makina Corpus)", email="django_pyoidc@makina-corpus.net"}
+]
+classifiers=["Topic :: Utilities",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Intended Audience :: Developers",
+        "Environment :: Web Environment",
+        "Framework :: Django",
+        "Development Status :: 5 - Production/Stable",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Topic :: Security"
+]
+description="Authenticate your users using OpenID Connect (OIDC)"
+requires-python=">=3.7"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect"]
+readme="README.md"
+
+[project.urls]
+repository="https://gitlab.makina-corpus.net/pfl/django-pyoidc"
+
 [build-system]
 # These are the assumed default build requirements from pip:
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
-requires = ["setuptools>=43.0.0", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.in"] }
+optional-dependencies.test = { file = ["requirements-test.txt"] }

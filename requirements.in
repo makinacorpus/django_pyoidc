@@ -1,0 +1,4 @@
+oic==1.7.0
+django>=3.2
+jsonpickle
+jwt
