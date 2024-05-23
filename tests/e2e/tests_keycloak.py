@@ -31,7 +31,8 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # options.headless = True
         profile = FirefoxProfile()
         profile.set_preference("browser.privatebrowsing.autostart", True)
-        cls.selenium = WebDriver(firefox_profile=profile, options=options)
+        options.profile = profile
+        cls.selenium = WebDriver(options=options)
         # cls.selenium.implicitly_wait(10)
 
     @classmethod
