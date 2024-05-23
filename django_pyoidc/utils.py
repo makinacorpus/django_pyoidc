@@ -1,10 +1,12 @@
 import hashlib
 import logging
 from importlib import import_module
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from django.conf import settings
 from django.core.cache import BaseCache, caches
+
+from django_pyoidc.exceptions import ClaimNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,24 @@ def import_object(path, def_name):
         cls = def_name
 
     return getattr(import_module(mod), cls)
+
+
+def extract_claim_from_tokens(claim: str, tokens: dict) -> Any:
+    """Given a dictionnary of tokens claims, extract the given claim.
+
+    This function will seek in "info_token_claims", then "id_token_claims"
+    and finally "access_token_claims".
+    If the claim is not found a ClaimNotFoundError exception is raised.
+    """
+    if "info_token_claims" in tokens and claim in tokens["info_token_claims"]:
+        value = tokens["info_token_claims"][claim]
+    elif "id_token_claims" in tokens and claim in tokens["id_token_claims"]:
+        value = tokens["id_token_claims"][claim]
+    elif "access_token_claims" and claim in tokens["access_token_claims"]:
+        value = tokens["access_token_claims"][claim]
+    else:
+        raise ClaimNotFoundError(f"{claim} not found in available OIDC tokens.")
+    return value
 
 
 class OIDCCacheBackendForDjango:

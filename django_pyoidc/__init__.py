@@ -1,38 +1,32 @@
 from typing import Dict
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import SuspiciousOperation
+
+from django_pyoidc.exceptions import ClaimNotFoundError
+from django_pyoidc.utils import extract_claim_from_tokens
 
 
 def get_user_by_email(tokens: Dict):
     User = get_user_model()
 
-    username = ""
-    email = ""
+    username = None
+    email = None
 
-    if "info_token_claims" in tokens and "email" in tokens["info_token_claims"]:
-        email = tokens["info_token_claims"]["email"]
-    elif "id_token_claims" in tokens and "email" in tokens["id_token_claims"]:
-        email = tokens["id_token_claims"]["email"]
-    elif "access_token_claims" and "email" in tokens["access_token_claims"]:
-        email = tokens["access_token_claims"]["email"]
+    try:
+        email = extract_claim_from_tokens("email", tokens)
+    except ClaimNotFoundError:
+        pass
 
-    if (
-        "id_token_claims" in tokens
-        and "preferred_username" in tokens["id_token_claims"]
-    ):
-        username = tokens["id_token_claims"]["preferred_username"]
-    elif (
-        "info_token_claims" in tokens
-        and "preferred_username" in tokens["info_token_claims"]
-    ):
-        username = tokens["info_token_claims"]["preferred_username"]
-    elif (
-        "access_token_claims" in tokens
-        and "preferred_username" in tokens["access_token_claims"]
-    ):
-        username = tokens["access_token_claims"]["preferred_username"]
-    else:
-        username = email
+    try:
+        username = extract_claim_from_tokens("preferred_username", tokens)
+    except ClaimNotFoundError:
+        if email:
+            username = email
+        else:
+            raise SuspiciousOperation(
+                "Cannot extract username or email from available OIDC tokens."
+            )
 
     user, created = User.objects.get_or_create(
         email=email,

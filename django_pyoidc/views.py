@@ -16,16 +16,13 @@ from jwt.exceptions import JWTDecodeError
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
+from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.utils import get_setting_for_sso_op, import_object
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidSIDException(Exception):
-    pass
 
 
 class OIDCMixin:
