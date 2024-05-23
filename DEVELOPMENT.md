@@ -27,3 +27,15 @@ Check database settings in tests/test_settings.py, target a real PostgreSQL Host
 ```
 python3 runtests.py
 ```
+
+## Adding a dependency
+
+Add the dependency to either `requirements.in` or `requirements-test.in`.
+
+Then run :
+
+```
+pip install pip-tools
+pip-compile requirements.in # freeze package versions
+pip-compile requirements-test.in
+```
