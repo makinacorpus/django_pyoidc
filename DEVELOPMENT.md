@@ -36,6 +36,11 @@ Then run :
 
 ```
 pip install pip-tools
-pip-compile requirements.in # freeze package versions
-pip-compile requirements-test.in
+pip-compile --output-file=requirements.txt pyproject.toml # freeze package versions
+pip-compile --output-file=requirements-test.txt requirements-test.in
+```
+
+FIXME: possible alternative for tests requirements would be:
+```
+python -m piptools compile --extra test -o requirements-test.txt pyproject.toml
 ```
