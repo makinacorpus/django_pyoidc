@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-pip install .['dev']
+pip install -r requirements.txt -r requirements-test.txt
 ```
 
 ## Enable pre-commit
