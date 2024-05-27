@@ -46,16 +46,16 @@ class OIDCBearerAuthentication(BaseAuthentication):
     def extract_access_token(self, request) -> str:
         val = request.headers.get("Authorization")
         if not val:
-            msg = "Request missing the authorization header, invalid Keyword."
-            raise exceptions.AuthenticationFailed(msg)
+            msg = "Request missing the authorization header."
+            raise RuntimeError(msg)
         val = val.strip()
         bearer_name, access_token_jwt = val.split(maxsplit=1)
         requested_bearer_name = get_setting_for_sso_op(
             self.op_name, "OIDC_API_BEARER_NAME", "Bearer"
         )
         if not bearer_name.lower() == requested_bearer_name.lower():
-            msg = "Request missing the authorization header, invalid Keyword."
-            raise exceptions.AuthenticationFailed(msg)
+            msg = "fBad authorization header, invalid Keyword for the bearer, expecting {requested_bearer_name}."
+            raise RuntimeError(msg)
         return access_token_jwt
 
     def authenticate(self, request):
@@ -65,24 +65,33 @@ class OIDCBearerAuthentication(BaseAuthentication):
         """
         try:
             user = None
+            access_token_claims = None
 
             # Extract the access token from an HTTP Authorization Bearer header
-            access_token_jwt = self.extract_access_token(request)
+            try:
+                access_token_jwt = self.extract_access_token(request)
+            except RuntimeError as e:
+                logger.error(e)
+                # we return None, and not an Error.
+                # API auth failed, but maybe anon access is allowed
+                return None
+
             # This introspection of the token is made by the SSO server
             # so it is quite slow, but there's a cache added based on the token expiration
             access_token_claims = self.engine.introspect_access_token(
                 access_token_jwt, client=self.client
             )
-            logger.error(access_token_claims)
+            logger.debug(access_token_claims)
             if not access_token_claims.get("active"):
                 msg = "Inactive access token."
                 raise exceptions.AuthenticationFailed(msg)
-            # FIXME: audience check here
+
+            # FIXME: Add audience check here, with a setting to disable
 
             # FIXME: add an option to request userinfo here, but that may be quite slow
 
             if access_token_claims:
-                logger.info("Request has valid access token.")
+                logger.debug("Request has valid access token.")
                 logger.debug("Let application load user via user hook.")
                 user = self.engine.call_get_user_function(
                     tokens={
@@ -101,4 +110,4 @@ class OIDCBearerAuthentication(BaseAuthentication):
             logger.exception(exp)
             return None
 
-        return (user, None)
+        return (user, access_token_claims)
