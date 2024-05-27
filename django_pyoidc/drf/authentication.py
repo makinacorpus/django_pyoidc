@@ -100,7 +100,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
                     }
                 )
 
-            if not user or not user.is_authenticated:
+            if not user:
                 logger.error(
                     "OIDC Bearer Authentication process failure. Cannot set active authenticated user."
                 )
