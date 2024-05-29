@@ -180,14 +180,16 @@ class OIDCLoginView(OIDCView):
         super().get(request, *args, **kwargs)
 
         client = OIDClient(self.op_name)
-        client.consumer.consumer_config["authz_page"] = self.get_setting(
-            "OIDC_CALLBACK_PATH"
+        client.consumer.consumer_config["authz_page"] = str(
+            self.get_setting("OIDC_CALLBACK_PATH")
         )
         redirect_uri = self.get_next_url(request, "next")
 
         if not redirect_uri:
-            redirect_uri = self.get_setting(
-                "POST_LOGIN_URI_SUCCESS", request.build_absolute_uri("/")
+            redirect_uri = str(
+                self.get_setting(
+                    "POST_LOGIN_URI_SUCCESS", request.build_absolute_uri("/")
+                )
             )
 
         request.session["oidc_login_next"] = redirect_uri
@@ -219,8 +221,10 @@ class OIDCLogoutView(OIDCView):
 
     def post_logout_url(self, request):
         """Return the post logout url defined in settings."""
-        return self.get_setting(
-            "POST_LOGOUT_REDIRECT_URI", request.build_absolute_uri("/")
+        return str(
+            self.get_setting(
+                "POST_LOGOUT_REDIRECT_URI", request.build_absolute_uri("/")
+            )
         )
 
     def get(self, request):
@@ -393,7 +397,11 @@ class OIDCCallbackView(OIDCView):
 
     def login_failure(self, request):
         return redirect(
-            self.get_setting("POST_LOGIN_URI_FAILURE", request.build_absolute_uri("/"))
+            str(
+                self.get_setting(
+                    "POST_LOGIN_URI_FAILURE", request.build_absolute_uri("/")
+                )
+            )
         )
 
     def _introspect_access_token(self, access_token_jwt):
