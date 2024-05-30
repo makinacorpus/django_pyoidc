@@ -54,7 +54,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
             self.op_name, "OIDC_API_BEARER_NAME", "Bearer"
         )
         if not bearer_name.lower() == requested_bearer_name.lower():
-            msg = "fBad authorization header, invalid Keyword for the bearer, expecting {requested_bearer_name}."
+            msg = f"Bad authorization header, invalid Keyword for the bearer, expecting {requested_bearer_name}."
             raise RuntimeError(msg)
         return access_token_jwt
 
