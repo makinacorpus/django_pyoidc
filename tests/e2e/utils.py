@@ -210,11 +210,14 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
         print(" + Create client applications.")
         cls.registerClient("app1", "secret_app1", cls.live_server_url)
         cls.registerClient(
-            "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
+            "app1-api",
+            "secret_app1-api",
+            cls.live_server_url,
+            bearerOnly=True,
         )
-        cls.registerClient("app2-foo", "secret_app2-foo", cls.live_server_url)
+        cls.registerClient("app2-full", "secret_app2-full", cls.live_server_url)
         cls.registerClient(
-            "app2-bar", "secret_app2-bar", cls.live_server_url, bearerOnly=True
+            "app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True
         )
         # Default demo users:
         # rtyler :: rtyler
@@ -484,26 +487,48 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         )
 
         print(" + Create client applications.")
-        app1_id = cls.registerClient("app1", "secret_app1", cls.live_server_url)
+        app1_id = cls.registerClient(
+            "app1",
+            "secret_app1",
+            cls.live_server_url,
+            serviceAccount=False,
+            channelLogoutUrl=f"{cls.live_server_url}/oidc/backchannel-logout",
+        )
         app1_api_id = cls.registerClient(
-            "app1-api", "secret_app1-api", cls.live_server_url, bearerOnly=True
+            "app1-api",
+            "secret_app1-api",
+            cls.live_server_url,
+            bearerOnly=True,
+            serviceAccount=False,
         )
         app1_front_id = cls.registerClient(
-            "app1-front", None, "http://localhost:9999", bearerOnly=False
+            "app1-front",
+            None,
+            "http://localhost:9999",
+            bearerOnly=False,
+            serviceAccount=False,
+            channelLogoutUrl="http://localhost:9999",
         )
-        app2_foo_id = cls.registerClient(
-            "app2-foo", "secret_app2-foo", cls.live_server_url
+        app_m2m_id = cls.registerClient(
+            "app_m2m",
+            "secret_app-m2m",
+            cls.live_server_url,
+            bearerOnly=False,
+            serviceAccount=True,
         )
-        app2_bar_id = cls.registerClient(
-            "app2-bar", "secret_app2-bar", cls.live_server_url, bearerOnly=True
+        app2_full_id = cls.registerClient(
+            "app2-full", "secret_app2-full", cls.live_server_url, bearerOnly=False
+        )
+        app2_api_id = cls.registerClient(
+            "app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True
         )
 
         print(" + Create client applications access roles.")
         app1_role = cls.registerClientRole(app1_id, "AccessApp1")
         app1_bis_role = cls.registerClientRole(app1_api_id, "AccessApp1API")
         app1_front_role = cls.registerClientRole(app1_front_id, "AccessApp1Front")
-        app2_foo_role = cls.registerClientRole(app2_foo_id, "AccessApp2Foo")
-        app2_bar_role = cls.registerClientRole(app2_bar_id, "AccessApp2Bar")
+        app2_full_role = cls.registerClientRole(app2_full_id, "AccessApp2Full")
+        app2_api_role = cls.registerClientRole(app2_api_id, "AccessApp2API")
 
         print(" + Create Client Scopes.")
         id_zone_app1 = cls.registerClientScope(
@@ -517,8 +542,8 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         id_zone_app2 = cls.registerClientScope(
             "zone-app2",
             [
-                {app2_foo_id: app2_foo_role},
-                {app2_bar_id: app2_bar_role},
+                {app2_full_id: app2_full_role},
+                {app2_api_id: app2_api_role},
             ],
         )
 
@@ -526,8 +551,9 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         cls.addClientScopeForClient(app1_id, id_zone_app1)
         cls.addClientScopeForClient(app1_api_id, id_zone_app1)
         cls.addClientScopeForClient(app1_front_id, id_zone_app1)
-        cls.addClientScopeForClient(app2_foo_id, id_zone_app2)
-        cls.addClientScopeForClient(app2_bar_id, id_zone_app2)
+        cls.addClientScopeForClient(app_m2m_id, id_zone_app1)
+        cls.addClientScopeForClient(app2_full_id, id_zone_app2)
+        cls.addClientScopeForClient(app2_api_id, id_zone_app2)
 
         print(" + Create Groups.")
         gApp1 = cls.registerGroup(
@@ -541,8 +567,8 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         gApp2 = cls.registerGroup(
             "App2",
             [
-                {"app2-foo": "AccessApp2Foo"},
-                {"app2-bar": "AccessApp2Bar"},
+                {"app2-full": "AccessApp2Full"},
+                {"app2-api": "AccessApp2API"},
             ],
         )
         gApp1Restricted = cls.registerGroup(
@@ -551,16 +577,23 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
                 {"app1": "AccessApp1"},
             ],
         )
+        cls.registerGroup(
+            "GroupM2M",
+            [{"app1": "AccessApp1"}, {"app1-api": "AccessApp1API"}],
+        )
         gAppAll = cls.registerGroup(
             "AllApps",
             [
                 {"app1": "AccessApp1"},
                 {"app1-api": "AccessApp1API"},
                 {"app1-front": "AccessApp1Front"},
-                {"app2-foo": "AccessApp2Foo"},
-                {"app2-bar": "AccessApp2Bar"},
+                {"app2-full": "AccessApp2Full"},
+                {"app2-api": "AccessApp2API"},
             ],
         )
+        print(" + Link service account users to groups")
+        m2m_user = cls.searchUser("service-account-app_m2m")
+        cls.add_user_to_group(m2m_user, "GroupM2M")
 
         print(" + Create users.")
         cls.registerUser(
@@ -675,17 +708,73 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         return output
 
     @classmethod
-    def registerClient(cls, name, secret, url, bearerOnly=False):
-        redirectUris = "[ ]" if bearerOnly else f'[ "{url}/*" ]'
+    def add_user_to_group(cls, user_id, group):
+        cls.docker_keycloak_command(
+            f"bin/kcadm.sh update users/{user_id}/groups/{group} -r realm1"
+        )
+
+    @classmethod
+    def searchUser(cls, user_name):
+        output = cls.docker_keycloak_command(
+            "bin/kcadm.sh get users -r realm1"
+            f" -q username={user_name} --fields 'id,username'"
+        )
+        id = None
+        cpt = 0
+        prevline = ""
+        for line in output.stdout.splitlines():
+            if line == f'  "username" : "{user_name}"':
+                cpt = cpt - 1
+                id_line = prevline
+                # line looks like '    "id": "42562-..-45646",'
+                # we split on " and get 3rd value
+                id = id_line.split('"')[3]
+                break
+            cpt += 1
+            prevline = line
+        return id
+
+    @classmethod
+    def registerClient(
+        cls,
+        name,
+        secret,
+        url,
+        bearerOnly=False,
+        serviceAccount=False,
+        channelLogoutUrl="",
+    ):
+        if serviceAccount:
+            bServiceAccountEnabled = "true"
+            redirectUris = "[ ]"
+            extraAttributes = (
+                '"use.refresh.tokens": "true",'
+                '"client_credentials.use_refresh_token": "false",'
+                '"tls.client.certificate.bound.access.tokens": "false",'
+                '"require.pushed.authorization.requests": "false",'
+                '"acr.loa.map": "{}",'
+                '"token.response.type.bearer.lower-case": "false",'
+            )
+            backchannelLogoutUrl = ""
+            frontchannelLogoutUrl = ""
+        else:
+
+            bServiceAccountEnabled = "false"
+            redirectUris = "[ ]" if bearerOnly else f'[ "{url}/*" ]'
+            extraAttributes = ""
         bBearerOnly = "true" if bearerOnly else "false"
         bStandardFlowEnabled = "false" if bearerOnly else "true"
         if secret is None:
             public_line = '"publicClient" : true,'
             secret_line = ""
             frontch_line = '"frontchannelLogout" : true,'
+            backchannelLogoutUrl = ""
+            frontchannelLogoutUrl = channelLogoutUrl
         else:
             public_line = '"publicClient" : false,'
             frontch_line = '"frontchannelLogout" : false,'
+            frontchannelLogoutUrl = ""
+            backchannelLogoutUrl = channelLogoutUrl
             secret_line = (
                 f'"clientAuthenticatorType" : "client-secret", "secret" : "{secret}",'
             )
@@ -710,17 +799,20 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
     "standardFlowEnabled" : {bStandardFlowEnabled},
     "implicitFlowEnabled" : false,
     "directAccessGrantsEnabled" : false,
-    "serviceAccountsEnabled" : false,
+    "serviceAccountsEnabled" : {bServiceAccountEnabled},
     {public_line}
     {frontch_line}
     "protocol" : "openid-connect",
     "attributes" : {{
+      {extraAttributes}
       "oidc.ciba.grant.enabled" : "false",
-      "backchannel.logout.session.required" : "false",
       "post.logout.redirect.uris" : "+",
       "display.on.consent.screen" : "false",
       "oauth2.device.authorization.grant.enabled" : "false",
-      "backchannel.logout.revoke.offline.tokens" : "false"
+      "backchannel.logout.revoke.offline.tokens" : "false",
+      "backchannel.logout.session.required" : "false",
+      "backchannel.logout.url": "{backchannelLogoutUrl}",
+      "frontchannel.logout.url": "{frontchannelLogoutUrl}"
     }},
     "authenticationFlowBindingOverrides" : {{ }},
     "fullScopeAllowed" : false,
@@ -790,7 +882,7 @@ EOF"""
     @classmethod
     def registerGroup(cls, name, role_mappings=[]):
         output = cls.docker_keycloak_command(
-            "bin/kcadm.sh create groups" " -r realm1" f" -s name={name}"
+            "bin/kcadm.sh create groups -r realm1" f" -s name={name}"
         )
         # output was in the form
         # "Created new group with id '0f5d0645-a7a7-4e88-adf8-b9e568025f5c'""
