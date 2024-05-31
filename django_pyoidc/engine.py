@@ -69,10 +69,10 @@ class OIDCEngine:
                 if "exp" not in access_token_claims:
                     raise RuntimeError("No expiry set on the access token.")
                 access_token_expiry = access_token_claims["exp"]
-                print("**********************")
-                print(current)
-                print(access_token_expiry)
                 exp = int(access_token_expiry) - int(current)
-                print(exp)
+                logger.debug(
+                    f"Token expiry: {exp}  - current is {current} "
+                    f"and expiry is set to {access_token_expiry} in the token"
+                )
                 self.general_cache_backend.set(cache_key, access_token_claims, exp)
         return access_token_claims

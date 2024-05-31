@@ -1,12 +1,17 @@
 import logging
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
-from django_pyoidc.utils import OIDCCacheBackendForDjango, get_setting_for_sso_op
+from django_pyoidc.utils import (
+    OIDCCacheBackendForDjango,
+    check_audience,
+    get_setting_for_sso_op,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -86,12 +91,18 @@ class OIDCBearerAuthentication(BaseAuthentication):
                 msg = "Inactive access token."
                 raise exceptions.AuthenticationFailed(msg)
 
-            # FIXME: Add audience check here, with a setting to disable
-
             # FIXME: add an option to request userinfo here, but that may be quite slow
 
             if access_token_claims:
                 logger.debug("Request has valid access token.")
+
+                # FIXME: Add a setting to disable
+                client_id = get_setting_for_sso_op(self.op_name, "OIDC_CLIENT_ID")
+                if not check_audience(client_id, access_token_claims):
+                    raise PermissionDenied(
+                        f"Invalid result for acces token audiences check for {client_id}."
+                    )
+
                 logger.debug("Let application load user via user hook.")
                 user = self.engine.call_get_user_function(
                     tokens={
@@ -106,6 +117,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
                 )
                 return None
 
+        except PermissionDenied as exp:
+            raise exp
         except Exception as exp:
             logger.exception(exp)
             return None

@@ -33,7 +33,6 @@ class UserViewSet(viewsets.ModelViewSet):
 apirouter = routers.DefaultRouter()
 apirouter.register(r"users", UserViewSet)
 
-
 urlpatterns = [
     path("login/", OIDCLoginView.as_view(op_name="sso1"), name="test_login"),
     path(

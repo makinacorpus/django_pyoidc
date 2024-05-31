@@ -509,9 +509,16 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             serviceAccount=False,
             channelLogoutUrl="http://localhost:9999",
         )
-        app_m2m_id = cls.registerClient(
-            "app_m2m",
-            "secret_app-m2m",
+        app_m2m1_id = cls.registerClient(
+            "app_m2m1",
+            "secret_app-m2m1",
+            cls.live_server_url,
+            bearerOnly=False,
+            serviceAccount=True,
+        )
+        app2_m2m2_id = cls.registerClient(
+            "app2_m2m2",
+            "secret_app2-m2m2",
             cls.live_server_url,
             bearerOnly=False,
             serviceAccount=True,
@@ -551,9 +558,10 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         cls.addClientScopeForClient(app1_id, id_zone_app1)
         cls.addClientScopeForClient(app1_api_id, id_zone_app1)
         cls.addClientScopeForClient(app1_front_id, id_zone_app1)
-        cls.addClientScopeForClient(app_m2m_id, id_zone_app1)
+        cls.addClientScopeForClient(app_m2m1_id, id_zone_app1)
         cls.addClientScopeForClient(app2_full_id, id_zone_app2)
         cls.addClientScopeForClient(app2_api_id, id_zone_app2)
+        cls.addClientScopeForClient(app2_m2m2_id, id_zone_app2)
 
         print(" + Create Groups.")
         gApp1 = cls.registerGroup(
@@ -577,9 +585,14 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
                 {"app1": "AccessApp1"},
             ],
         )
-        cls.registerGroup(
+        gm2m = cls.registerGroup(
             "GroupM2M",
-            [{"app1": "AccessApp1"}, {"app1-api": "AccessApp1API"}],
+            [
+                {"app1": "AccessApp1"},
+                {"app1-api": "AccessApp1API"},
+                {"app2-full": "AccessApp2Full"},
+                {"app2-api": "AccessApp2API"},
+            ],
         )
         gAppAll = cls.registerGroup(
             "AllApps",
@@ -592,8 +605,10 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             ],
         )
         print(" + Link service account users to groups")
-        m2m_user = cls.searchUser("service-account-app_m2m")
-        cls.add_user_to_group(m2m_user, "GroupM2M")
+        m2m_user1 = cls.searchUser("service-account-app_m2m1")
+        m2m_user2 = cls.searchUser("service-account-app2_m2m2")
+        cls.add_user_to_group(m2m_user1, gm2m)
+        cls.add_user_to_group(m2m_user2, gm2m)
 
         print(" + Create users.")
         cls.registerUser(

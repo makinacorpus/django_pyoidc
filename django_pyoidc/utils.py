@@ -50,6 +50,29 @@ def extract_claim_from_tokens(claim: str, tokens: dict) -> Any:
     return value
 
 
+def check_audience(client_id: str, access_token_claims: dict) -> bool:
+    """Verify that the current client_id is present in 'aud' claim.
+
+    Audences are stored in 'aud' claim.
+    Audiences of an access token is a list of client_id where this token is allowed.
+    When receiving an access token in 'API' bearer mode checking that your client_id
+    is in the audience is a must.
+    Access tokens received in 'full' mode, when this Django is the OIDC client
+    managing the redirections to the SSO server may not always contain the client_id
+    in 'aud'. This is the case for Keycloak for example, where the 'aud' would only
+    contain 'others' client_id where this token can be used, and not the one generating it.
+    Audience in userinfo and id tokens are different beasts.
+    """
+    if "aud" not in access_token_claims:
+        return False
+    if client_id not in access_token_claims["aud"]:
+        logger.error(
+            f"{client_id} not found in access_token_claims['aud']: {access_token_claims['aud']}"
+        )
+        return False
+    return True
+
+
 class OIDCCacheBackendForDjango:
     """Implement General cache for OIDC using django cache"""
 
