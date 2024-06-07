@@ -107,9 +107,24 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         headers = {
             "Authorization": f"Bearer {access_token}",
         }
-        print("sending API Request with access token")
+        print("sending API Request with access token, should get a 403 Forbidden.")
         response = requests.get(api_url, headers=headers)
         self.assertEqual(403, response.status_code)
+
+    def test_003_m2m_anonymous_api_access(self, *args):
+
+        # auth part is forbidden
+        api_url = f"{self.live_server_url}/api/users"
+        response = requests.get(api_url)
+        self.assertEqual(403, response.status_code)
+
+        # public part is OK
+        api_url = f"{self.live_server_url}/api/publics"
+        print("sending anonymous API Request.")
+        response = requests.get(api_url)
+        response.raise_for_status()
+        content = response.text
+        self.assertIn("[]", content)
 
     def test_100_login_page_redirects_to_keycloak_sso(self, *args):
         """
