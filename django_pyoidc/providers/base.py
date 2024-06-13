@@ -1,6 +1,8 @@
 from typing import Any, Dict, List
 
-from django.urls import path, reverse_lazy
+from django.urls import path
+
+from django_pyoidc.settings import OIDCSettingsFactory
 
 
 class Provider:
@@ -9,35 +11,45 @@ class Provider:
     use this class directly. Instead, you should but subclass it to implement the configuration logic.
     """
 
-    def __init__(
-        self,
-        op_name: str,
-        provider_discovery_uri: str,
-        logout_redirect: str,
-        failure_redirect: str,
-        success_redirect: str,
-        redirect_requires_https: bool,
-        client_secret: str,
-        client_id: str,
-    ):
+    def __init__(self, op_name: str, *args, **kwargs):
+        # provider_discovery_uri: str,
+        # logout_redirect: str,
+        # failure_redirect: str,
+        # success_redirect: str,
+        # redirect_requires_https: bool,
+        # client_secret: str,
+        # client_id: str,
+        # ):
         """
-        Parameters:
-            op_name (str): the name of the sso provider that you are using
-            logout_redirect (str): the URI where a user should be redirected to on logout success
-            failure_redirect (str): the URI where a user should be redirected to on login failure
-            success_redirect (str): the URI a user should be redirected to on login success if no redirection url where provided
-            redirect_requires_https (bool): set to True to disallow redirecting user to non-https uri on login success
-            client_secret (str): the OIDC client secret
-            client_id (str): the OIDC client ID
+           Parameters:
+               op_name (str): the name of the sso provider that you are using
+        FIXME       logout_redirect (str): the URI where a user should be redirected to on logout success
+        FIXME       failure_redirect (str): the URI where a user should be redirected to on login failure
+        FIXME       success_redirect (str): the URI a user should be redirected to on login success if no redirection url where provided
+        FIXME       redirect_requires_https (bool): set to True to disallow redirecting user to non-https uri on login success
+        FIXME       client_secret (str): the OIDC client secret
+        FIXME       client_id (str): the OIDC client ID
         """
-        self.op_name = op_name
-        self.provider_discovery_uri = provider_discovery_uri
-        self.logout_redirect = logout_redirect
-        self.failure_redirect = failure_redirect
-        self.success_redirect = success_redirect
-        self.redirect_requires_https = redirect_requires_https
-        self.client_secret = client_secret
-        self.client_id = client_id
+
+        self.settings = OIDCSettingsFactory.get(op_name=op_name, *args, **kwargs)
+
+        #    provider_discovery_uri=provider_discovery_uri,
+        #    logout_redirect=logout_redirect,
+        #    failure_redirect=failure_redirect,
+        #    success_redirect=success_redirect,
+        #    redirect_requires_https=redirect_requires_https,
+        #    client_secret=client_secret,
+        #    client_id=client_id,
+        # )
+
+        self.op_name = self.settings.get("op_name")
+        # self.provider_discovery_uri = provider_discovery_uri
+        # self.logout_redirect = logout_redirect
+        # self.failure_redirect = failure_redirect
+        # self.success_redirect = success_redirect
+        # self.redirect_requires_https = redirect_requires_https
+        # self.client_secret = client_secret
+        # self.client_id = client_id
 
     def get_config(
         self, allowed_hosts, cache_backend: str = "default"
@@ -52,21 +64,10 @@ class Provider:
         Returns:
             dict: A dictionary with all the settings that `django-pyoidc` expects to work properly
         """
-        return {
-            self.op_name: {
-                "POST_LOGIN_URI_FAILURE": self.failure_redirect,
-                "POST_LOGIN_URI_SUCCESS": self.success_redirect,
-                "POST_LOGOUT_REDIRECT_URI": self.logout_redirect,
-                "OIDC_CALLBACK_PATH": reverse_lazy(self.callback_uri_name),
-                "REDIRECT_REQUIRES_HTTPS": self.redirect_requires_https,
-                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": allowed_hosts,
-                "OIDC_CLIENT_SECRET": self.client_secret,
-                "OIDC_CLIENT_ID": self.client_id,
-                "OIDC_PROVIDER_DISCOVERY_URI": self.provider_discovery_uri,
-                "OIDC_LOGOUT_REDIRECT_PARAMETER_NAME": None,
-                "CACHE_DJANGO_BACKEND": cache_backend,
-            }
-        }
+        config = self.settings.get_op_config()
+        config["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"] = allowed_hosts
+        config["CACHE_DJANGO_BACKEND"] = cache_backend
+        return config
 
     @property
     def login_uri_name(self):

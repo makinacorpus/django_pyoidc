@@ -6,6 +6,7 @@ from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
 from django_pyoidc.session import OIDCCacheSessionBackendForDjango
+from django_pyoidc.settings import OIDCSettingsFactory
 from django_pyoidc.utils import OIDCCacheBackendForDjango, get_setting_for_sso_op
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 class OIDCClient:
     def __init__(self, op_name, session_id=None):
         self._op_name = op_name
+        self.settings = OIDCSettingsFactory.get(self.op_name)
 
         self.session_cache_backend = OIDCCacheSessionBackendForDjango(self._op_name)
         self.general_cache_backend = OIDCCacheBackendForDjango(self._op_name)

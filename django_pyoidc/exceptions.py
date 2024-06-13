@@ -4,3 +4,7 @@ class InvalidSIDException(Exception):
 
 class ClaimNotFoundError(Exception):
     pass
+
+
+class InvalidOIDCConfigurationException(Exception):
+    pass
