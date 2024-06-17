@@ -1,3 +1,4 @@
+import functools
 import logging
 
 from django.conf import settings
@@ -25,8 +26,11 @@ class OIDCBearerAuthentication(BaseAuthentication):
         super(OIDCBearerAuthentication, self).__init__(*args, **kwargs)
         self.op_name = self.extract_drf_opname()
         self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
-        self.client = OIDCClient(self.op_name)
         self.engine = OIDCEngine(self.op_name)
+
+    @functools.cached_property
+    def client(self):
+        return OIDCClient(self.op_name)
 
     @classmethod
     def extract_drf_opname(cls):
