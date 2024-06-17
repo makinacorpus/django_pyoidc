@@ -16,6 +16,10 @@ from django_pyoidc.utils import (
 logger = logging.getLogger(__name__)
 
 
+class OidcAuthException(Exception):
+    pass
+
+
 class OIDCBearerAuthentication(BaseAuthentication):
     def __init__(self, *args, **kwargs):
         super(OIDCBearerAuthentication, self).__init__(*args, **kwargs)
@@ -53,7 +57,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
         val = request.headers.get("Authorization")
         if not val:
             msg = "Request missing the authorization header."
-            raise RuntimeError(msg)
+            raise OidcAuthException(msg)
         val = val.strip()
         bearer_name, access_token_jwt = val.split(maxsplit=1)
         requested_bearer_name = get_setting_for_sso_op(
@@ -61,7 +65,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
         )
         if not bearer_name.lower() == requested_bearer_name.lower():
             msg = f"Bad authorization header, invalid Keyword for the bearer, expecting {requested_bearer_name}."
-            raise RuntimeError(msg)
+            raise OidcAuthException(msg)
         return access_token_jwt
 
     def authenticate(self, request):
@@ -76,10 +80,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
             # Extract the access token from an HTTP Authorization Bearer header
             try:
                 access_token_jwt = self.extract_access_token(request)
-            except RuntimeError as e:
-                logger.error(e)
-                # we return None, and not an Error.
-                # API auth failed, but maybe anon access is allowed
+            except OidcAuthException as e:
+                logger.debug(e)
                 return None
 
             # This introspection of the token is made by the SSO server
@@ -113,9 +115,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
                 )
 
             if not user:
-                logger.error(
-                    "OIDC Bearer Authentication process failure. Cannot set active authenticated user."
-                )
+                # OIDC Bearer Authentication process failure : cannot set active authenticated user
                 return None
 
         except PermissionDenied as exp:
@@ -124,4 +124,4 @@ class OIDCBearerAuthentication(BaseAuthentication):
             logger.exception(exp)
             return None
 
-        return (user, access_token_claims)
+        return user, access_token_claims

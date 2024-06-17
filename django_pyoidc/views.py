@@ -222,7 +222,7 @@ class OIDCLogoutView(OIDCView):
             return redirect(url)
         else:
             logger.error(
-                f"Cannot build the SSO disconnection link, still redirecting directly to {post_logout_url}"
+                f"Cannot build the SSO disconnection link (maybe the cache was flushed ?), still redirecting directly to {post_logout_url}"
             )
             return redirect(post_logout_url)
 
@@ -258,7 +258,7 @@ class OIDCBackChannelLogoutView(OIDCView):
         s = SessionStore()
         s.delete(session.cache_session_key)
         session.delete()
-        logger.info(f"Backchannel logout request received and validated for {session}")
+        logger.debug(f"Backchannel logout request received and validated for {session}")
 
     def post(self, request):
         if request.content_type != "application/x-www-form-urlencoded":
@@ -279,14 +279,14 @@ class OIDCBackChannelLogoutView(OIDCView):
                 try:
                     self.logout_sessions_by_sid(client, sid, body)
                 except InvalidSIDException as e:
-                    logger.warning(
+                    logger.debug(
                         f"Got invalid sid from request : expected {sid}. Error : \n{e}"
                     )
                     result.status_code = 400
             else:
                 result.status_code = 400
                 result.content = "Got invalid logout token : sub or sid is missing"
-                logger.warning("Got invalid logout token : sub or sid is missing")
+                logger.debug("Got invalid logout token : sub or sid is missing")
         except JWTDecodeError:
             result.status_code = 400
         except UnicodeDecodeError as e:
@@ -430,6 +430,3 @@ class OIDCCallbackView(OIDCView):
             logger.exception(exc)
             messages.error(request, "Permission Denied.")
             return self.login_failure(request)
-        # except Exception as exc:
-        #    logger.exception(exc)
-        #    return self.login_failure(request)
