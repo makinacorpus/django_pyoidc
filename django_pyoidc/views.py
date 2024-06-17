@@ -1,4 +1,3 @@
-import datetime
 import logging
 from importlib import import_module
 
@@ -14,84 +13,16 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwt import JWT
 from jwt.exceptions import JWTDecodeError
-from oic.extension.client import Client as ClientExtension
-from oic.oic.consumer import Consumer
-from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
-from django_pyoidc import get_user_by_email
+from django_pyoidc.client import OIDCClient
+from django_pyoidc.engine import OIDCEngine
+from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.session import OIDCCacheSessionBackendForDjango
-from django_pyoidc.utils import (
-    OIDCCacheBackendForDjango,
-    get_setting_for_sso_op,
-    get_settings_for_sso_op,
-)
+from django_pyoidc.utils import get_setting_for_sso_op, import_object
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidSIDException(Exception):
-    pass
-
-
-def _import_object(path, def_name):
-    try:
-        mod, cls = path.split(":", 1)
-    except ValueError:
-        mod = path
-        cls = def_name
-
-    return getattr(import_module(mod), cls)
-
-
-class OIDClient:
-    def __init__(self, op_name, session_id=None):
-        self._op_name = op_name
-
-        self.session_cache_backend = OIDCCacheSessionBackendForDjango(self._op_name)
-        self.general_cache_backend = OIDCCacheBackendForDjango(self._op_name)
-
-        consumer_config = {
-            # "debug": True,
-            "response_type": "code"
-        }
-
-        client_config = {
-            "client_id": get_setting_for_sso_op(op_name, "OIDC_CLIENT_ID"),
-            "client_authn_method": CLIENT_AUTHN_METHOD,
-        }
-
-        self.consumer = Consumer(
-            session_db=self.session_cache_backend,
-            consumer_config=consumer_config,
-            client_config=client_config,
-        )
-        # used in token introspection
-        self.client_extension = ClientExtension(**client_config)
-
-        provider_info_uri = get_setting_for_sso_op(
-            op_name, "OIDC_PROVIDER_DISCOVERY_URI"
-        )
-        client_secret = get_setting_for_sso_op(op_name, "OIDC_CLIENT_SECRET")
-        self.client_extension.client_secret = client_secret
-
-        if session_id:
-            self.consumer.restore(session_id)
-        else:
-
-            cache_key = self.general_cache_backend.generate_hashed_cache_key(
-                provider_info_uri
-            )
-            try:
-                config = self.general_cache_backend[cache_key]
-            except KeyError:
-                config = self.consumer.provider_config(provider_info_uri)
-                # shared microcache for provider config
-                # FIXME: Setting for duration
-                self.general_cache_backend.set(cache_key, config, 60)
-            self.consumer.client_secret = client_secret
 
 
 class OIDCMixin:
@@ -111,17 +42,8 @@ class OIDCView(View, OIDCMixin):
     def call_function(self, setting_name, *args, **kwargs):
         function_path = get_setting_for_sso_op(self.op_name, setting_name)
         if function_path:
-            func = _import_object(function_path, "")
+            func = import_object(function_path, "")
             return func(*args, **kwargs)
-
-    def call_get_user_function(self, tokens={}):
-        if "HOOK_GET_USER" in get_settings_for_sso_op(self.op_name):
-            logger.debug("OIDC, Calling user hook on get_user")
-            return self.call_function("HOOK_GET_USER", tokens)
-        else:
-            return get_user_by_email(
-                tokens["info_token_claims"], tokens["id_token_claims"]
-            )
 
     def call_callback_function(self, request, user):
         logger.debug("OIDC, Calling user hook on login")
@@ -145,7 +67,7 @@ class OIDCView(View, OIDCMixin):
         Adapted from https://github.com/mozilla/mozilla-django-oidc/blob/71e4af8283a10aa51234de705d34cd298e927f97/mozilla_django_oidc/views.py#L132
         """
         next_url = request.GET.get(redirect_field_name)
-        print(f"{next_url=}")
+        # print(f"{next_url=}")
         if next_url:
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
@@ -179,9 +101,9 @@ class OIDCLoginView(OIDCView):
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
 
-        client = OIDClient(self.op_name)
-        client.consumer.consumer_config["authz_page"] = str(
-            self.get_setting("OIDC_CALLBACK_PATH")
+        client = OIDCClient(self.op_name)
+        client.consumer.consumer_config["authz_page"] = self.get_setting(
+            "OIDC_CALLBACK_PATH"
         )
         redirect_uri = self.get_next_url(request, "next")
 
@@ -264,7 +186,7 @@ class OIDCLogoutView(OIDCView):
 
         if sid:
             try:
-                client = OIDClient(self.op_name, session_id=sid)
+                client = OIDCClient(self.op_name, session_id=sid)
             except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
                 logger.error("OIDC Logout call error when loading OIDC state: ")
                 logger.exception(e)
@@ -316,7 +238,7 @@ class OIDCBackChannelLogoutView(OIDCView):
 
     http_method_names = ["post"]
 
-    def logout_sessions_by_sid(self, client: OIDClient, sid: str, body):
+    def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body):
         validated_sid = client.consumer.backchannel_logout(
             request_args={"logout_token": body}
         )
@@ -326,7 +248,7 @@ class OIDCBackChannelLogoutView(OIDCView):
         for session in sessions:
             self._logout_session(session)
 
-    def logout_sessions_by_sub(self, client: OIDClient, sub: str, body):
+    def logout_sessions_by_sub(self, client: OIDCClient, sub: str, body):
         sessions = OIDCSession.objects.filter(sub=sub)
         for session in sessions:
             client.consumer.backchannel_logout(request_args={"logout_token": body})
@@ -350,10 +272,10 @@ class OIDCBackChannelLogoutView(OIDCView):
             sub = decoded.get("sub")
             if sub:
                 # Authorization server wants to kill all sessions
-                client = OIDClient(self.op_name)
+                client = OIDCClient(self.op_name)
                 self.logout_sessions_by_sub(client, sub, body)
             elif sid:
-                client = OIDClient(self.op_name, session_id=sid)
+                client = OIDCClient(self.op_name, session_id=sid)
                 try:
                     self.logout_sessions_by_sid(client, sid, body)
                 except InvalidSIDException as e:
@@ -385,7 +307,7 @@ class OIDCCallbackView(OIDCView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
+        self.engine = OIDCEngine(self.op_name)
 
     def success_url(self, request):
         # Pull the next url from the session or settings --we don't need to
@@ -408,54 +330,13 @@ class OIDCCallbackView(OIDCView):
         """
         Perform a cached intropesction call to extract claims from encoded jwt of the access_token
         """
-        # FIXME: allow a non-cached mode by global settings
-        access_token_claims = None
-
-        # FIXME: in what case could we not have an access token available?
-        # should we raise an error then?
-        if access_token_jwt is not None:
-            cache_key = self.general_cache_backend.generate_hashed_cache_key(
-                access_token_jwt
-            )
-            try:
-                access_token_claims = self.general_cache_backend["cache_key"]
-            except KeyError:
-                # CACHE MISS
-
-                # RFC 7662: token introspection: ask SSO to validate and render the jwt as json
-                # this means a slow web call
-                request_args = {
-                    "token": access_token_jwt,
-                    "token_type_hint": "access_token",
-                }
-                client_auth_method = self.client.consumer.registration_response.get(
-                    "introspection_endpoint_auth_method", "client_secret_basic"
-                )
-                introspection = self.client.client_extension.do_token_introspection(
-                    request_args=request_args,
-                    authn_method=client_auth_method,
-                    endpoint=self.client.consumer.introspection_endpoint,
-                )
-                access_token_claims = introspection.to_dict()
-
-                # store it in cache
-                current = datetime.datetime.now().strftime("%s")
-                if "exp" not in access_token_claims:
-                    raise RuntimeError("No expiry set on the access token.")
-                access_token_expiry = access_token_claims["exp"]
-                print("**********************")
-                print(current)
-                print(access_token_expiry)
-                exp = int(access_token_expiry) - int(current)
-                print(exp)
-                self.general_cache_backend.set(cache_key, access_token_claims, exp)
-        return access_token_claims
+        return
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
         try:
             if "oidc_sid" in request.session:
-                self.client = OIDClient(
+                self.client = OIDCClient(
                     self.op_name, session_id=request.session["oidc_sid"]
                 )
 
@@ -495,8 +376,8 @@ class OIDCCallbackView(OIDCView):
                         tokens["access_token"] if "access_token" in tokens else None
                     )
 
-                    access_token_claims = self._introspect_access_token(
-                        access_token_jwt
+                    access_token_claims = self.engine.introspect_access_token(
+                        access_token_jwt, self.client
                     )
 
                     id_token_claims = (
@@ -508,7 +389,7 @@ class OIDCCallbackView(OIDCView):
                     userinfo_claims = userinfo.to_dict()
 
                     # Call user hook
-                    user = self.call_get_user_function(
+                    user = self.engine.call_get_user_function(
                         tokens={
                             "info_token_claims": userinfo_claims,
                             "access_token_jwt": access_token_jwt,

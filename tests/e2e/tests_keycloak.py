@@ -1,5 +1,6 @@
 import http.client as http_client
 import logging
+import time
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -10,11 +11,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
-
-# from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import WebDriverWait
 
 from tests.e2e.utils import OIDCE2EKeycloakTestCase
+
+logger = logging.getLogger(__name__)
+
 
 # HTTP debug for requests
 http_client.HTTPConnection.debuglevel = 1
@@ -29,7 +31,8 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # options.headless = True
         profile = FirefoxProfile()
         profile.set_preference("browser.privatebrowsing.autostart", True)
-        cls.selenium = WebDriver(firefox_profile=profile, options=options)
+        options.profile = profile
+        cls.selenium = WebDriver(options=options)
         # cls.selenium.implicitly_wait(10)
 
     @classmethod
@@ -37,7 +40,93 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         cls.selenium.quit()
         super().tearDownClass()
 
-    def test_00_login_page_redirects_to_keycloak_sso(self, *args):
+    def test_001_m2m_client_credential_success(self, *args):
+        """
+        Check that we can request the API using a 'service account'.
+
+        We use a 'service account', so we are an external M2M client
+        in this situation, we do not use the Django OIDC credentials
+        but the creds of a service account, as would be done by an external
+        application in a B2B call.
+        """
+
+        sso_url = (
+            "http://localhost:8080/auth/realms/realm1/protocol/openid-connect/token"
+        )
+        params = {
+            "client_id": "app_m2m1",
+            "client_secret": "secret_app-m2m1",
+            "grant_type": "client_credentials",
+        }
+        print("sending M2M Login Request")
+        response = requests.post(sso_url, data=params)
+        # failing the test in case of bad HTTP status
+        response.raise_for_status()
+
+        print("Auth success")
+        data = response.json()
+        access_token = data["access_token"]
+
+        api_url = f"{self.live_server_url}/api/users"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+        }
+        print("sending API Request with access token")
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        content = response.text
+        self.assertIn('"username":"service-account-app_m2m1"', content)
+
+    def test_002_m2m_client_credential_forbidden(self, *args):
+        """
+        Check that we can request the API using a 'service account' and be rejected.
+
+        The client used here does not have access to the same scope as the client
+        used in the API. THe group and roles are OK, but not the scope. So Keycloak
+        will not add the right audience in the token and we should be rejected.
+        """
+
+        sso_url = (
+            "http://localhost:8080/auth/realms/realm1/protocol/openid-connect/token"
+        )
+        params = {
+            "client_id": "app2_m2m2",
+            "client_secret": "secret_app2-m2m2",
+            "grant_type": "client_credentials",
+        }
+        print("sending M2M Login Request")
+        response = requests.post(sso_url, data=params)
+        # failing the test in case of bad HTTP status
+        response.raise_for_status()
+
+        print("Auth success")
+        data = response.json()
+        access_token = data["access_token"]
+
+        api_url = f"{self.live_server_url}/api/users"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+        }
+        print("sending API Request with access token, should get a 403 Forbidden.")
+        response = requests.get(api_url, headers=headers)
+        self.assertEqual(403, response.status_code)
+
+    def test_003_m2m_anonymous_api_access(self, *args):
+
+        # auth part is forbidden
+        api_url = f"{self.live_server_url}/api/users"
+        response = requests.get(api_url)
+        self.assertEqual(403, response.status_code)
+
+        # public part is OK
+        api_url = f"{self.live_server_url}/api/publics"
+        print("sending anonymous API Request.")
+        response = requests.get(api_url)
+        response.raise_for_status()
+        content = response.text
+        self.assertIn("[]", content)
+
+    def test_100_login_page_redirects_to_keycloak_sso(self, *args):
         """
         Test that accessing login callback redirects to the SSO server.
         """
@@ -77,6 +166,31 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertEqual(qs["scope"][0], "openid")
         self.assertTrue(qs["state"][0])
         self.assertTrue(qs["nonce"][0])
+
+    def _selenium_front_sso_login(self, user, password):
+        front_url = "http://localhost:9999"
+        self.selenium.get(front_url)
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "loginBtn"))
+        ).click()
+        # self.selenium.find_element(By.ID, "loginBtn").click()
+        self.wait.until(EC.url_changes(front_url))
+        username_input = self.selenium.find_element(By.NAME, "username")
+        username_input.send_keys(user)
+        password_input = self.selenium.find_element(By.NAME, "password")
+        password_input.send_keys(password)
+        self.selenium.find_element(By.ID, "kc-login").click()
+        self.wait.until(EC.url_matches(front_url))
+
+    def _selenium_front_logout(self):
+        front_url = "http://localhost:9999"
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "logoutBtn"))
+        ).click()
+        self.wait.until(EC.url_matches(front_url))
+        bodyText = self.selenium.find_element(By.ID, "message").text
+        # check we are NOT logged in
+        self.assertEqual("", bodyText)
 
     def _selenium_sso_login(
         self,
@@ -129,7 +243,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # check we are NOT logged in
         self.assertTrue("You are logged out" in bodyText)
 
-    def test_01_selenium_sso_login(self, *args):
+    def test_101_selenium_sso_login(self, *args):
         """
         Test a complete working OIDC login/logout.
         """
@@ -174,7 +288,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("OIDC-LOGIN-LINK" in bodyText)
         self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
 
-    def test_02_selenium_sso_login__relogin_and_logout(self, *args):
+    def test_102_selenium_sso_login__relogin_and_logout(self, *args):
         """
         Test a login/logout session, adding a re-login on existing session in the middle
         """
@@ -246,7 +360,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             },
         },
     )
-    def test_03_selenium_sso_session_with_callbacks(self, *args):
+    def test_103_selenium_sso_session_with_callbacks(self, *args):
         timeout = 5
         login_url = reverse("test_login")
         success_url = reverse("test_success")
@@ -300,7 +414,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             },
         },
     )
-    def test_04_selenium_sso_failed_login(self, *args):
+    def test_104_selenium_sso_failed_login(self, *args):
         """
         Test a failed SSO login (bad client)
         """
@@ -341,7 +455,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             },
         },
     )
-    def test_05_selenium_ressource_access_checks(self, *args):
+    def test_105_selenium_ressource_access_checks(self, *args):
         """
         Check that a resource access check can be performed to prevent access for some users.
 
@@ -439,7 +553,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             },
         },
     )
-    def test_06_selenium_minimal_audience_checks(self, *args):
+    def test_106_selenium_minimal_audience_checks(self, *args):
         """
         Check that a minimal audience check can be performed to prevent access for some users.
 
@@ -524,3 +638,41 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # Check the session message is shown
         self.assertTrue("message: user_app1_only@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
+
+    def test_201_selenium_front_app_api_call(self, *args):
+        """
+        Check that a test front app can make an OIDC API call.
+        """
+        timeout = 60
+        self.wait = WebDriverWait(self.selenium, timeout)
+
+        # user1 login is OK, resource access success
+        self._selenium_front_sso_login("user1", "passwd1")
+        # let the page reloads after login fill the user session stuff
+        time.sleep(3)
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
+            "innerHTML"
+        )
+        self.assertTrue("User: user1" in bodyText)
+
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "securedBtn"))
+        ).click()
+
+        # let the ajax stuff behave
+        time.sleep(3)
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
+            "innerHTML"
+        )
+        # logger.error(bodyText)
+        self.assertTrue("user1@example.com" in bodyText)
+
+        # FIXME: there a selenium issue in the logout btn selection...
+        #  self._selenium_front_logout()
+        #
+        #  # After logout, launch unauthorized ajax call
+        #  WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "securedBtn"))).click()
+        #  # let the ajax stuff behave
+        #  time.sleep(3)
+        #  bodyText = self.selenium.find_element(By.ID, "message").get_attribute('innerHTML')
+        #  self.assertTrue("Request Forbidden" in bodyText)

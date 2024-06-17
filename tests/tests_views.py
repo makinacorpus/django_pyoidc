@@ -9,17 +9,17 @@ from jwt import JWT, jwk_from_dict
 from oic.oic import IdToken
 from oic.oic.message import OpenIDSchema
 
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.views import OIDClient
 from tests.utils import OIDCTestCase
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
 class LoginViewTestCase(OIDCTestCase):
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch(
-        "django_pyoidc.views.Consumer.begin",
+        "django_pyoidc.client.Consumer.begin",
         return_value=(1234, "https://sso.notatld"),
     )
     def test_redirect_uri_management_no_next_params(self, *args):
@@ -38,9 +38,9 @@ class LoginViewTestCase(OIDCTestCase):
             settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
         )
 
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch(
-        "django_pyoidc.views.Consumer.begin",
+        "django_pyoidc.client.Consumer.begin",
         return_value=(1234, "https://sso.notatld"),
     )
     def test_redirect_uri_management_next_to_samesite(self, *args):
@@ -64,9 +64,9 @@ class LoginViewTestCase(OIDCTestCase):
             "https://test.django-pyoidc.notatld/myview/details",
         )
 
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch(
-        "django_pyoidc.views.Consumer.begin",
+        "django_pyoidc.client.Consumer.begin",
         return_value=(1234, "https://sso.notatld"),
     )
     def test_redirect_uri_management_next_follows_https_requires(self, *args):
@@ -90,9 +90,9 @@ class LoginViewTestCase(OIDCTestCase):
             settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
         )
 
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch(
-        "django_pyoidc.views.Consumer.begin",
+        "django_pyoidc.client.Consumer.begin",
         return_value=(1234, "https://sso.notatld"),
     )
     def test_redirect_uri_management_next_to_disallowed_site(self, *args):
@@ -106,7 +106,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_oidc_session_is_saved(self, *args):
         """
         Test that the OIDC client is saved on login request, and that the returned session ID allows us to restore the client
@@ -123,7 +123,7 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertEqual(response.status_code, 302)
         sid = self.client.session["oidc_sid"]
         self.assertIsNotNone(sid)
-        client = OIDClient(op_name="sso1", session_id=sid)
+        client = OIDCClient(op_name="sso1", session_id=sid)
         self.assertEqual(client.consumer.client_id, "1")
 
 
@@ -156,9 +156,9 @@ class LogoutViewTestCase(OIDCTestCase):
             SESSION_KEY in self.client.session
         )  # from https://stackoverflow.com/a/6013115
 
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     @mock.patch(
-        "django_pyoidc.views.Consumer.request_info",
+        "django_pyoidc.client.Consumer.request_info",
         return_value=("http://example.com", "", "", ""),
     )
     def test_logout_generates_oidc_request_to_sso(
@@ -203,10 +203,10 @@ class CallbackViewTestCase(OIDCTestCase):
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
 
     @mock.patch(
-        "django_pyoidc.views.Consumer.parse_authz",
+        "django_pyoidc.client.Consumer.parse_authz",
         return_value=({"state": ""}, None, None),
     )
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_but_state_mismatch(self, mocked_restore, mocked_parse_authz):
         """
         Test that receiving a callback with a wrong state parameter results in an HTTP 4XX error
@@ -225,18 +225,18 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_parse_authz.assert_called_once()
 
     @mock.patch(
-        "django_pyoidc.views.Consumer.parse_authz",
+        "django_pyoidc.client.Consumer.parse_authz",
         return_value=({"state": "test_id_12345"}, None, None),
     )
-    @mock.patch("django_pyoidc.views.get_user_by_email", return_value=None)
+    @mock.patch("django_pyoidc.engine.get_user_by_email", return_value=None)
     @mock.patch(
-        "django_pyoidc.views.Consumer.get_user_info", return_value=OpenIDSchema()
+        "django_pyoidc.client.Consumer.get_user_info", return_value=OpenIDSchema()
     )
     @mock.patch(
-        "django_pyoidc.views.Consumer.complete",
+        "django_pyoidc.client.Consumer.complete",
         return_value={"id_token": IdToken(iss="fake")},
     )
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_no_session_state_provided_invalid_user(
         self,
         mocked_restore,
@@ -262,23 +262,30 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_complete.assert_called_once_with(state=state, session_state=None)
         mocked_parse_authz.assert_called_once()
         mocked_get_user_info.assert_called_once_with(state=state)
-        mocked_get_user.assert_called_once_with({}, {"iss": "fake"})
+        mocked_get_user.assert_called_once_with(
+            {
+                "info_token_claims": {},
+                "access_token_jwt": None,
+                "access_token_claims": None,
+                "id_token_claims": {"iss": "fake"},
+            }
+        )
 
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
         self.assertEqual(OIDCSession.objects.all().count(), 0)
 
     @mock.patch("django_pyoidc.views.OIDCView.call_callback_function")
     @mock.patch(
-        "django_pyoidc.views.Consumer.parse_authz",
+        "django_pyoidc.client.Consumer.parse_authz",
         return_value=({"state": "test_id_12345"}, None, None),
     )
-    @mock.patch("django_pyoidc.views.get_user_by_email")
-    @mock.patch("django_pyoidc.views.Consumer.get_user_info")
+    @mock.patch("django_pyoidc.engine.get_user_by_email")
+    @mock.patch("django_pyoidc.client.Consumer.get_user_info")
     @mock.patch(
-        "django_pyoidc.views.Consumer.complete",
+        "django_pyoidc.client.Consumer.complete",
         return_value={"id_token": IdToken(iss="fake")},
     )
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_no_session_state_provided_valid_user(
         self,
         mocked_restore,
@@ -315,7 +322,14 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info_dict, {"iss": "fake"})
+        mocked_get_user.assert_called_once_with(
+            {
+                "info_token_claims": user_info_dict,
+                "access_token_jwt": None,
+                "access_token_claims": None,
+                "id_token_claims": {"iss": "fake"},
+            }
+        )
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
@@ -332,14 +346,14 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_call_callback_function.assert_called_once()
 
     @mock.patch("django_pyoidc.views.OIDCView.call_callback_function")
-    @mock.patch("django_pyoidc.views.Consumer.parse_authz")
-    @mock.patch("django_pyoidc.views.get_user_by_email")
-    @mock.patch("django_pyoidc.views.Consumer.get_user_info")
+    @mock.patch("django_pyoidc.client.Consumer.parse_authz")
+    @mock.patch("django_pyoidc.engine.get_user_by_email")
+    @mock.patch("django_pyoidc.client.Consumer.get_user_info")
     @mock.patch(
-        "django_pyoidc.views.Consumer.complete",
+        "django_pyoidc.client.Consumer.complete",
         return_value={"id_token": IdToken(iss="fake")},
     )
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_with_session_state_provided_valid_user(
         self,
         mocked_restore,
@@ -382,7 +396,14 @@ class CallbackViewTestCase(OIDCTestCase):
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
-        mocked_get_user.assert_called_once_with(user_info_dict, {"iss": "fake"})
+        mocked_get_user.assert_called_once_with(
+            {
+                "info_token_claims": user_info_dict,
+                "access_token_jwt": None,
+                "access_token_claims": None,
+                "id_token_claims": {"iss": "fake"},
+            }
+        )
 
         self.assertRedirects(
             response, "/default/success", fetch_redirect_response=False
@@ -466,8 +487,8 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         )
 
     @mock.patch("django_pyoidc.views.SessionStore.delete")
-    @mock.patch("django_pyoidc.views.Consumer.backchannel_logout")
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_valid_backchannel_sub(
         self, mocked_provider_config, mocked_backchannel_logout, mocked_session_delete
     ):
@@ -500,9 +521,9 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_session_delete.assert_called_once_with(cache_session_key)
 
     @mock.patch("django_pyoidc.views.SessionStore.delete")
-    @mock.patch("django_pyoidc.views.Consumer.backchannel_logout")
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_valid_backchannel_sid(
         self,
         mocked_restore,
@@ -546,9 +567,9 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_restore.assert_called_once_with(session_state)
 
     @mock.patch("django_pyoidc.views.SessionStore.delete")
-    @mock.patch("django_pyoidc.views.Consumer.backchannel_logout")
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
-    @mock.patch("django_pyoidc.views.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_invalid_backchannel_sid(
         self,
         mocked_restore,
@@ -592,8 +613,8 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_restore.assert_called_once_with(session_state)
 
     @mock.patch("django_pyoidc.views.SessionStore.delete")
-    @mock.patch("django_pyoidc.views.Consumer.backchannel_logout")
-    @mock.patch("django_pyoidc.views.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_valid_backchannel_sub_multiple_sessions(
         self, mocked_provider_config, mocked_backchannel_logout, mocked_session_delete
     ):
