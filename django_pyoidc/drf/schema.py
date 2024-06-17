@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 try:
     from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
@@ -14,6 +16,10 @@ try:
 
             op = OIDCBearerAuthentication.extract_drf_opname()
             well_known_url = get_setting_for_sso_op(op, "OIDC_PROVIDER_DISCOVERY_URI")
+            if not well_known_url.endswith(".well-known/openid-configuration"):
+                well_known_url = urljoin(
+                    well_known_url, ".well-known/openid-configuration"
+                )
             return {"type": "openIdConnect", "openIdConnectUrl": well_known_url}
 
 except ImportError:
