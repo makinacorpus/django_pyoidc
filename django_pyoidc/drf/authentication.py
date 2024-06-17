@@ -24,7 +24,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
         self.client = OIDCClient(self.op_name)
         self.engine = OIDCEngine(self.op_name)
 
-    def extract_drf_opname(self):
+    @classmethod
+    def extract_drf_opname(cls):
         """
         Given a list of opnames and setting in DJANGO_PYOIDC conf, extract the one having USED_BY_REST_FRAMEWORK=True.
         """
