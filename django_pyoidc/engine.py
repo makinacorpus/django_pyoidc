@@ -12,6 +12,10 @@ from django_pyoidc.utils import (
 logger = logging.getLogger(__name__)
 
 
+class OIDCEngineException(Exception):
+    pass
+
+
 class OIDCEngine:
     def __init__(self, op_name: str):
         self.op_name = op_name
@@ -64,10 +68,13 @@ class OIDCEngine:
                 )
                 access_token_claims = introspection.to_dict()
 
+                if not access_token_claims.get("active", False):
+                    raise OIDCEngineException("Token is not active.")
+
                 # store it in cache
                 current = datetime.datetime.now().strftime("%s")
                 if "exp" not in access_token_claims:
-                    raise RuntimeError("No expiry set on the access token.")
+                    raise OIDCEngineException("No expiry set on the access token.")
                 access_token_expiry = access_token_claims["exp"]
                 exp = int(access_token_expiry) - int(current)
                 logger.debug(
