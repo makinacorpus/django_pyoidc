@@ -32,7 +32,7 @@ def import_object(path, def_name):
     return getattr(import_module(mod), cls)
 
 
-def extract_claim_from_tokens(claim: str, tokens: dict) -> Any:
+def extract_claim_from_tokens(claim: str, tokens: dict, raise_exception=True) -> Any:
     """Given a dictionnary of tokens claims, extract the given claim.
 
     This function will seek in "info_token_claims", then "id_token_claims"
@@ -46,7 +46,10 @@ def extract_claim_from_tokens(claim: str, tokens: dict) -> Any:
     elif "access_token_claims" and claim in tokens["access_token_claims"]:
         value = tokens["access_token_claims"][claim]
     else:
-        raise ClaimNotFoundError(f"{claim} not found in available OIDC tokens.")
+        if raise_exception:
+            raise ClaimNotFoundError(f"{claim} not found in available OIDC tokens.")
+        else:
+            return None
     return value
 
 
