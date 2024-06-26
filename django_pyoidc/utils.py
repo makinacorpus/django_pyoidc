@@ -43,7 +43,7 @@ def extract_claim_from_tokens(claim: str, tokens: dict, raise_exception=True) ->
         value = tokens["info_token_claims"][claim]
     elif "id_token_claims" in tokens and claim in tokens["id_token_claims"]:
         value = tokens["id_token_claims"][claim]
-    elif "access_token_claims" and claim in tokens["access_token_claims"]:
+    elif "access_token_claims" in tokens and claim in tokens["access_token_claims"]:
         value = tokens["access_token_claims"][claim]
     else:
         if raise_exception:
