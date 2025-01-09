@@ -45,20 +45,21 @@ class OIDCE2ETestCase(LiveServerTestCase):
         "django.contrib.messages.middleware.MessageMiddleware",
     ],
     DJANGO_PYOIDC={
-        "sso1": {
-            "OIDC_CLIENT_ID": "app1",
-            "CACHE_DJANGO_BACKEND": "default",
-            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/",
-            "OIDC_CLIENT_SECRET": "secret_app1",
-            "OIDC_CALLBACK_PATH": "/callback",
-            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
-            "POST_LOGIN_URI_SUCCESS": "/test-success",
-            "POST_LOGIN_URI_FAILURE": "/test-failure",
+        "lemon1": {
+            "provider_class": "LemonLDAPng2Provider",
+            "client_id": "app1",
+            "cache_django_backend": "default",
+            "provider_discovery_uri": "http://localhost:8070/",
+            "client_secret": "secret_app1",
+            "oidc_callback_path": "/callback-ll-1",
+            "post_logout_redirect_uri": "/test-ll-logout-done-1",
+            "login_uris_redirect_allowed_hosts": ["testserver"],
+            "login_redirection_requires_https": False,
+            "post_login_uri_success": "/test-ll-success-1",
+            "post_login_uri_failure": "/test-ll-failure-1",
             "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
-            "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT": {"confirm": 1},
+            # "oidc_logout_query_string_extra_parameters_dict": {"confirm": 1},
         },
     },
 )
@@ -208,14 +209,26 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
         )
 
         print(" + Create client applications.")
-        cls.registerClient("app1", "secret_app1", cls.live_server_url)
+        cls.registerClient(
+            "app1",
+            "secret_app1",
+            cls.live_server_url,
+            callback_url=f"{cls.live_server_url}/callback-ll-1",
+            post_login_url=f"{cls.live_server_url}/test-ll-logout-done-1",
+        )
         cls.registerClient(
             "app1-api",
             "secret_app1-api",
             cls.live_server_url,
             bearerOnly=True,
         )
-        cls.registerClient("app2-full", "secret_app2-full", cls.live_server_url)
+        cls.registerClient(
+            "app2-full",
+            "secret_app2-full",
+            cls.live_server_url,
+            callback_url=f"{cls.live_server_url}/callback-ll-2",
+            post_login_url=f"{cls.live_server_url}/test-ll-logout-done-2",
+        )
         cls.registerClient(
             "app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True
         )
@@ -282,9 +295,11 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
         return output
 
     @classmethod
-    def registerClient(cls, name, secret, url, bearerOnly=False):
-        redirectUris = "''" if bearerOnly else f"'{url}/callback'"
-        logoutRedirectUris = "''" if bearerOnly else f"'{url}/test-logout-done'"
+    def registerClient(
+        cls, name, secret, url, callback_url="", post_login_url="", bearerOnly=False
+    ):
+        redirectUris = "''" if bearerOnly else f"'{callback_url}'"
+        logoutRedirectUris = "''" if bearerOnly else f"'{post_login_url}'"
 
         cls.docker_lemonldap_command(
             f"""usr/share/lemonldap-ng/bin/lemonldap-ng-cli -yes 1 \
@@ -326,37 +341,101 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
     ],
     DJANGO_PYOIDC={
         "sso1": {
-            "OIDC_CLIENT_ID": "app1",
-            "CACHE_DJANGO_BACKEND": "default",
-            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-            "OIDC_CLIENT_SECRET": "secret_app1",
-            "OIDC_CALLBACK_PATH": "/callback",
-            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
-            "POST_LOGIN_URI_SUCCESS": "/test-success",
-            "POST_LOGIN_URI_FAILURE": "/test-failure",
-            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
+            "provider_class": "KeycloakProvider",
+            "keycloak_base_uri": "http://localhost:8080/auth/",
+            "keycloak_realm": "realm1",
+            "client_id": "app1",
+            "client_secret": "secret_app1",
+            "cache_django_backend": "default",
+            "callback_uri_name": "e2e_test_callback_1",
+            "post_login_uri_success": "/test-success-1",
+            "post_login_uri_failure": "/test-failure-1",
+            "post_logout_redirect_uri": "/test-logout-done-1",
             "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "login_uris_redirect_allowed_hosts": ["testserver"],
+            "login_redirection_requires_https": False,
         },
+        # sso2 use a different client_id
         "sso2": {
-            "OIDC_CLIENT_ID": "app1",
-            "CACHE_DJANGO_BACKEND": "default",
-            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/auth/realms/realm1",
-            "OIDC_CLIENT_SECRET": "secret_app1",
-            "OIDC_CALLBACK_PATH": "/callback",
-            "POST_LOGIN_URI_SUCCESS": "/test-success",
-            "POST_LOGIN_URI_FAILURE": "/test-failure",
-            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
+            "provider_class": "KeycloakProvider",
+            "keycloak_base_uri": "http://localhost:8080/auth/",
+            "keycloak_realm": "realm1",
+            "client_id": "app2-full",
+            "client_secret": "secret_app2-full",
+            "cache_django_backend": "default",
+            "callback_uri_name": "e2e_test_callback_2",
+            "post_login_uri_success": "/test-success-2",
+            "post_login_uri_failure": "/test-failure-2",
+            "post_logout_redirect_uri": "/test-logout-done-2",
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "login_uris_redirect_allowed_hosts": ["testserver"],
+            "login_redirection_requires_https": False,
+            "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
         },
-        "apisso": {
-            "OIDC_CLIENT_ID": "app1-api",
-            "CACHE_DJANGO_BACKEND": "default",
-            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-            "OIDC_CLIENT_SECRET": "secret_app1-api",
-            "USED_BY_REST_FRAMEWORK": True,
+        # broken client_id
+        "sso3": {
+            "client_id": "bad_client_id",
+            "provider_class": "KeycloakProvider",
+            "keycloak_base_uri": "http://localhost:8080/auth/",
+            "keycloak_realm": "realm1",
+            "client_secret": "secret_app1",
+            "cache_django_backend": "default",
+            "callback_uri_name": "e2e_test_callback_3",
+            "post_login_uri_success": "/test-success-3",
+            "post_login_uri_failure": "/test-failure-3",
+            "post_logout_redirect_uri": "/test-logout-done-3",
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "login_uris_redirect_allowed_hosts": ["testserver"],
+            "login_redirection_requires_https": False,
+        },
+        # hook_get_user
+        "sso4": {
+            "provider_class": "KeycloakProvider",
+            "keycloak_base_uri": "http://localhost:8080/auth/",
+            "keycloak_realm": "realm1",
+            "client_id": "app1",
+            "client_secret": "secret_app1",
+            "cache_django_backend": "default",
+            "callback_uri_name": "e2e_test_callback_4",
+            "post_login_uri_success": "/test-success-4",
+            "post_login_uri_failure": "/test-failure-4",
+            "post_logout_redirect_uri": "/test-logout-done-4",
+            "login_uris_redirect_allowed_hosts": ["testserver"],
+            "login_redirection_requires_https": False,
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
+        },
+        # hook_get_user
+        "sso5": {
+            "provider_class": "KeycloakProvider",
+            "keycloak_base_uri": "http://localhost:8080/auth/",
+            "keycloak_realm": "realm1",
+            "client_id": "app1",
+            "client_secret": "secret_app1",
+            "cache_django_backend": "default",
+            "callback_uri_name": "e2e_test_callback_5",
+            "post_login_uri_success": "/test-success-5",
+            "post_login_uri_failure": "/test-failure-5",
+            "post_logout_redirect_uri": "/test-logout-done-5",
+            "login_uris_redirect_allowed_hosts": ["testserver"],
+            "login_redirection_requires_https": False,
+            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
+            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_minimal_audiences_check",
+        },
+        # API
+        "drf": {
+            "client_id": "app1-api",
+            "cache_django_backend": "default",
+            "provider_discovery_uri": "http://localhost:8080/auth/realms/realm1",
+            "client_secret": "secret_app1-api",
+            "provider_class": "KeycloakProvider",
+            "keycloak_base_uri": "http://localhost:8080/auth/",
+            "keycloak_realm": "realm1",
         },
     },
 )
@@ -492,7 +571,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             "secret_app1",
             cls.live_server_url,
             serviceAccount=False,
-            channelLogoutUrl=f"{cls.live_server_url}/oidc/backchannel-logout",
+            channelLogoutUrl=f"{cls.live_server_url}/back_channel_logout-1/",
         )
         app1_api_id = cls.registerClient(
             "app1-api",
@@ -524,7 +603,11 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             serviceAccount=True,
         )
         app2_full_id = cls.registerClient(
-            "app2-full", "secret_app2-full", cls.live_server_url, bearerOnly=False
+            "app2-full",
+            "secret_app2-full",
+            cls.live_server_url,
+            bearerOnly=False,
+            channelLogoutUrl=f"{cls.live_server_url}/back_channel_logout-2/",
         )
         app2_api_id = cls.registerClient(
             "app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True

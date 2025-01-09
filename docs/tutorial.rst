@@ -174,7 +174,7 @@ If you check this json you can extract paths from this file. For example the fir
 ``http://keycloak.local:8080/auth/realms/Demo``. Everything before the ``realms`` keyword is the
 ``keycloak_base_uri`` that this library needs, the word following ``realms/`` is the ``keycloak_realm`` parameter.
 
-Then you can use the methods :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>` and
+FIXME  Then you can use the methods :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>` and
 :py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>` to easily generate the settings
 and url configuration for your provider.
 
@@ -186,10 +186,10 @@ Edit your django configuration to add your configuration to ``DJANGO_PYOIDC`` se
     from .oidc import my_oidc_provider
 
     DJANGO_PYOIDC = {
-        **my_oidc_provider.get_config(allowed_hosts=["app.local:8082"]),
+        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["app.local:8082"]),
     }
 
-TODO: remove allowed_hosts from this step, should be in settings
+TODO: remove login_uris_redirect_allowed_hosts from this step, should be in settings
 
 Generate the URLs
 *****************

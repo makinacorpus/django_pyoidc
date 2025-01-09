@@ -9,7 +9,7 @@ from jsonpickle.handlers import BaseHandler
 from oic.utils.session_backend import SessionBackend
 
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.utils import get_settings_for_sso_op
+from django_pyoidc.settings import OIDCSettings
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +28,11 @@ jsonpickle.register(RsaKey, RSAKeyHandler)
 
 
 class OIDCCacheSessionBackendForDjango(SessionBackend):
-    """Implement Session backend using django cache"""
+    """Implement Session backend using django cache."""
 
-    def __init__(self, op_name):
-        self.storage: BaseCache = caches[
-            get_settings_for_sso_op(op_name)["CACHE_DJANGO_BACKEND"]
-        ]
-        self.op_name = op_name
+    def __init__(self, opsettings: OIDCSettings):
+        self.storage: BaseCache = caches[opsettings.get("cache_django_backend")]
+        self.op_name = opsettings.get("op_name")
 
     def get_key(self, key):
         return f"{self.op_name}-{key}"

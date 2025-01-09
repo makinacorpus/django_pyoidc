@@ -3,23 +3,12 @@ import logging
 from importlib import import_module
 from typing import Any, Dict, Union
 
-from django.conf import settings
 from django.core.cache import BaseCache, caches
 
 from django_pyoidc.exceptions import ClaimNotFoundError
+from django_pyoidc.settings import OIDCSettings
 
 logger = logging.getLogger(__name__)
-
-
-def get_setting_for_sso_op(op_name: str, key: str, default=None):
-    if key in settings.DJANGO_PYOIDC[op_name]:
-        return settings.DJANGO_PYOIDC[op_name][key]
-    else:
-        return default
-
-
-def get_settings_for_sso_op(op_name: str):
-    return settings.DJANGO_PYOIDC[op_name]
 
 
 def import_object(path, def_name):
@@ -79,15 +68,12 @@ def check_audience(client_id: str, access_token_claims: dict) -> bool:
 class OIDCCacheBackendForDjango:
     """Implement General cache for OIDC using django cache"""
 
-    def __init__(self, op_name):
-        self.op_name = op_name
-        self.enabled = get_setting_for_sso_op(
-            self.op_name, "OIDC_CACHE_PROVIDER_METADATA", False
-        )
+    def __init__(self, opsettings: OIDCSettings):
+        self.op_name = opsettings.get("op_name")
+
+        self.enabled = opsettings.get("OIDC_CACHE_PROVIDER_METADATA", False)
         if self.enabled:
-            self.storage: BaseCache = caches[
-                get_setting_for_sso_op(self.op_name, "CACHE_DJANGO_BACKEND")
-            ]
+            self.storage: BaseCache = caches[opsettings.get("CACHE_DJANGO_BACKEND")]
 
     def generate_hashed_cache_key(self, value: str) -> str:
         h = hashlib.new("sha256")
@@ -96,7 +82,10 @@ class OIDCCacheBackendForDjango:
         return cache_key
 
     def clear(self):
-        return self.storage.clear()
+        if self.enabled:
+            return self.storage.clear()
+        else:
+            return 0
 
     def get_key(self, key):
         return f"oidc-{self.op_name}-{key}"

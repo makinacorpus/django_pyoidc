@@ -3,7 +3,6 @@ import logging
 from urllib.parse import parse_qs, urlparse
 
 import requests
-from django.test import override_settings
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -47,7 +46,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
 
         print(f"Running Django on {self.live_server_url}")
 
-        login_url = reverse("test_login")
+        login_url = reverse("e2e_test_ll_login_1")
         response = client.get(
             f"{self.live_server_url}{login_url}", allow_redirects=False
         )
@@ -66,7 +65,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         self.assertEqual(parsed.netloc, "localhost:8070")
         self.assertEqual(parsed.path, "/oauth2/authorize")
         self.assertEqual(qs["client_id"][0], "app1")
-        self.assertEqual(qs["redirect_uri"][0], f"{self.live_server_url}/callback")
+        self.assertEqual(qs["redirect_uri"][0], f"{self.live_server_url}/callback-ll-1")
         self.assertEqual(qs["response_type"][0], "code")
         self.assertEqual(qs["scope"][0], "openid")
         self.assertTrue(qs["state"][0])
@@ -115,8 +114,8 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         Test a complete working OIDC login.
         """
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_success")
+        login_url = reverse("e2e_test_ll_login_1")
+        success_url = reverse("e2e_test_ll_success_1")
         start_url = f"{self.live_server_url}{login_url}"
         end_url = f"{self.live_server_url}{success_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
@@ -138,9 +137,9 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         FIXME : Make this test independant of test #1
         """
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_success")
-        post_logout_url = reverse("test_logout_done")
+        login_url = reverse("e2e_test_ll_login_1")
+        success_url = reverse("e2e_test_ll_success_1")
+        post_logout_url = reverse("e2e_test_ll_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
@@ -171,30 +170,11 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         self.assertTrue("OIDC-LOGIN-LINK" in bodyText)
         self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
 
-    @override_settings(
-        DJANGO_PYOIDC={
-            "sso1": {
-                "OIDC_CLIENT_ID": "app1",
-                "CACHE_DJANGO_BACKEND": "default",
-                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/",
-                "OIDC_CLIENT_SECRET": "secret_app1",
-                "OIDC_CALLBACK_PATH": "/callback",
-                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
-                "POST_LOGIN_URI_SUCCESS": "/test-success",
-                "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-                "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
-                "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
-                "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT": {"confirm": 1},
-            },
-        },
-    )
     def test_03_selenium_sso_session_with_callbacks(self, *args):
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_success")
-        post_logout_url = reverse("test_logout_done")
+        login_url = reverse("e2e_test_ll_login_1")
+        success_url = reverse("e2e_test_ll_success_1")
+        post_logout_url = reverse("e2e_test_ll_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
@@ -228,28 +208,12 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         # Check the logout callback message is shown
         self.assertTrue("Logout Callback for rtyler@badwolf.org." in bodyText)
 
-    # @override_settings(
-    #    DJANGO_PYOIDC={
-    #        "sso1": {
-    #            "OIDC_CLIENT_ID": "bad_client_id",
-    #            "CACHE_DJANGO_BACKEND": "default",
-    #            "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8070/",
-    #            "OIDC_CLIENT_SECRET": "secret_app1",
-    #            "OIDC_CALLBACK_PATH": "/callback",
-    #            "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-    #            "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-    #            "LOGIN_REDIRECTION_REQUIRES_HTTPS": False,
-    #            "POST_LOGIN_URI_SUCCESS": "/test-success",
-    #            "POST_LOGIN_URI_FAILURE": "/test-failure",
-    #        },
-    #    },
-    # )
     # def test_04_selenium_sso_failed_login(self, *args):
     #    """
     #    Test a failed SSO login (bad client)
     #    """
     #    timeout = 30
-    #    login_url = reverse("test_login")
+    #    login_url = reverse("e2e_test_ll_login_2")
     #    start_url = f"{self.live_server_url}{login_url}"
     #    wait = WebDriverWait(self.selenium, timeout)
     #    # wait ->
@@ -259,16 +223,4 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
     #    #   EC.title_contains('')
     #    #   EC.title_is('')
     #    #   EC.url_to_be('') // exact
-
-
-#
-#    self.selenium.get(start_url)
-#    # wait for the SSO redirection
-#    wait.until(EC.url_changes(start_url))
-#
-#    bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-#    # check the SSO rejected our client id
-#    self.assertTrue("We are sorry..." in bodyText)
-#    self.assertTrue("Invalid parameter: redirect_uri" in bodyText)
-#
-#
+    # (...)

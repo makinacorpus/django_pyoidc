@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from django_pyoidc.providers.keycloak_10 import Keycloak10Provider
 
 

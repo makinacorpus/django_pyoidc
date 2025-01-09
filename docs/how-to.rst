@@ -36,7 +36,7 @@ If you used a provider, the best way to achieve that is by modifying the configu
 .. code-block:: python
 
     DJANGO_PYOIDC = {
-        **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
+        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["myhost"]),
     }
 
     DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGIN"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
@@ -126,7 +126,7 @@ Using a provider, edith your configuration like this :
 .. code-block:: python
 
     DJANGO_PYOIDC = {
-        **my_oidc_provider.get_config(allowed_hosts=["myhost"]),
+        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["myhost"]),
     }
 
     DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_GET_USER"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
@@ -159,7 +159,7 @@ TODO: audience check outside of get_user, settings based
         audiences = id_token["aud"]
 
         # Perform audience check
-        if settings.DJANGO_PYOIDC["keycloak"]["OIDC_CLIENT_ID"] not in audiences:
+        if settings.DJANGO_PYOIDC["keycloak"]["client_id"] not in audiences:
             raise PermissionDenied("You do not have access to this application")
 
         User = get_user_model()
@@ -242,7 +242,7 @@ Here is an example of a login button redirecting the user to the page named "pro
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
 
-However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`LOGIN_REDIRECTION_REQUIRES_HTTPS` and :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS`.
+However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
 
 TODO: RedirectDemo now exists, where do I connect it?
 
@@ -259,10 +259,10 @@ In a multi-provider setup, the settings look like this :
 
     DJANGO_PYOIDC = {
         'oidc_provider_name_1' : {
-            'OIDC_CLIENT_ID' : '' # <- provider 1 settings here
+            'client_id' : '' # <- provider 1 settings here
         }
         'oidc_provider_name_2' : {
-            'OIDC_CLIENT_ID' : '' # <- provider 2 settings here
+            'client_id' : '' # <- provider 2 settings here
         }
      }
 
@@ -274,8 +274,8 @@ If you are using our premade providers configuration, your ``settings.py`` will 
     from .oidc_providers import oidc_provider_1, oidc_provider_2
 
     DJANGO_PYOIDC = {
-        **oidc_provider_1.get_config(allowed_hosts=["app.local:8082"]),
-        **oidc_provider_2.get_config(allowed_hosts=["app.local:8082"]),
+        FIXME **oidc_provider_1.get_config(login_uris_redirect_allowed_hosts=["app.local:8082"]),
+        FIXME **oidc_provider_2.get_config(login_uris_redirect_allowed_hosts=["app.local:8082"]),
      }
 
 Then you have to include all your provider url configuration in your ``urlpatterns``. Since view names includes the identity provider name,

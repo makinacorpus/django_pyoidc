@@ -24,7 +24,7 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_no_next_params(self, *args):
         """
-        Test that without a next parameter we are redirected to 'POST_LOGOUT_REDIRECT_URI'
+        Test that without a next parameter we are redirected to 'post_logout_redirect_uri'
         """
         response = self.client.get(
             reverse("test_login"),
@@ -35,7 +35,7 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
+            settings.DJANGO_PYOIDC["sso1"]["post_login_uri_success"],
         )
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
@@ -45,13 +45,13 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_to_samesite(self, *args):
         """
-        Test that redirecting to a site allowed in 'LOGIN_URIS_REDIRECT_ALLOWED_HOSTS' works
+        Test that redirecting to a site allowed in 'login_uris_redirect_allowed_hosts' works
         """
         response = self.client.get(
             reverse("test_login"),
             data={
                 "next": "https://"
-                + settings.DJANGO_PYOIDC["sso1"]["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["login_uris_redirect_allowed_hosts"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -71,13 +71,13 @@ class LoginViewTestCase(OIDCTestCase):
     )
     def test_redirect_uri_management_next_follows_https_requires(self, *args):
         """
-        Test that trying to redirect to a non https site when LOGIN_REDIRECTION_REQUIRES_HTTPS is set to True does not work
+        Test that trying to redirect to a non https site when login_redirection_requires_https is set to True does not work
         """
         response = self.client.get(
             reverse("test_login"),
             data={
                 "next": "http://"
-                + settings.DJANGO_PYOIDC["sso1"]["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["login_uris_redirect_allowed_hosts"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -87,17 +87,13 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(
             self.client.session["oidc_login_next"],
-            settings.DJANGO_PYOIDC["sso1"]["POST_LOGIN_URI_SUCCESS"],
+            settings.DJANGO_PYOIDC["sso1"]["post_login_uri_success"],
         )
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    @mock.patch(
-        "django_pyoidc.client.Consumer.begin",
-        return_value=(1234, "https://sso.notatld"),
-    )
-    def test_redirect_uri_management_next_to_disallowed_site(self, *args):
+    def test_redirect_uri_bad_server_name(self, *args):
         """
-        Test that trying to redirect to a site not allowed in 'LOGIN_URIS_REDIRECT_ALLOWED_HOSTS' results in HTTP 400
+        Test that requesting django oidc with bad host name is rejected (HTTP 400).
         """
         response = self.client.get(
             reverse("test_login"),
@@ -107,15 +103,51 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertEqual(response.status_code, 400)
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_redirect_uri_management_next_to_disallowed_site(self, *args):
+        """
+        Test that trying to redirect to a site not allowed in 'login_uris_redirect_allowed_hosts' results in ignored instruction.
+
+        The library will reject this host and use the 'post_login_uri_success' setting instead.
+        """
+        response = self.client.get(
+            reverse("test_login"),
+            data={"next": "http://test.hacker.notatld/myview/details"},
+            SERVER_NAME="test.django-pyoidc.notatld",
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            self.client.session["oidc_login_next"],
+            settings.DJANGO_PYOIDC["sso1"]["post_login_uri_success"],
+        )
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_redirect_uri_management_next_to_disallowed_site2(self, *args):
+        """
+        Test that trying to redirect to a site not allowed in 'login_uris_redirect_allowed_hosts' results in ignored instruction.
+
+        The library will reject this host and use  "/" instead (as 'post_login_uri_success' is undefined for sso2).
+        """
+        response = self.client.get(
+            reverse("test_login_2"),
+            data={"next": "http://test.hacker.notatld/myview/details"},
+            SERVER_NAME="test2.django-pyoidc.notatld",
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            self.client.session["oidc_login_next"],
+            "/",
+        )
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_oidc_session_is_saved(self, *args):
         """
-        Test that the OIDC client is saved on login request, and that the returned session ID allows us to restore the client
+        Test that the OIDC client is saved on login request, and that the returned session ID allows us to restore the client.
         """
         response = self.client.get(
             reverse("test_login"),
             data={
                 "next": "https://"
-                + settings.DJANGO_PYOIDC["sso1"]["LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"][0]
+                + settings.DJANGO_PYOIDC["sso1"]["login_uris_redirect_allowed_hosts"][0]
                 + "/myview/details"
             },
             SERVER_NAME="test.django-pyoidc.notatld",
@@ -196,9 +228,9 @@ class CallbackViewTestCase(OIDCTestCase):
 
     def test_callback_but_no_sid_on_our_side(self):
         """
-        Test that receiving a random request without any session states is well handled
+        Test that receiving a random request without any session states is well handled.
         """
-        response = self.client.get(reverse("test_callback"))
+        response = self.client.get(reverse("my_test_callback"))
 
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
 
@@ -209,7 +241,7 @@ class CallbackViewTestCase(OIDCTestCase):
     @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_but_state_mismatch(self, mocked_restore, mocked_parse_authz):
         """
-        Test that receiving a callback with a wrong state parameter results in an HTTP 4XX error
+        Test that receiving a callback with a wrong state parameter results in an HTTP 4XX error.
         """
         self.client.force_login(self.user)
 
@@ -219,7 +251,7 @@ class CallbackViewTestCase(OIDCTestCase):
         session["oidc_sid"] = state
         session.save()
 
-        response = self.client.get(reverse("test_callback"))
+        response = self.client.get(reverse("my_test_callback"))
         self.assertEqual(response.status_code, 400)
         mocked_restore.assert_called_once_with(state)
         mocked_parse_authz.assert_called_once()
@@ -257,7 +289,7 @@ class CallbackViewTestCase(OIDCTestCase):
         session["oidc_sid"] = state
         session.save()
 
-        response = self.client.get(reverse("test_callback"))
+        response = self.client.get(reverse("my_test_callback"))
         mocked_restore.assert_called_once_with(state)
         mocked_complete.assert_called_once_with(state=state, session_state=None)
         mocked_parse_authz.assert_called_once()
@@ -314,7 +346,7 @@ class CallbackViewTestCase(OIDCTestCase):
         dummy_user = self.user
         mocked_get_user.return_value = dummy_user
 
-        response = self.client.get(reverse("test_callback"))
+        response = self.client.get(reverse("my_test_callback"))
 
         with self.subTest("pyoidc calls are performed"):
             mocked_restore.assert_called_once_with(state)
@@ -386,7 +418,7 @@ class CallbackViewTestCase(OIDCTestCase):
         dummy_user = self.user
         mocked_get_user.return_value = dummy_user
 
-        response = self.client.get(reverse("test_callback"))
+        response = self.client.get(reverse("my_test_callback"))
 
         with self.subTest("pyoidc calls are performed"):
             mocked_restore.assert_called_once_with(state)

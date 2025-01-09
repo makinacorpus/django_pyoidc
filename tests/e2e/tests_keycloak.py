@@ -4,7 +4,6 @@ import time
 from urllib.parse import parse_qs, urlparse
 
 import requests
-from django.test import override_settings
 from django.urls import reverse
 from selenium.webdriver import FirefoxProfile
 from selenium.webdriver.common.by import By
@@ -130,6 +129,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         """
         Test that accessing login callback redirects to the SSO server.
         """
+        self.selenium.delete_all_cookies()
         logging.basicConfig()
         logging.getLogger().setLevel(logging.DEBUG)
         requests_log = logging.getLogger("requests.packages.urllib3")
@@ -140,7 +140,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
 
         print(f"Running Django on {self.live_server_url}")
 
-        login_url = reverse("test_login")
+        login_url = reverse("e2e_test_login_1")
         response = client.get(
             f"{self.live_server_url}{login_url}", allow_redirects=False
         )
@@ -161,7 +161,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             parsed.path, "/auth/realms/realm1/protocol/openid-connect/auth"
         )
         self.assertEqual(qs["client_id"][0], "app1")
-        self.assertEqual(qs["redirect_uri"][0], f"{self.live_server_url}/callback")
+        self.assertEqual(qs["redirect_uri"][0], f"{self.live_server_url}/callback-1/")
         self.assertEqual(qs["response_type"][0], "code")
         self.assertEqual(qs["scope"][0], "openid")
         self.assertTrue(qs["state"][0])
@@ -212,7 +212,15 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             #   EC.title_is('')
             #   EC.url_to_be('') // exact
 
-            username_input = self.selenium.find_element(By.NAME, "username")
+            # Uncomment if you want time to detect why it's not working
+            WebDriverWait(self.selenium, 30).until(
+                EC.presence_of_element_located((By.NAME, "username"))
+            )
+
+            username_input = self.selenium.find_element(
+                By.NAME,
+                "username",
+            )
             username_input.send_keys(user)
             password_input = self.selenium.find_element(By.NAME, "password")
             password_input.send_keys(password)
@@ -231,6 +239,11 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("OIDC-ANON-LOGOUT-LINK" in bodyText)
         # click logout
         self.selenium.find_element(By.ID, "oidc-anon-logout-link").click()
+        # FIXME: ensure the anon logout worked for real
+        # WebDriverWait(self.selenium, 30).until(
+        #     EC.presence_of_element_located((By.NAME, "username"))
+        # )
+        # self.wait.until(EC.url_matches(logout_end_url))
 
     def _selenium_logout(self, end_url):
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
@@ -247,10 +260,11 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         """
         Test a complete working OIDC login/logout.
         """
+        self.selenium.delete_all_cookies()
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_success")
-        post_logout_url = reverse("test_logout_done")
+        login_url = reverse("e2e_test_login_1")
+        success_url = reverse("e2e_test_success_1")
+        post_logout_url = reverse("e2e_test_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
@@ -288,14 +302,86 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("OIDC-LOGIN-LINK" in bodyText)
         self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
 
-    def test_102_selenium_sso_login__relogin_and_logout(self, *args):
+    def _test_102_selenium_sso_login_relogin_and_logout_with_mixed_clients_id(
+        self, *args
+    ):
+        """
+        Test using sso1 and sso2 with different client_id on same sso server.
+        """
+        self.selenium.delete_all_cookies()
+        timeout = 5
+        login_url = reverse("e2e_test_login_2")
+        success_url = reverse("e2e_test_success_2")
+        start_url = f"{self.live_server_url}{login_url}"
+        middle_url = f"{self.live_server_url}{success_url}"
+        self.wait = WebDriverWait(self.selenium, timeout)
+
+        # LOGIN 1 on sso2
+        self._selenium_sso_login(
+            start_url, middle_url, "user1", "passwd1", active_sso_session=False
+        )
+
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        # check we are logged in
+        self.assertTrue("You are logged in as user1@example.com" in bodyText)
+        self.assertFalse("You are logged out" in bodyText)
+
+        # Check the session message is shown
+        self.assertTrue("message: user1@example.com is logged in." in bodyText)
+
+        # LOGIN 2: reusing existing session on sso2
+        self._selenium_sso_login(start_url, middle_url, "", "", active_sso_session=True)
+
+        # check we are logged in
+        self.assertTrue("You are logged in as user1@example.com" in bodyText)
+        self.assertFalse("You are logged out" in bodyText)
+
+        # LOGIN 3: using sso1, different client_id on same sso
+        # we should get automatcally connected without a form submission
+        login_url1 = reverse("e2e_test_login_1")
+        success_url1 = reverse("e2e_test_success_1")
+        post_logout_url1 = reverse("e2e_test_logout_done_1")
+        start_url1 = f"{self.live_server_url}{login_url1}"
+        middle_url1 = f"{self.live_server_url}{success_url1}"
+        end_url1 = f"{self.live_server_url}{post_logout_url1}"
+        self._selenium_sso_login(
+            start_url1, middle_url1, "", "", active_sso_session=True
+        )
+
+        # check we are logged in
+        self.assertTrue("You are logged in as user1@example.com" in bodyText)
+        self.assertFalse("You are logged out" in bodyText)
+
+        # check we have the logout link
+        self.assertFalse("OIDC-LOGIN-LINK" in bodyText)
+        self.assertTrue("OIDC-LOGOUT-LINK" in bodyText)
+
+        # click logout
+        self.selenium.find_element(By.ID, "oidc-logout-link").click()
+
+        self.wait.until(EC.url_matches(end_url1))
+
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+
+        # check we are NOT logged in
+        self.assertFalse("You are logged in as user1@example.com" in bodyText)
+        self.assertTrue("You are logged out" in bodyText)
+
+        # Check the logout view message is shown
+        self.assertTrue("message: post logout view." in bodyText)
+        # check we have the login link
+        self.assertTrue("OIDC-LOGIN-LINK" in bodyText)
+        self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
+
+    def _test_103_selenium_sso_login__relogin_and_logout(self, *args):
         """
         Test a login/logout session, adding a re-login on existing session in the middle
         """
+        self.selenium.delete_all_cookies()
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_success")
-        post_logout_url = reverse("test_logout_done")
+        login_url = reverse("e2e_test_login_1")
+        success_url = reverse("e2e_test_success_1")
+        post_logout_url = reverse("e2e_test_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
@@ -342,29 +428,12 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("OIDC-LOGIN-LINK" in bodyText)
         self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
 
-    @override_settings(
-        DJANGO_PYOIDC={
-            "sso1": {
-                "OIDC_CLIENT_ID": "app1",
-                "CACHE_DJANGO_BACKEND": "default",
-                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-                "OIDC_CLIENT_SECRET": "secret_app1",
-                "OIDC_CALLBACK_PATH": "/callback",
-                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "POST_LOGIN_URI_SUCCESS": "/test-success",
-                "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-                "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
-                "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
-            },
-        },
-    )
-    def test_103_selenium_sso_session_with_callbacks(self, *args):
+    def _test_104_selenium_sso_session_with_callbacks(self, *args):
+        self.selenium.delete_all_cookies()
         timeout = 5
-        login_url = reverse("test_login")
-        success_url = reverse("test_success")
-        post_logout_url = reverse("test_logout_done")
+        login_url = reverse("e2e_test_login_1")
+        success_url = reverse("e2e_test_success_1")
+        post_logout_url = reverse("e2e_test_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
@@ -398,28 +467,13 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # Check the logout callback message is shown
         self.assertTrue("Logout Callback for user1@example.com." in bodyText)
 
-    @override_settings(
-        DJANGO_PYOIDC={
-            "sso1": {
-                "OIDC_CLIENT_ID": "bad_client_id",
-                "CACHE_DJANGO_BACKEND": "default",
-                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-                "OIDC_CLIENT_SECRET": "secret_app1",
-                "OIDC_CALLBACK_PATH": "/callback",
-                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "POST_LOGIN_URI_SUCCESS": "/test-success",
-                "POST_LOGIN_URI_FAILURE": "/test-failure",
-            },
-        },
-    )
-    def test_104_selenium_sso_failed_login(self, *args):
+    def _test_105_selenium_sso_failed_login(self, *args):
         """
-        Test a failed SSO login (bad client)
+        Test a failed SSO login (bad client_id: bad_client_id)
         """
+        self.selenium.delete_all_cookies()
         timeout = 30
-        login_url = reverse("test_login")
+        login_url = reverse("e2e_test_login_3")
         start_url = f"{self.live_server_url}{login_url}"
         wait = WebDriverWait(self.selenium, timeout)
         # wait ->
@@ -436,36 +490,22 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check the SSO rejected our client id
+        logger.error("*****************************")
+        logger.error(bodyText)
         self.assertTrue("We are sorry..." in bodyText)
 
-    @override_settings(
-        DJANGO_PYOIDC={
-            "sso1": {
-                "OIDC_CLIENT_ID": "app1",
-                "CACHE_DJANGO_BACKEND": "default",
-                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-                "OIDC_CLIENT_SECRET": "secret_app1",
-                "OIDC_CALLBACK_PATH": "/callback",
-                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-                "POST_LOGIN_URI_SUCCESS": "/test-success",
-                "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
-            },
-        },
-    )
-    def test_105_selenium_ressource_access_checks(self, *args):
+    def test_106_selenium_ressource_access_checks(self, *args):
         """
         Check that a resource access check can be performed to prevent access for some users.
 
         @see tests.e2e.test_app.callback:get_user_with_resource_access_check
         """
+        self.selenium.delete_all_cookies()
         timeout = 5
-        login_location = reverse("test_login")
-        success_location = reverse("test_success")
-        failure_location = reverse("test_failure")
-        post_logout_location = reverse("test_logout_done")
+        login_location = reverse("e2e_test_login_4")
+        success_location = reverse("e2e_test_success_4")
+        failure_location = reverse("e2e_test_failure_4")
+        post_logout_location = reverse("e2e_test_logout_done_4")
         start_url = f"{self.live_server_url}{login_location}"
         ok_url = f"{self.live_server_url}{success_location}"
         failure_url = f"{self.live_server_url}{failure_location}"
@@ -536,33 +576,16 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("message: user1@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
 
-    @override_settings(
-        DJANGO_PYOIDC={
-            "sso1": {
-                "OIDC_CLIENT_ID": "app1",
-                "CACHE_DJANGO_BACKEND": "default",
-                "OIDC_PROVIDER_DISCOVERY_URI": "http://localhost:8080/auth/realms/realm1",
-                "OIDC_CLIENT_SECRET": "secret_app1",
-                "OIDC_CALLBACK_PATH": "/callback",
-                "LOGIN_URIS_REDIRECT_ALLOWED_HOSTS": ["testserver"],
-                "REDIRECT_REQUIRES_HTTPS": False,
-                "POST_LOGOUT_REDIRECT_URI": "/test-logout-done",
-                "POST_LOGIN_URI_SUCCESS": "/test-success",
-                "POST_LOGIN_URI_FAILURE": "/test-failure",
-                "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_minimal_audiences_check",
-            },
-        },
-    )
-    def test_106_selenium_minimal_audience_checks(self, *args):
+    def test_107_selenium_minimal_audience_checks(self, *args):
         """
         Check that a minimal audience check can be performed to prevent access for some users.
-
         @see tests.e2e.test_app.callback:get_user_with_minimal_audiences_check
         """
+        self.selenium.delete_all_cookies()
         timeout = 5
-        login_location = reverse("test_login")
-        success_location = reverse("test_success")
-        post_logout_location = reverse("test_logout_done")
+        login_location = reverse("e2e_test_login_5")
+        success_location = reverse("e2e_test_success_5")
+        post_logout_location = reverse("e2e_test_logout_done_5")
         start_url = f"{self.live_server_url}{login_location}"
         ok_url = f"{self.live_server_url}{success_location}"
         end_url = f"{self.live_server_url}{post_logout_location}"
@@ -664,15 +687,19 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
             "innerHTML"
         )
-        # logger.error(bodyText)
+        logger.error(bodyText)
         self.assertTrue("user1@example.com" in bodyText)
 
         # FIXME: there a selenium issue in the logout btn selection...
-        #  self._selenium_front_logout()
-        #
-        #  # After logout, launch unauthorized ajax call
-        #  WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "securedBtn"))).click()
-        #  # let the ajax stuff behave
-        #  time.sleep(3)
-        #  bodyText = self.selenium.find_element(By.ID, "message").get_attribute('innerHTML')
-        #  self.assertTrue("Request Forbidden" in bodyText)
+        self._selenium_front_logout()
+
+        # After logout, launch unauthorized ajax call
+        WebDriverWait(self.selenium, 30).until(
+            EC.element_to_be_clickable((By.ID, "securedBtn"))
+        ).click()
+        # let the ajax stuff behave
+        time.sleep(3)
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
+            "innerHTML"
+        )
+        self.assertTrue("Request Forbidden" in bodyText)

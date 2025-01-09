@@ -13,7 +13,11 @@ def login_callback(request, user):
 
 
 def logout_callback(request, logout_request_args):
-    messages.success(request, f"Logout Callback for {request.user.email}.")
+    if request.user.is_anonymous:
+        messages.success(request, "Logout Callback for anonymous user.")
+    else:
+        messages.success(request, f"Logout Callback for {request.user.email}.")
+
     logout_request_args["locale"] = "fr"
     logout_request_args["test"] = "zorg"
     return logout_request_args
@@ -61,8 +65,10 @@ def get_user_with_resource_access_check(tokens={}):
     )
 
     # Perform resource access checks
-    client_id = settings.DJANGO_PYOIDC["sso1"]["OIDC_CLIENT_ID"]
-    # warning for user with o access Keycloak would not generate the resource_access claim
+    # FIXME: not sure we are always used with sso1, needa way to retrieve current op_name
+    # maybe from the request session, but then the request should be given as arg of user hook.
+    client_id = settings.DJANGO_PYOIDC["sso1"]["client_id"]
+    # warning for user with no access Keycloak would not generate the resource_access claim
     # so we need to check absence of the claim also
     if (resource_access and client_id not in resource_access) or (
         resource_access is None
@@ -111,7 +117,7 @@ def get_user_with_minimal_audiences_check(tokens={}):
 
     # Perform a minimal audience check
     # Note: here not checking if client_id is in 'aud' because that's broken in Keycloak
-    client_id = settings.DJANGO_PYOIDC["sso1"]["OIDC_CLIENT_ID"]
+    client_id = settings.DJANGO_PYOIDC["sso1"]["client_id"]
     if "azp" not in access_token_claims:
         logger.error("Missing azp claim access_token")
         raise PermissionDenied("You do not have access to this application.")
@@ -173,7 +179,7 @@ def get_user_with_audiences_check(tokens={}):
             raise RuntimeError("Unknown type for audience claim")
 
     # Perform audience check
-    if audiences and settings.DJANGO_PYOIDC["sso1"]["OIDC_CLIENT_ID"] not in audiences:
+    if audiences and settings.DJANGO_PYOIDC["sso1"]["client_id"] not in audiences:
         logger.error("Failed audience check in access_token")
         raise PermissionDenied("You do not have access to this application.")
 

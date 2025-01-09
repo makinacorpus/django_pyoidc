@@ -22,10 +22,11 @@ sphinx-autobuild docs docs/_build/html
 
 ## Running Tests
 
-Check database settings in tests/test_settings.py, target a real PostgreSQL Host (You need a PostgreSQL version 12 or greater).
+Check database settings in `tests/test_settings.py`, target a real PostgreSQL Host (You need a PostgreSQL version 12 or greater), for e2e tests check the `tests/e2e/settings.py` file.
 
 ```
-python3 runtests.py
+python3 run_tests.py  # for unit tests
+python3 run_e2e_tests.py  # for end to end tests
 ```
 
 ## Adding a dependency
