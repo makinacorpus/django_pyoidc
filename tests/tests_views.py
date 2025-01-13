@@ -266,7 +266,7 @@ class CallbackViewTestCase(OIDCTestCase):
     )
     @mock.patch(
         "django_pyoidc.client.Consumer.complete",
-        return_value={"id_token": IdToken(iss="fake")},
+        return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
     )
     @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_no_session_state_provided_invalid_user(
@@ -297,7 +297,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_get_user.assert_called_once_with(
             {
                 "info_token_claims": {},
-                "access_token_jwt": None,
+                "access_token_jwt": "--",
                 "access_token_claims": None,
                 "id_token_claims": {"iss": "fake"},
             }
@@ -315,7 +315,7 @@ class CallbackViewTestCase(OIDCTestCase):
     @mock.patch("django_pyoidc.client.Consumer.get_user_info")
     @mock.patch(
         "django_pyoidc.client.Consumer.complete",
-        return_value={"id_token": IdToken(iss="fake")},
+        return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
     )
     @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_no_session_state_provided_valid_user(
@@ -357,7 +357,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_get_user.assert_called_once_with(
             {
                 "info_token_claims": user_info_dict,
-                "access_token_jwt": None,
+                "access_token_jwt": "--",
                 "access_token_claims": None,
                 "id_token_claims": {"iss": "fake"},
             }
@@ -383,7 +383,7 @@ class CallbackViewTestCase(OIDCTestCase):
     @mock.patch("django_pyoidc.client.Consumer.get_user_info")
     @mock.patch(
         "django_pyoidc.client.Consumer.complete",
-        return_value={"id_token": IdToken(iss="fake")},
+        return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
     )
     @mock.patch("django_pyoidc.client.Consumer.restore")
     def test_callback_with_session_state_provided_valid_user(
@@ -431,7 +431,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_get_user.assert_called_once_with(
             {
                 "info_token_claims": user_info_dict,
-                "access_token_jwt": None,
+                "access_token_jwt": "--",
                 "access_token_claims": None,
                 "id_token_claims": {"iss": "fake"},
             }
@@ -452,6 +452,53 @@ class CallbackViewTestCase(OIDCTestCase):
             self.assertEqual(session.cache_session_key, self.client.session.session_key)
 
         mocked_call_callback_function.assert_called_once()
+
+    @mock.patch(
+        "django_pyoidc.client.Consumer.parse_authz",
+        return_value=({"state": "test_id_12345"}, None, None),
+    )
+    @mock.patch("django_pyoidc.engine.get_user_by_email", return_value=None)
+    @mock.patch(
+        "django_pyoidc.client.Consumer.get_user_info", return_value=OpenIDSchema()
+    )
+    @mock.patch(
+        "django_pyoidc.client.Consumer.complete",
+        return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
+    )
+    @mock.patch("django_pyoidc.client.Consumer.restore")
+    @mock.patch("tests.e2e.test_app.callback.hook_validate_access_token")
+    def test_callback_calling_hook_validate_access_token(
+        self,
+        mocked_user_access_token_hook,
+        mocked_restore,
+        mocked_complete,
+        mocked_get_user_info,
+        mocked_get_user,
+        mocked_parse_authz,
+    ):
+        """
+        Test that receiving a callback for a user that does not get validated by the developer-provided function 'get_user'
+        does not get logged in
+        """
+        self.client.force_login(self.user)
+
+        state = "test_id_12345"
+
+        session = self.client.session
+        session["oidc_sid"] = state
+        session.save()
+
+        # sso2 contains a definition with a hook for access token validation
+        response = self.client.get(reverse("my_test_callback_sso2"))
+        mocked_restore.assert_called_once_with(state)
+        mocked_complete.assert_called_once_with(state=state, session_state=None)
+        mocked_parse_authz.assert_called_once()
+        mocked_get_user_info.assert_called_once_with(state=state)
+        mocked_get_user.assert_called_once()
+
+        self.assertRedirects(response, "/", fetch_redirect_response=False)
+        self.assertEqual(OIDCSession.objects.all().count(), 0)
+        mocked_user_access_token_hook.assert_called_once()
 
 
 class BackchannelLogoutTestCase(OIDCTestCase):

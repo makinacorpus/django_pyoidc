@@ -59,6 +59,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
 
             # This introspection of the token is made by the SSO server
             # so it is quite slow, but there's a cache added based on the token expiration
+            # it could also call a user defined validator if 'use_introspection_on_access_tokens'
+            # is False. or it could return None if the two previous are not defined.
             access_token_claims = self.engine.introspect_access_token(
                 access_token_jwt, client=self.client
             )

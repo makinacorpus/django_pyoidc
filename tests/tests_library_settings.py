@@ -96,6 +96,8 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("login_uris_allowed_hosts"), None)
         self.assertEqual(settings.get("hook_user_login"), None)
         self.assertEqual(settings.get("hook_user_logout"), None)
+        self.assertEqual(settings.get("hook_validate_access_token"), None)
+        self.assertEqual(settings.get("use_introspection_on_access_tokens"), False)
 
     @override_settings(
         DJANGO_PYOIDC={
@@ -217,6 +219,33 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("redirect_requires_https"), None)
         self.assertEqual(settings.get("REDIRECT_REQUIRES_HTTPS"), None)
         self.assertEqual(settings.get("login_redirection_requires_https"), False)
+
+    @override_settings(
+        DJANGO_PYOIDC={
+            "lib_371": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "foo3",
+                "client_secret": "secret",
+                "provider_discovery_uri": "http://foo",
+                "callback_uri_name": "my_test_callback",
+                "use_introspection_on_access_tokens": True,
+                "hook_validate_access_token": "tests.e2e.test_app.callback:hook_validate_access_token",
+            },
+        },
+    )
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_client_settings_no_hook_validate_access_token_if_use_introspection_on_access_tokens(
+        self, mocked_provider_config, *args
+    ):
+        """
+        Test that we prevent setting using both use_introspection_on_access_tokens and hook_validate_access_token.
+        """
+        with self.assertRaises(InvalidOIDCConfigurationException) as context:
+            OIDCClient(op_name="lib_371")
+        self.assertTrue(
+            "You cannot define hook_validate_access_token if you use use_introspection_on_access_tokens."
+            in context.exception.__repr__()
+        )
 
     @override_settings(
         DJANGO_PYOIDC={
@@ -371,3 +400,39 @@ class SettingsTestCase(OIDCTestCase):
         sso_client = OIDCClient(op_name="lib_902")
         settings = sso_client.get_settings()
         self.assertEqual(settings.get("provider_discovery_uri"), "http://foobar/zorg2")
+
+    @override_settings(
+        DJANGO_PYOIDC={
+            "lib_865": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "eorg",
+                "client_secret": "--",
+                "provider_discovery_uri": "http://foo",
+            },
+        },
+    )
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_client_settings_globals(self, mocked_provider_config, *args):
+        """
+        Test that some globale settings are defined.
+        """
+        sso_client = OIDCClient(op_name="lib_865")
+        settings = sso_client.get_settings()
+        self.assertEqual(settings.get("CACHE_DJANGO_BACKEND"), "default")
+        self.assertEqual(settings.get("cache_django_backend"), "default")
+        self.assertEqual(settings.get("CACHE_PROVIDER_TTL"), 300)
+        self.assertEqual(settings.get("cache_provider_ttl"), 300)
+        self.assertEqual(settings.get("USE_INTROSPECTION_ON_ACCESS_TOKENS"), False)
+        self.assertEqual(settings.get("use_introspection_on_access_tokens"), False)
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_client_use_introspection_on_access_tokens_defaults_to_true_if_name_drf(
+        self, *args
+    ):
+        """
+        Test that some globale settings are defined.
+        """
+        sso_client = OIDCClient(op_name="drf")
+        settings = sso_client.get_settings()
+        self.assertEqual(settings.get("USE_INTROSPECTION_ON_ACCESS_TOKENS"), True)
+        self.assertEqual(settings.get("use_introspection_on_access_tokens"), True)

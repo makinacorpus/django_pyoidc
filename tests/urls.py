@@ -16,6 +16,11 @@ urlpatterns = [
         name="my_test_callback",
     ),
     path(
+        "callback-wtf/",
+        OIDCCallbackView.as_view(op_name="sso2"),
+        name="my_test_callback_sso2",
+    ),
+    path(
         "logout-xyz/",
         OIDCLogoutView.as_view(op_name="sso1"),
         name="test_logout",

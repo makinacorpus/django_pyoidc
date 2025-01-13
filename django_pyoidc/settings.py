@@ -15,9 +15,7 @@ class OIDCSettings:
     GLOBAL_SETTINGS = {
         "cache_django_backend": "default",
         "cache_provider_ttl": 300,
-        # "DRF_CLIENT_ID": None,  # Nope, it should be a ref to the right op_name
-        # "DRF_USE_INTROSPECTION": True,  # Nope that's more a use introspection in each op
-        "USE_INTROSPECTION": True,
+        "use_introspection_on_access_tokens": True,
     }
     OP_SETTINGS = {}
 
@@ -93,6 +91,7 @@ class OIDCSettings:
                 self.OP_SETTINGS[key] = val
 
         self.OP_SETTINGS["op_name"] = self.op_name
+        self._validate_settings()
 
     def _fix_settings(self, op_definition):
         """Workarounds over specific settings and aliases."""
@@ -162,18 +161,31 @@ class OIDCSettings:
             else:
                 op_definition["login_redirection_requires_https"] = True
 
+        return op_definition
+
+    def _validate_settings(self):
+        if (
+            "hook_validate_access_token" in self.OP_SETTINGS
+            and "use_introspection_on_access_tokens" in self.OP_SETTINGS
+            and self.OP_SETTINGS["use_introspection_on_access_tokens"]
+        ):
+            raise InvalidOIDCConfigurationException(
+                "You cannot define hook_validate_access_token if you use use_introspection_on_access_tokens."
+            )
+
         # client_id is required
-        if "client_id" not in op_definition or not op_definition["client_id"]:
+        if "client_id" not in self.OP_SETTINGS or not self.OP_SETTINGS["client_id"]:
             raise InvalidOIDCConfigurationException(
                 f"Provider definition does not contain any 'client_id' entry. Check your DJANGO_PYOIDC['{self.op_name}'] settings."
             )
         # we do not enforce client_secret (in case someone wrongly use a public client)
-        if "client_secret" not in op_definition or not op_definition["client_secret"]:
+        if (
+            "client_secret" not in self.OP_SETTINGS
+            or not self.OP_SETTINGS["client_secret"]
+        ):
             logger.warning(
                 f"OIDC settings for {self.op_name} has no client_secret. You are maybe using a public OIDC client, you should not."
             )
-
-        return op_definition
 
     def set(self, key: str, value=None):
         self.OP_SETTINGS[key] = value

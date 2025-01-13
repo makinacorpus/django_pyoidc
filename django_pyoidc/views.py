@@ -382,11 +382,12 @@ class OIDCCallbackView(OIDCView):
                         return self.login_failure(request)
 
                     # TODO: add a setting to allow/disallow session storage of the tokens
-                    # FIXME: token introspection for access_token deserialization?
                     access_token_jwt = (
                         tokens["access_token"] if "access_token" in tokens else None
                     )
 
+                    # this will call token instrospection or user defined validator
+                    # or return None
                     access_token_claims = self.engine.introspect_access_token(
                         access_token_jwt, self.client
                     )

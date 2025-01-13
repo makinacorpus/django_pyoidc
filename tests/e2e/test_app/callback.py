@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 
+from django_pyoidc.client import OIDCClient
+
 logger = logging.getLogger(__name__)
 
 
@@ -204,3 +206,11 @@ def get_user_with_audiences_check(tokens={}):
     user.save()
 
     return user
+
+
+def hook_validate_access_token(access_token_jwt: str, client: OIDCClient):
+    """Here we should handle the jwt string and convert it to a claim dictionnary.
+
+    But we should also ensure validity of the jwt (like signatures, expiration, etc.).
+    """
+    return {}

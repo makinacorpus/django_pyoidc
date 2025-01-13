@@ -50,7 +50,7 @@ class Provider:
             "provider_discovery_uri": self.provider_discovery_uri,
             "oidc_logout_redirect_parameter_name": self.oidc_logout_redirect_parameter_name,
             # Use introspection in API-Bearer mode?
-            "use_introspection": (self.op_name == "drf"),
+            "use_introspection_on_access_tokens": (self.op_name == "drf"),
             # Rare usages ---
             "client_authn_method": None,
             # "client_consumer_config_dict": None,
