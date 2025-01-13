@@ -10,7 +10,7 @@ from django_pyoidc.exceptions import (
     InvalidSIDException,
 )
 from django_pyoidc.session import OIDCCacheSessionBackendForDjango
-from django_pyoidc.settings import OIDCSettingsFactory
+from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
 from django_pyoidc.utils import OIDCCacheBackendForDjango
 
 logger = logging.getLogger(__name__)
@@ -83,3 +83,6 @@ class OIDCClient:
                 # This make an HTTP call on provider discovery uri
                 config = self.consumer.provider_config(provider_discovery_uri)
         self.consumer.client_secret = client_secret
+
+    def get_settings(self) -> OIDCSettings:
+        return self.opsettings

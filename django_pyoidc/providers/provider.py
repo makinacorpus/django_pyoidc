@@ -19,6 +19,8 @@ class Provider:
 
         if "provider_discovery_uri" in kwargs:
             self.provider_discovery_uri = kwargs["provider_discovery_uri"]
+        else:
+            self.provider_discovery_uri = None
 
         if "oidc_logout_redirect_parameter_name" in kwargs:
             self.oidc_logout_redirect_parameter_name = kwargs[
@@ -30,7 +32,7 @@ class Provider:
         if "oidc_callback_path" in kwargs:
             self.oidc_callback_path = kwargs["oidc_callback_path"]
         else:
-            self.oidc_callback_path = "oidc-callback/"
+            self.oidc_callback_path = "/oidc-callback/"
 
     def get_default_config(self) -> Dict[str, Dict[str, Any]]:
         """Get the default configuration settings for this provider.

@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from importlib import import_module
 
@@ -5,6 +6,8 @@ from django.conf import settings as django_settings
 from django.urls import reverse_lazy
 
 from django_pyoidc.exceptions import InvalidOIDCConfigurationException
+
+logger = logging.getLogger(__name__)
 
 
 class OIDCSettings:
@@ -19,12 +22,13 @@ class OIDCSettings:
     OP_SETTINGS = {}
 
     def __repr__(self):
-        print(f"Oidc Settings for {self.op_name}")
+        repr_str = f"Oidc Settings for {self.op_name}"
         for key, val in self.OP_SETTINGS.items():
             if val is None:
-                print(f" + {key}: None")
+                repr_str += f"\n + {key}: None"
             else:
-                print(f" + {key}: {val}")
+                repr_str += f"\n + {key}: {val}"
+        return repr_str
 
     def __init__(self, op_name: str):
         """
@@ -55,9 +59,8 @@ class OIDCSettings:
             k.lower(): v for k, v in django_settings.DJANGO_PYOIDC[self.op_name].items()
         }
 
-        # fix potential bad settings declaration
+        # fix potential bad settings declaration (or aliases)
         op_definition = self._fix_settings(op_definition)
-
         if "provider_class" in op_definition:
             provider_class = op_definition["provider_class"]
             # allow usage of simple names like "keycloak" instead of "django_pyoidc.providers.keycloak"
@@ -89,30 +92,12 @@ class OIDCSettings:
             if key not in self.OP_SETTINGS or self.OP_SETTINGS[key] is None:
                 self.OP_SETTINGS[key] = val
 
-        # IMPORTANT: INTERNAL ******************
-        # BEFORE
-        # PROVIDER -> Generates config for Django Settings
-        #             Can have some defaults defined
-        #             Can have args override given on init
-        # SETTINGS -> Reads config from Django Settings keyed by op_name
-        #             but can also return globals
-        #
-        # BUUuuuuut do we want to keep it that way?
-        # settings which only provides overrides to defaults stored in providers seems fine to me
-        # and settings where I can declare a 'provider_class' also
-        #
-        # NOW: settings, load Django settings keyed by opname
-        # and special provider_class can be used to refine which operator has to be associated with the settings object
-
-        # NOPE: provider is used just BEFORE generating settings
-        # self.provider = OIDCProviderFactory.get(self.op_name)
-        # provider_defaults = self.provider.get_default_config()
         self.OP_SETTINGS["op_name"] = self.op_name
 
     def _fix_settings(self, op_definition):
         """Workarounds over specific settings and aliases."""
 
-        # pyoidc wants the discovery uti WITHOUT the well-known part '.well-known/openid-configuration'
+        # pyoidc wants the discovery uri WITHOUT the well-known part '.well-known/openid-configuration'
         if (
             "provider_discovery_uri" in op_definition
             and op_definition["provider_discovery_uri"]
@@ -146,6 +131,7 @@ class OIDCSettings:
                 op_definition["post_logout_redirect_uri"] = op_definition[
                     "logout_redirect"
                 ]
+                del op_definition["logout_redirect"]
             else:
                 op_definition["post_logout_redirect_uri"] = "/"
 
@@ -177,12 +163,15 @@ class OIDCSettings:
                 op_definition["login_redirection_requires_https"] = True
 
         # client_id is required
-        if "client_id" not in op_definition:
+        if "client_id" not in op_definition or not op_definition["client_id"]:
             raise InvalidOIDCConfigurationException(
                 f"Provider definition does not contain any 'client_id' entry. Check your DJANGO_PYOIDC['{self.op_name}'] settings."
             )
         # we do not enforce client_secret (in case someone wrongly use a public client)
-        # FIXME: maybe generate a WARNING in logs
+        if "client_secret" not in op_definition or not op_definition["client_secret"]:
+            logger.warning(
+                f"OIDC settings for {self.op_name} has no client_secret. You are maybe using a public OIDC client, you should not."
+            )
 
         return op_definition
 
