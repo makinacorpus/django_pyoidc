@@ -21,10 +21,10 @@ class OIDCEngine:
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_get_user_function(self, tokens={}):
-        if self.opsettings.get("HOOK_GET_USER"):
+    def call_get_user_function(self, client: OIDCClient, tokens={}):
+        if self.opsettings.get("hook_get_user"):
             logger.debug("OIDC, Calling user hook on get_user")
-            return self.call_function("HOOK_GET_USER", tokens)
+            return self.call_function("hook_get_user", tokens, client)
         else:
             logger.debug("OIDC, Calling get_user_by_email")
             return get_user_by_email(tokens)

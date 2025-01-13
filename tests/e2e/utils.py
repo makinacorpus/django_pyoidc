@@ -372,7 +372,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
             "login_uris_redirect_allowed_hosts": ["testserver"],
             "login_redirection_requires_https": False,
-            "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
+            "hook_get_user": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
         },
         # broken client_id
         "sso3": {
@@ -407,7 +407,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "login_redirection_requires_https": False,
             "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
-            "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
+            "hook_get_user": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
         },
         # hook_get_user
         "sso5": {
@@ -425,7 +425,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "login_redirection_requires_https": False,
             "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
-            "HOOK_GET_USER": "tests.e2e.test_app.callback:get_user_with_minimal_audiences_check",
+            "hook_get_user": "tests.e2e.test_app.callback:get_user_with_minimal_audiences_check",
         },
         # API
         "drf": {

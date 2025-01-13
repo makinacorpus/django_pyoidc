@@ -86,7 +86,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
                     tokens={
                         "access_token_jwt": access_token_jwt,
                         "access_token_claims": access_token_claims,
-                    }
+                    },
+                    client=self.client,
                 )
 
             if not user:

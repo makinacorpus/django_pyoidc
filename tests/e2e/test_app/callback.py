@@ -1,6 +1,5 @@
 import logging
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
@@ -49,7 +48,7 @@ def _debug_tokens(tokens={}):
         print(tokens["id_token_claims"])
 
 
-def get_user_with_resource_access_check(tokens={}):
+def get_user_with_resource_access_check(client: OIDCClient, tokens={}):
 
     _debug_tokens(tokens)
     access_token_claims = (
@@ -67,9 +66,7 @@ def get_user_with_resource_access_check(tokens={}):
     )
 
     # Perform resource access checks
-    # FIXME: not sure we are always used with sso1, needa way to retrieve current op_name
-    # maybe from the request session, but then the request should be given as arg of user hook.
-    client_id = settings.DJANGO_PYOIDC["sso1"]["client_id"]
+    client_id = client.get_setting("client_id")
     # warning for user with no access Keycloak would not generate the resource_access claim
     # so we need to check absence of the claim also
     if (resource_access and client_id not in resource_access) or (
@@ -106,7 +103,7 @@ def get_user_with_resource_access_check(tokens={}):
     return user
 
 
-def get_user_with_minimal_audiences_check(tokens={}):
+def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
 
     _debug_tokens(tokens)
     access_token_claims = (
@@ -119,7 +116,7 @@ def get_user_with_minimal_audiences_check(tokens={}):
 
     # Perform a minimal audience check
     # Note: here not checking if client_id is in 'aud' because that's broken in Keycloak
-    client_id = settings.DJANGO_PYOIDC["sso1"]["client_id"]
+    client_id = client.get_setting("client_id")
     if "azp" not in access_token_claims:
         logger.error("Missing azp claim access_token")
         raise PermissionDenied("You do not have access to this application.")
@@ -150,7 +147,7 @@ def get_user_with_minimal_audiences_check(tokens={}):
     return user
 
 
-def get_user_with_audiences_check(tokens={}):
+def get_user_with_audiences_check(client: OIDCClient, tokens={}):
 
     _debug_tokens(tokens)
     access_token_claims = (
@@ -181,7 +178,7 @@ def get_user_with_audiences_check(tokens={}):
             raise RuntimeError("Unknown type for audience claim")
 
     # Perform audience check
-    if audiences and settings.DJANGO_PYOIDC["sso1"]["client_id"] not in audiences:
+    if audiences and client.get_setting("client_id") not in audiences:
         logger.error("Failed audience check in access_token")
         raise PermissionDenied("You do not have access to this application.")
 

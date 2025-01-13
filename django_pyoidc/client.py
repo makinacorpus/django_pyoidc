@@ -86,3 +86,6 @@ class OIDCClient:
 
     def get_settings(self) -> OIDCSettings:
         return self.opsettings
+
+    def get_setting(self, name, default=None):
+        return self.opsettings.get(name, default)

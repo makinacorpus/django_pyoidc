@@ -407,7 +407,8 @@ class OIDCCallbackView(OIDCView):
                             "access_token_jwt": access_token_jwt,
                             "access_token_claims": access_token_claims,
                             "id_token_claims": id_token_claims,
-                        }
+                        },
+                        client=self.client,
                     )
 
                     if not user or not user.is_authenticated:
