@@ -298,7 +298,6 @@ class CallbackViewTestCase(OIDCTestCase):
             {
                 "info_token_claims": {},
                 "access_token_jwt": "--",
-                "access_token_claims": None,
                 "id_token_claims": {"iss": "fake"},
             }
         )
@@ -358,7 +357,6 @@ class CallbackViewTestCase(OIDCTestCase):
             {
                 "info_token_claims": user_info_dict,
                 "access_token_jwt": "--",
-                "access_token_claims": None,
                 "id_token_claims": {"iss": "fake"},
             }
         )
@@ -432,7 +430,6 @@ class CallbackViewTestCase(OIDCTestCase):
             {
                 "info_token_claims": user_info_dict,
                 "access_token_jwt": "--",
-                "access_token_claims": None,
                 "id_token_claims": {"iss": "fake"},
             }
         )

@@ -399,15 +399,17 @@ class OIDCCallbackView(OIDCView):
                     #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
                     # )
                     userinfo_claims = userinfo.to_dict()
-
+                    tokens = {
+                        "info_token_claims": userinfo_claims,
+                        "access_token_jwt": access_token_jwt,
+                        "access_token_claims": access_token_claims,
+                        "id_token_claims": id_token_claims,
+                    }
+                    # simplify check code, if any dict is None remove the entry
+                    filtered_tokens = {k: v for k, v in tokens.items() if v is not None}
                     # Call user hook
                     user = self.engine.call_get_user_function(
-                        tokens={
-                            "info_token_claims": userinfo_claims,
-                            "access_token_jwt": access_token_jwt,
-                            "access_token_claims": access_token_claims,
-                            "id_token_claims": id_token_claims,
-                        },
+                        tokens=filtered_tokens,
                         client=self.client,
                     )
 

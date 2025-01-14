@@ -24,7 +24,7 @@ class OIDCEngine:
     def call_get_user_function(self, client: OIDCClient, tokens={}):
         if self.opsettings.get("hook_get_user"):
             logger.debug("OIDC, Calling user hook on get_user")
-            return self.call_function("hook_get_user", tokens, client)
+            return self.call_function("hook_get_user", client=client, tokens=tokens)
         else:
             logger.debug("OIDC, Calling get_user_by_email")
             return get_user_by_email(tokens)
@@ -83,6 +83,7 @@ class OIDCEngine:
                 f"and expiry is set to {access_token_expiry} in the token"
             )
             self.general_cache_backend.set(cache_key, access_token_claims, exp)
+        return access_token_claims
 
     def call_validate_tokens_hook(self, access_token_jwt, client: OIDCClient):
         if self.opsettings.get("hook_validate_access_token"):

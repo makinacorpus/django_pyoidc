@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 
 from django_pyoidc.client import OIDCClient
+from django_pyoidc.exceptions import ClaimNotFoundError
+from django_pyoidc.utils import extract_claim_from_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,7 @@ def _debug_tokens(tokens={}):
         print(tokens["access_token_claims"])
 
     if "id_token_claims" in tokens:
+        print("id_token_claims")
         print(type(tokens["id_token_claims"]))  # dict
         print(tokens["id_token_claims"])
 
@@ -61,7 +64,7 @@ def get_user_with_resource_access_check(client: OIDCClient, tokens={}):
 
     resource_access = (
         access_token_claims["resource_access"]
-        if "resource_access" in access_token_claims
+        if access_token_claims and "resource_access" in access_token_claims
         else None
     )
 
@@ -103,13 +106,28 @@ def get_user_with_resource_access_check(client: OIDCClient, tokens={}):
     return user
 
 
-def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
+def extract_username_from_tokens(tokens: dict):
+    try:
+        username = extract_claim_from_tokens("preferred_username", tokens)
+    except ClaimNotFoundError:
+        try:
+            username = extract_claim_from_tokens("email", tokens)
+        except ClaimNotFoundError:
+            raise ClaimNotFoundError(
+                "We found nothing to extract a username in current OIDC tokens."
+            )
+    return username
 
+
+def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
+    """Checking audiences on the access token. Works with access_token_claims extracted only."""
     _debug_tokens(tokens)
     access_token_claims = (
-        tokens["access_token_claims"] if "access_token_claims" in tokens else None
+        tokens["access_token_claims"]
+        if "access_token_claims" in tokens and tokens["access_token_claims"]
+        else None
     )
-    id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
+    # id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
     info_token_claims = (
         tokens["info_token_claims"] if "info_token_claims" in tokens else None
     )
@@ -117,21 +135,22 @@ def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
     # Perform a minimal audience check
     # Note: here not checking if client_id is in 'aud' because that's broken in Keycloak
     client_id = client.get_setting("client_id")
-    if "azp" not in access_token_claims:
-        logger.error("Missing azp claim access_token")
-        raise PermissionDenied("You do not have access to this application.")
-    elif not access_token_claims["azp"] == client_id:
-        logger.error("Failed audience (azp claim) minimal check in access_token")
-        raise PermissionDenied("You do not have access to this application.")
-
-    username = ""
-
-    if "preferred_username" in id_token_claims:
-        username = id_token_claims["preferred_username"]
-    elif "preferred_username" in info_token_claims:
-        username = info_token_claims["preferred_username"]
+    if access_token_claims:
+        if "azp" not in access_token_claims:
+            logger.error("Missing azp claim access_token")
+            raise PermissionDenied("You do not have access to this application.")
+        elif not access_token_claims["azp"] == client_id:
+            logger.error("Failed audience (azp claim) minimal check in access_token")
+            raise PermissionDenied("You do not have access to this application.")
     else:
-        username = info_token_claims["email"]
+        logger.error(
+            "Missing access_token claims. This function need an extracted access token to work, please activate 'use_introspection_on_access_tokens' or 'hook_validate_access_token'."
+        )
+        raise ClaimNotFoundError(
+            "get_user_with_minimal_audiences_check works only with claims extracted from the access token."
+        )
+
+    username = extract_username_from_tokens(tokens)
 
     User = get_user_model()
     user, created = User.objects.get_or_create(
@@ -153,7 +172,7 @@ def get_user_with_audiences_check(client: OIDCClient, tokens={}):
     access_token_claims = (
         tokens["access_token_claims"] if "access_token_claims" in tokens else None
     )
-    id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
+    # id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
     info_token_claims = (
         tokens["info_token_claims"] if "info_token_claims" in tokens else None
     )
@@ -182,14 +201,7 @@ def get_user_with_audiences_check(client: OIDCClient, tokens={}):
         logger.error("Failed audience check in access_token")
         raise PermissionDenied("You do not have access to this application.")
 
-    username = ""
-
-    if "preferred_username" in id_token_claims:
-        username = id_token_claims["preferred_username"]
-    elif "preferred_username" in info_token_claims:
-        username = info_token_claims["preferred_username"]
-    else:
-        username = info_token_claims["email"]
+    username = extract_username_from_tokens(tokens)
 
     User = get_user_model()
     user, created = User.objects.get_or_create(

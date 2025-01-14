@@ -408,6 +408,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
             "hook_get_user": "tests.e2e.test_app.callback:get_user_with_resource_access_check",
+            "use_introspection_on_access_tokens": True,
         },
         # hook_get_user
         "sso5": {
@@ -425,6 +426,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "login_redirection_requires_https": False,
             "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
             "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
+            "use_introspection_on_access_tokens": True,
             "hook_get_user": "tests.e2e.test_app.callback:get_user_with_minimal_audiences_check",
         },
         # API
