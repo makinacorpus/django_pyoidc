@@ -305,7 +305,7 @@ class CallbackViewTestCase(OIDCTestCase):
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
         self.assertEqual(OIDCSession.objects.all().count(), 0)
 
-    @mock.patch("django_pyoidc.views.OIDCView.call_callback_function")
+    @mock.patch("django_pyoidc.views.OIDCView.call_user_login_callback_function")
     @mock.patch(
         "django_pyoidc.client.Consumer.parse_authz",
         return_value=({"state": "test_id_12345"}, None, None),
@@ -324,7 +324,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_get_user_info,
         mocked_get_user,
         mocked_parse_authz,
-        mocked_call_callback_function,
+        mocked_call_user_login_callback_function,
     ):
         """
         Test that receiving a callback for a user that gets validated by the developer-provided function 'get_user'
@@ -373,9 +373,9 @@ class CallbackViewTestCase(OIDCTestCase):
             self.assertEqual(session.sub, user_info_dict["sub"])
             self.assertEqual(session.state, state)
             self.assertEqual(session.cache_session_key, self.client.session.session_key)
-        mocked_call_callback_function.assert_called_once()
+        mocked_call_user_login_callback_function.assert_called_once()
 
-    @mock.patch("django_pyoidc.views.OIDCView.call_callback_function")
+    @mock.patch("django_pyoidc.views.OIDCView.call_user_login_callback_function")
     @mock.patch("django_pyoidc.client.Consumer.parse_authz")
     @mock.patch("django_pyoidc.engine.get_user_by_email")
     @mock.patch("django_pyoidc.client.Consumer.get_user_info")
@@ -391,7 +391,7 @@ class CallbackViewTestCase(OIDCTestCase):
         mocked_get_user_info,
         mocked_get_user,
         mocked_parse_authz,
-        mocked_call_callback_function,
+        mocked_call_user_login_callback_function,
     ):
         """
         Test that receiving a callback with a session state (SID) for a user that gets validated by the developer-provided
@@ -448,7 +448,7 @@ class CallbackViewTestCase(OIDCTestCase):
             self.assertEqual(session.state, state)
             self.assertEqual(session.cache_session_key, self.client.session.session_key)
 
-        mocked_call_callback_function.assert_called_once()
+        mocked_call_user_login_callback_function.assert_called_once()
 
     @mock.patch(
         "django_pyoidc.client.Consumer.parse_authz",

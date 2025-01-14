@@ -53,9 +53,9 @@ class OIDCView(View, OIDCMixin):
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_callback_function(self, request, user):
+    def call_user_login_callback_function(self, request, user):
         logger.debug("OIDC, Calling user hook on login")
-        self.call_function("HOOK_USER_LOGIN", request, user)
+        self.call_function("hook_user_login", request, user)
 
     def call_logout_function(self, user_request, logout_request_args):
         """Function called right before local session removal and before final redirection to the SSO server.
@@ -68,7 +68,7 @@ class OIDCView(View, OIDCMixin):
         Returns:
             dict: extra query string arguments to add to the SSO disconnection url
         """
-        return self.call_function("HOOK_USER_LOGOUT", user_request, logout_request_args)
+        return self.call_function("hook_user_logout", user_request, logout_request_args)
 
     def get_next_url(self, request, redirect_field_name):
         """
@@ -426,7 +426,7 @@ class OIDCCallbackView(OIDCView):
                             cache_session_key=request.session.session_key,
                             session_state=session_state,
                         )
-                        self.call_callback_function(request, user)
+                        self.call_user_login_callback_function(request, user)
                         redir = self.success_url(request)
                         return redirect(redir)
                 else:

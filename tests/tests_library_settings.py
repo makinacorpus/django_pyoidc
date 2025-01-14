@@ -93,7 +93,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("post_login_uri_failure"), "/")
         self.assertEqual(settings.get("post_logout_redirect_uri"), "/")
         self.assertEqual(settings.get("oidc_callback_path"), "/oidc-callback/")
-        self.assertEqual(settings.get("login_uris_allowed_hosts"), None)
+        self.assertEqual(settings.get("login_uris_redirect_allowed_hosts"), None)
         self.assertEqual(settings.get("hook_user_login"), None)
         self.assertEqual(settings.get("hook_user_logout"), None)
         self.assertEqual(settings.get("hook_validate_access_token"), None)

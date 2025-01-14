@@ -64,6 +64,10 @@ class OIDCBearerAuthentication(BaseAuthentication):
             access_token_claims = self.engine.introspect_access_token(
                 access_token_jwt, client=self.client
             )
+            if not access_token_claims:
+                exceptions.AuthenticationFailed(
+                    "Access token claims failed to be extracted."
+                )
             logger.debug(access_token_claims)
             if not access_token_claims.get("active"):
                 msg = "Inactive access token."

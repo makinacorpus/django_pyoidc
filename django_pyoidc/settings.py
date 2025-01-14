@@ -36,15 +36,29 @@ class OIDCSettings:
         It may for example contain:
                client_secret (str): the OIDC client secret
                client_id (str): the OIDC client ID
-               logout_redirect (str): the URI where a user should be redirected to on logout success
-               failure_redirect (str): the URI where a user should be redirected to on login failure
-               success_redirect (str): the URI a user should be redirected to on login success if no redirection url where provided
-               redirect_requires_https (bool): set to True to disallow redirecting user to non-https uri on login success
+               provider_discovery_uri (str): URL of the SSO server (the .well-known/openid-configuration part is added to this path).
+                Some providers like the keycloak provider can instead generate this settings by combining 'keycloak_base_uri' (str) and
+                'keycloak_realm' (str) settings.
+               oidc_callback_path (str): the path used to call this library during the login round-trips, the default is "/oidc-callback/".
+               callback_uri_name (str): the route giving the path for oidc_callback_path that you can use instead of oidc_callback_path
+               post_logout_redirect_uri (str): the URI where a user should be redirected to on logout success
+               post_login_uri_failure (str): the URI where a user should be redirected to on login failure
+               post_login_uri_success (str): the URI a user should be redirected to on login success if no redirection url where provided
+               login_redirection_requires_https (bool): set to True to disallow redirecting user to non-https uri on login success
                login_uris_redirect_allowed_hosts(:obj:`list`) : A list of allowed domains that can be redirected to.
                  A good idea is to this to use :setting:`ALLOWED_HOSTS <django:ALLOWED_HOSTS>`.
                  See :ref:`Redirect the user after login` for more details.
                cache_backend(:obj:`str`, optional): Defaults to 'default'. The cache backend that should be used to store
                  this provider sessions. Take a look at :ref:`Cache Management`
+               hook_user_login (str): path to a function hook to be run after sucessful login.
+               hook_user_logout (str):  path to a function hook to be run during logout(before local session removal and redirection to SSO
+                remote logout).
+               hook_validate_access_token (str):  path to a function hook to extract access tokens claims from the raw jwt.
+                this is not used if 'use_introspection_on_access_tokens' is True
+               use_introspection_on_access_tokens (bool): extract access tokens claims by sending the access token to the sso server on
+                the introspection route. This deleagtes validation of the token to the SSO server. If you do not use hook_validate_access_token
+                or use_introspection_on_access_tokens you will just have the raw jwt for the access token, that you can use to send HTTP queries
+                on behalf of the user.
         """
 
         self.op_name = op_name
