@@ -49,7 +49,7 @@ class OIDCClient:
         provider_discovery_uri = self.opsettings.get("provider_discovery_uri", None)
         self.client_extension.client_secret = client_secret
 
-        if session_id:
+        if session_id is not None:
             try:
                 self.consumer.restore(session_id)
             except KeyError:
@@ -60,7 +60,7 @@ class OIDCClient:
                 )
             return
 
-        if not provider_discovery_uri:
+        if provider_discovery_uri is None:
             raise InvalidOIDCConfigurationException(
                 "No provider discovery uri provided."
             )
