@@ -7,6 +7,7 @@ from rest_framework.authentication import BaseAuthentication
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
+from django_pyoidc.exceptions import ExpiredToken
 from django_pyoidc.settings import OIDCSettingsFactory
 from django_pyoidc.utils import OIDCCacheBackendForDjango, check_audience
 
@@ -61,9 +62,14 @@ class OIDCBearerAuthentication(BaseAuthentication):
             # so it is quite slow, but there's a cache added based on the token expiration
             # it could also call a user defined validator if 'use_introspection_on_access_tokens'
             # is False. or it could return None if the two previous are not defined.
-            access_token_claims = self.engine.introspect_access_token(
-                access_token_jwt, client=self.client
-            )
+            try:
+                access_token_claims = self.engine.introspect_access_token(
+                    access_token_jwt, client=self.client
+                )
+            except ExpiredToken:
+                msg = "Inactive access token."
+                raise exceptions.AuthenticationFailed(msg)
+
             if not access_token_claims:
                 exceptions.AuthenticationFailed(
                     "Access token claims failed to be extracted."

@@ -275,7 +275,7 @@ class OIDCBackChannelLogoutView(OIDCView):
         s = SessionStore()
         s.delete(session.cache_session_key)
         session.delete()
-        logger.debug(f"Backchannel logout request received and validated for {session}")
+        logger.info(f"Backchannel logout request received and validated for {session}")
 
     def post(self, request):
         if request.content_type != "application/x-www-form-urlencoded":

@@ -4,7 +4,7 @@ from typing import Optional
 
 from django_pyoidc import get_user_by_email
 from django_pyoidc.client import OIDCClient
-from django_pyoidc.exceptions import TokenError
+from django_pyoidc.exceptions import ExpiredToken, TokenError
 from django_pyoidc.settings import OIDCSettings
 from django_pyoidc.utils import OIDCCacheBackendForDjango, import_object
 
@@ -72,7 +72,10 @@ class OIDCEngine:
                 endpoint=client.consumer.introspection_endpoint,
             )
             access_token_claims = introspection.to_dict()
-
+            if "active" in access_token_claims and not access_token_claims["active"]:
+                # there will not be other claims, like expiry, this is simply an expired token
+                logger.info("access token introspection failed, expired token.")
+                raise ExpiredToken("Inactive access token.")
             # store it in cache
             current = datetime.datetime.now().strftime("%s")
             if "exp" not in access_token_claims:

@@ -6,6 +6,10 @@ class TokenError(Exception):
     pass
 
 
+class ExpiredToken(Exception):
+    pass
+
+
 class ClaimNotFoundError(Exception):
     pass
 
