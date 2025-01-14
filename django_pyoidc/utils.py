@@ -71,9 +71,9 @@ class OIDCCacheBackendForDjango:
     def __init__(self, opsettings: OIDCSettings):
         self.op_name = opsettings.get("op_name")
 
-        self.enabled = opsettings.get("OIDC_CACHE_PROVIDER_METADATA", False)
+        self.enabled = opsettings.get("oidc_cache_provider_metadata", False)
         if self.enabled:
-            self.storage: BaseCache = caches[opsettings.get("CACHE_DJANGO_BACKEND")]
+            self.storage: BaseCache = caches[opsettings.get("cache_django_backend")]
 
     def generate_hashed_cache_key(self, value: str) -> str:
         h = hashlib.new("sha256")

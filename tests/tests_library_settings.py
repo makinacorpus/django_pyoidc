@@ -16,6 +16,7 @@ class SettingsTestCase(OIDCTestCase):
         DJANGO_PYOIDC={
             "lib_123": {
                 "oidc_cache_provider_metadata": False,
+                "oidc_cache_provider_metadata_ttl": 75,
                 "client_id": "foo",
                 "client_secret": "secret_app_foo",
                 "cache_django_backend": "default",
@@ -49,6 +50,7 @@ class SettingsTestCase(OIDCTestCase):
         )
         self.assertEqual(settings.get("cache_django_backend"), "default")
         self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
+        self.assertEqual(settings.get("oidc_cache_provider_metadata_ttl"), 75)
         self.assertEqual(settings.get("oidc_callback_path"), "/callback-foo-abc")
         self.assertEqual(
             settings.get("login_uris_redirect_allowed_hosts"), ["foo", "bar"]
@@ -88,6 +90,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("provider_discovery_uri"), "http://foo")
         self.assertEqual(settings.get("cache_django_backend"), "default")
         self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
+        self.assertEqual(settings.get("oidc_cache_provider_metadata_ttl"), 120)
         self.assertEqual(settings.get("login_redirection_requires_https"), True)
         self.assertEqual(settings.get("post_login_uri_success"), "/")
         self.assertEqual(settings.get("post_login_uri_failure"), "/")
@@ -420,8 +423,10 @@ class SettingsTestCase(OIDCTestCase):
         settings = sso_client.get_settings()
         self.assertEqual(settings.get("CACHE_DJANGO_BACKEND"), "default")
         self.assertEqual(settings.get("cache_django_backend"), "default")
-        self.assertEqual(settings.get("CACHE_PROVIDER_TTL"), 300)
-        self.assertEqual(settings.get("cache_provider_ttl"), 300)
+        self.assertEqual(settings.get("OIDC_CACHE_PROVIDER_METADATA"), False)
+        self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
+        self.assertEqual(settings.get("OIDC_CACHE_PROVIDER_METADATA_TTL"), 120)
+        self.assertEqual(settings.get("oidc_cache_provider_metadata_ttl"), 120)
         self.assertEqual(settings.get("USE_INTROSPECTION_ON_ACCESS_TOKENS"), False)
         self.assertEqual(settings.get("use_introspection_on_access_tokens"), False)
 

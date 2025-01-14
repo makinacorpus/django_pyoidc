@@ -14,7 +14,8 @@ class OIDCSettings:
 
     GLOBAL_SETTINGS = {
         "cache_django_backend": "default",
-        "cache_provider_ttl": 300,
+        "oidc_cache_provider_metadata": False,
+        "oidc_cache_provider_metadata_ttl": 120,
         "use_introspection_on_access_tokens": True,
     }
     OP_SETTINGS = {}
@@ -48,7 +49,12 @@ class OIDCSettings:
                login_uris_redirect_allowed_hosts(:obj:`list`) : A list of allowed domains that can be redirected to.
                  A good idea is to this to use :setting:`ALLOWED_HOSTS <django:ALLOWED_HOSTS>`.
                  See :ref:`Redirect the user after login` for more details.
-               cache_backend(:obj:`str`, optional): Defaults to 'default'. The cache backend that should be used to store
+               oidc_cache_provider_metadata (bool): default to False; if True calls to the provider_discovery_uri will be cached,
+                removing a lot of HTTP traffic. The provider metadata is the same for all your users, so when you havce a lot of
+                concurrent OIDC related operations this cache can be usefull even with a short duration.
+               oidc_cache_provider_metadata_ttl (int): validity of the metadata cache in seconds, default is 120 (2 minutes).
+                you can use a long TTL (you known the SSO metadata does not move a lot) or a shorter one (microcache).
+               cache_django_backend(:obj:`str`, optional): Defaults to 'default'. The cache backend that should be used to store
                  this provider sessions. Take a look at :ref:`Cache Management`
                hook_user_login (str): path to a function hook to be run after sucessful login.
                hook_user_logout (str):  path to a function hook to be run during logout(before local session removal and redirection to SSO

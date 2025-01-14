@@ -77,11 +77,14 @@ class OIDCClient:
                     # This make an HTTP call on provider discovery uri
                     config = self.consumer.provider_config(provider_discovery_uri)
                     # shared microcache for provider config
-                    # FIXME: Setting for duration
-                    self.general_cache_backend.set(cache_key, config, 60)
+                    self.general_cache_backend.set(
+                        cache_key,
+                        config,
+                        self.opsettings.get("oidc_cache_provider_metadata_ttl"),
+                    )
             else:
                 # This make an HTTP call on provider discovery uri
-                config = self.consumer.provider_config(provider_discovery_uri)
+                self.consumer.provider_config(provider_discovery_uri)
         self.consumer.client_secret = client_secret
 
     def get_settings(self) -> OIDCSettings:
