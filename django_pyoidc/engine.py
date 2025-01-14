@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import Optional
 
 from django_pyoidc import get_user_by_email
 from django_pyoidc.client import OIDCClient
@@ -17,35 +18,35 @@ class OIDCEngine:
 
     def call_function(self, setting_func_name, *args, **kwargs):
         function_path = self.opsettings.get(setting_func_name)
-        if function_path:
+        if function_path is not None:
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_get_user_function(self, client: OIDCClient, tokens={}):
-        if self.opsettings.get("hook_get_user"):
+    def call_get_user_function(self, client: OIDCClient, tokens=None):
+        if tokens is None:
+            tokens = {}
+        if self.opsettings.get("hook_get_user") is not None:
             logger.debug("OIDC, Calling user hook on get_user")
             return self.call_function("hook_get_user", client=client, tokens=tokens)
         else:
             logger.debug("OIDC, Calling get_user_by_email")
             return get_user_by_email(tokens)
 
-    def introspect_access_token(self, access_token_jwt: str, client: OIDCClient):
+    def introspect_access_token(
+        self, access_token_jwt: Optional[str], client: OIDCClient
+    ):
         """
         Perform a cached introspection call to extract claims from encoded jwt of the access_token
         """
         # FIXME: allow a non-cached mode by global settings
-        access_token_claims = None
 
         if access_token_jwt is None:
             raise TokenError("Nothing in access_token_jwt.")
 
-        if self.opsettings.get("use_introspection_on_access_tokens"):
-            access_token_claims = self._call_introspection(access_token_jwt, client)
+        if self.opsettings.get("use_introspection_on_access_tokens") is not None:
+            return self._call_introspection(access_token_jwt, client)
         else:
-            access_token_claims = self.call_validate_tokens_hook(
-                access_token_jwt, client
-            )
-        return access_token_claims
+            return self.call_validate_tokens_hook(access_token_jwt, client)
 
     def _call_introspection(self, access_token_jwt, client: OIDCClient):
         cache_key = self.general_cache_backend.generate_hashed_cache_key(
@@ -86,7 +87,7 @@ class OIDCEngine:
         return access_token_claims
 
     def call_validate_tokens_hook(self, access_token_jwt, client: OIDCClient):
-        if self.opsettings.get("hook_validate_access_token"):
+        if self.opsettings.get("hook_validate_access_token") is not None:
             logger.debug("OIDC, Calling hook_validate_access_token.")
             return self.call_function(
                 "hook_validate_access_token", access_token_jwt, client

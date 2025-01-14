@@ -64,7 +64,7 @@ class OIDCSettings:
         self.op_name = op_name
         if self.op_name not in django_settings.DJANGO_PYOIDC:
             raise InvalidOIDCConfigurationException(
-                f"{self.op_name} provider name is not present in DJANGO_PYOIDC settings."
+                f"{self.op_name} provider name must be configured in DJANGO_PYOIDC settings."
             )
 
         op_definition = {
@@ -116,11 +116,13 @@ class OIDCSettings:
             and op_definition["provider_discovery_uri"]
         ):
             discovery = op_definition["provider_discovery_uri"]
-            if discovery.endswith(".well-known/openid-configuration"):
-                discovery = discovery[:-33]
+            extra_string = ".well-known/openid-configuration"
+            if discovery.endswith(extra_string):
+                discovery = discovery[: -len(extra_string)]
                 op_definition["provider_discovery_uri"] = discovery
-            if discovery.endswith(".well-known/openid-configuration/"):
-                discovery = discovery[:-34]
+            extra_string = ".well-known/openid-configuration/"
+            if discovery.endswith(extra_string):
+                discovery = discovery[: -len(extra_string)]
                 op_definition["provider_discovery_uri"] = discovery
 
         # Special path manipulations
@@ -134,7 +136,7 @@ class OIDCSettings:
         # else: do not set defaults.
         # The Provider objet will define a defaut callback path if not set.
 
-        # allow simplier names
+        # allow simpler names
         # * "logout_redirect" for "post_logout_redirect_uri"
         # * "failure_redirect" for "post_login_uri_failure"
         # * "success_redirect" for "post_login_uri_success"
@@ -181,21 +183,21 @@ class OIDCSettings:
         if (
             "hook_validate_access_token" in self.OP_SETTINGS
             and "use_introspection_on_access_tokens" in self.OP_SETTINGS
-            and self.OP_SETTINGS["use_introspection_on_access_tokens"]
+            and self.OP_SETTINGS["use_introspection_on_access_tokens"] is not None
         ):
             raise InvalidOIDCConfigurationException(
                 "You cannot define hook_validate_access_token if you use use_introspection_on_access_tokens."
             )
 
         # client_id is required
-        if "client_id" not in self.OP_SETTINGS or not self.OP_SETTINGS["client_id"]:
+        if "client_id" not in self.OP_SETTINGS or self.OP_SETTINGS["client_id"] is None:
             raise InvalidOIDCConfigurationException(
                 f"Provider definition does not contain any 'client_id' entry. Check your DJANGO_PYOIDC['{self.op_name}'] settings."
             )
         # we do not enforce client_secret (in case someone wrongly use a public client)
         if (
             "client_secret" not in self.OP_SETTINGS
-            or not self.OP_SETTINGS["client_secret"]
+            or self.OP_SETTINGS["client_secret"] is None
         ):
             logger.warning(
                 f"OIDC settings for {self.op_name} has no client_secret. You are maybe using a public OIDC client, you should not."
