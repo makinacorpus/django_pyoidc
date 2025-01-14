@@ -130,6 +130,10 @@ class OIDCSettings:
             if discovery.endswith(extra_string):
                 discovery = discovery[: -len(extra_string)]
                 op_definition["provider_discovery_uri"] = discovery
+            extra_string = "/"
+            if discovery.endswith(extra_string):
+                discovery = discovery[: -len(extra_string)]
+                op_definition["provider_discovery_uri"] = discovery
 
         # Special path manipulations
         if "oidc_callback_path" in op_definition:
@@ -189,7 +193,7 @@ class OIDCSettings:
         if (
             "hook_validate_access_token" in self.OP_SETTINGS
             and "use_introspection_on_access_tokens" in self.OP_SETTINGS
-            and self.OP_SETTINGS["use_introspection_on_access_tokens"] is not None
+            and self.OP_SETTINGS["use_introspection_on_access_tokens"]
         ):
             raise InvalidOIDCConfigurationException(
                 "You cannot define hook_validate_access_token if you use use_introspection_on_access_tokens."

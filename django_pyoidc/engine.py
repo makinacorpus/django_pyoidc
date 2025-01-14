@@ -43,7 +43,7 @@ class OIDCEngine:
         if access_token_jwt is None:
             raise TokenError("Nothing in access_token_jwt.")
 
-        if self.opsettings.get("use_introspection_on_access_tokens") is not None:
+        if self.opsettings.get("use_introspection_on_access_tokens"):
             return self._call_introspection(access_token_jwt, client)
         else:
             return self.call_validate_tokens_hook(access_token_jwt, client)
