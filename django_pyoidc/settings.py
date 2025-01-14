@@ -18,7 +18,6 @@ class OIDCSettings:
         "oidc_cache_provider_metadata_ttl": 120,
         "use_introspection_on_access_tokens": True,
     }
-    OP_SETTINGS = {}
 
     def __repr__(self):
         repr_str = f"Oidc Settings for {self.op_name}"
