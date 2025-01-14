@@ -292,6 +292,27 @@ class SettingsTestCase(OIDCTestCase):
                 "provider_class": "django_pyoidc.providers.KeycloakProvider",
                 "keycloak_realm": "toto",
             },
+            "lib_551": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "lib_551",
+                "client_secret": "secret",
+                "provider_class": "django_pyoidc.providers.KeycloakProvider",
+                "provider_discovery_uri": "http://uvw/xyz/abc/",
+            },
+            "lib_552": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "lib_552",
+                "client_secret": "secret",
+                "provider_class": "django_pyoidc.providers.KeycloakProvider",
+                "provider_discovery_uri": "http://uvw/xyz/realms/",
+            },
+            "lib_553": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "lib_552",
+                "client_secret": "secret",
+                "provider_class": "django_pyoidc.providers.KeycloakProvider",
+                "provider_discovery_uri": "http://uvw/xyz/realms/foo/bar",
+            },
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
@@ -309,14 +330,81 @@ class SettingsTestCase(OIDCTestCase):
         with self.assertRaises(TypeError) as context:
             OIDCClient(op_name="lib_549")
         self.assertTrue(
-            "missing 1 required positional argument: 'keycloak_realm'"
+            "Keycloak10Provider requires keycloak_base_uri and keycloak_realm or provider_discovery_uri."
             in context.exception.__repr__()
         )
         with self.assertRaises(TypeError) as context:
             OIDCClient(op_name="lib_550")
         self.assertTrue(
-            "missing 1 required positional argument: 'keycloak_base_uri'"
+            "Keycloak10Provider requires keycloak_base_uri and keycloak_realm or provider_discovery_uri."
             in context.exception.__repr__()
+        )
+        with self.assertRaises(RuntimeError) as context:
+            OIDCClient(op_name="lib_551")
+        self.assertTrue(
+            "Provided 'provider_discovery_uri' url is not a valid Keycloak metadata url, it does not contains /realms/."
+            in context.exception.__repr__()
+        )
+        with self.assertRaises(RuntimeError) as context:
+            OIDCClient(op_name="lib_552")
+        self.assertTrue(
+            "Provided 'provider_discovery_uri' url is not a valid Keycloak metadata url, it does not contains /realms/."
+            in context.exception.__repr__()
+        )
+        with self.assertRaises(RuntimeError) as context:
+            OIDCClient(op_name="lib_553")
+        self.assertTrue(
+            "Cannot extract the keycloak realm from the provided url."
+            in context.exception.__repr__()
+        )
+
+    @override_settings(
+        DJANGO_PYOIDC={
+            "lib_612": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "lib_612",
+                "client_secret": "secret",
+                "provider_class": "django_pyoidc.providers.KeycloakProvider",
+                "keycloak_base_uri": "http://abc/def",
+                "keycloak_realm": "ghj",
+            },
+            "lib_613": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "lib_613",
+                "client_secret": "secret",
+                "provider_class": "django_pyoidc.providers.KeycloakProvider",
+                "provider_discovery_uri": "http://lmn/opq/realms/rst",
+            },
+            "lib_614": {
+                "oidc_cache_provider_metadata": False,
+                "client_id": "lib_613",
+                "client_secret": "secret",
+                "provider_class": "django_pyoidc.providers.KeycloakProvider",
+                "provider_discovery_uri": "http://uvw/xyz/realms/abc/.well-known/openid-configuration",
+            },
+        },
+    )
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_client_settings_keycloak_provider_can_generate_provider_discovery_uri_or_not(
+        self, mocked_provider_config, *args
+    ):
+        """
+        Test that missing provider_discovery_uri (or alternatives) will fail.
+        """
+        sso_client = OIDCClient(op_name="lib_612")
+        settings = sso_client.get_settings()
+        self.assertEqual(
+            settings.get("provider_discovery_uri"), "http://abc/def/realms/ghj"
+        )
+        sso_client = OIDCClient(op_name="lib_613")
+        settings = sso_client.get_settings()
+        self.assertEqual(
+            settings.get("provider_discovery_uri"), "http://lmn/opq/realms/rst"
+        )
+        sso_client = OIDCClient(op_name="lib_614")
+        settings = sso_client.get_settings()
+        self.assertEqual(
+            settings.get("provider_discovery_uri"), "http://uvw/xyz/realms/abc"
         )
 
     @override_settings(
