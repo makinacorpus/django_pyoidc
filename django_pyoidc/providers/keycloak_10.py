@@ -1,10 +1,10 @@
 """
 Base Keycloak Provider class.
 """
-from typing import Any, Dict, Optional
+from typing import Optional, override
 from urllib.parse import urlparse
 
-from django_pyoidc.providers.provider import Provider
+from django_pyoidc.providers.provider import Provider, ProviderConfig
 
 
 class Keycloak10Provider(Provider):
@@ -14,10 +14,10 @@ class Keycloak10Provider(Provider):
 
     def __init__(
         self,
-        op_name: str,
         keycloak_base_uri: Optional[str] = None,
         keycloak_realm: Optional[str] = None,
         *args,
+        op_name: str,
         **kwargs,
     ):
         if keycloak_base_uri is None or keycloak_realm is None:
@@ -37,15 +37,19 @@ class Keycloak10Provider(Provider):
                 base_path = parts[0]
                 keycloak_realm = parts[1]
                 extra_string = ".well-known/openid-configuration"
-                if keycloak_realm.endswith(extra_string):
+                if keycloak_realm is not None and keycloak_realm.endswith(extra_string):
                     keycloak_realm = keycloak_realm[: -len(extra_string)]
                 extra_string = ".well-known/openid-configuration/"
-                if keycloak_realm.endswith(extra_string):
+                if keycloak_realm is not None and keycloak_realm.endswith(extra_string):
                     keycloak_realm = keycloak_realm[: -len(extra_string)]
                 extra_string = "/"
-                if keycloak_realm.endswith(extra_string):
+                if keycloak_realm is not None and keycloak_realm.endswith(extra_string):
                     keycloak_realm = keycloak_realm[: -len(extra_string)]
-                if "/" in keycloak_realm or not keycloak_realm:
+                if (
+                    keycloak_realm is not None
+                    and "/" in keycloak_realm
+                    or keycloak_realm is None
+                ):
                     raise RuntimeError(
                         "Cannot extract the keycloak realm from the provided url."
                     )
@@ -66,7 +70,8 @@ class Keycloak10Provider(Provider):
         kwargs["provider_discovery_uri"] = provider_discovery_uri
         super().__init__(op_name=op_name, *args, **kwargs)
 
-    def get_default_config(self) -> Dict[str, Dict[str, Any]]:
+    @override
+    def get_default_config(self) -> ProviderConfig:
         result = super().get_default_config()
 
         result["oidc_logout_query_string_redirect_parameter"] = "redirect_uri"

@@ -71,5 +71,6 @@ def get_user_by_email(tokens: Dict):
         email=email,
         username=django_username,
     )
-    user.backend = "django.contrib.auth.backends.ModelBackend"
+    if hasattr(user, "backend"):
+        user.backend = "django.contrib.auth.backends.ModelBackend"
     return user

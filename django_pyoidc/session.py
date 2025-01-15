@@ -54,13 +54,17 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
 
     def get_by_uid(self, uid: str) -> List[str]:
         # FIXME : maybe .filter(cache_session_key=uid) ?
-        result = OIDCSession.objects.filter(uid=uid).values_list("sid", flat=True)
+        result = OIDCSession.objects.filter(cache_session_key=uid).values_list(
+            "cache_session_key", flat=True
+        )
         logger.debug(f"Fetched the following sid : {result} for {uid=}")
 
         return list(result)
 
     def get_by_sub(self, sub: str) -> List[str]:
-        result = OIDCSession.objects.filter(sub=sub).values_list("sid", flat=True)
+        result = OIDCSession.objects.filter(sub=sub).values_list(
+            "cache_session_key", flat=True
+        )
         logger.debug(f"Fetched fhe following sid : {result} for {sub=}")
         return list(result)
 

@@ -13,12 +13,13 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwt import JWT
 from jwt.exceptions import JWTDecodeError
+from oic.utils.http_util import BadRequest
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.settings import OIDCSettingsFactory
+from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
 from django_pyoidc.utils import import_object
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
@@ -27,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 
 class OIDCMixin:
-    op_name = None
-    opsettings = None
+    op_name: str = ""
+    opsettings: OIDCSettings
 
 
 class OIDCView(View, OIDCMixin):
@@ -351,9 +352,20 @@ class OIDCCallbackView(OIDCView):
                     self.op_name, session_id=request.session["oidc_sid"]
                 )
 
-                aresp, atr, idt = self.client.consumer.parse_authz(
+                parsing_result = self.client.consumer.parse_authz(
                     query=request.GET.urlencode()
                 )
+                if isinstance(parsing_result, BadRequest):
+                    logger.error(
+                        "OIDC login process failure; cannot parse OIDC response"
+                    )
+                    return self.login_failure(request)
+
+                aresp, atr, idt = parsing_result
+
+                if aresp is None:
+                    logger.error("OIDC login process failure; empty OIDC response")
+                    return self.login_failure(request)
 
                 if aresp["state"] == request.session["oidc_sid"]:
                     state = aresp["state"]

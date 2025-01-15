@@ -69,7 +69,7 @@ class OIDCEngine:
             introspection = client.client_extension.do_token_introspection(
                 request_args=request_args,
                 authn_method=client_auth_method,
-                endpoint=client.consumer.introspection_endpoint,
+                endpoint=client.consumer.introspection_endpoint,  # type: ignore
             )
             access_token_claims = introspection.to_dict()
             if "active" in access_token_claims and not access_token_claims["active"]:
