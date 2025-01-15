@@ -59,3 +59,11 @@ FIXME: possible alternative for tests requirements would be:
 ```
 python -m piptools compile --extra test -o requirements-test.txt pyproject.toml
 ```
+
+## Building local packages
+
+You can build the package locally by running :
+
+```
+python -m build
+```

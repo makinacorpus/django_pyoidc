@@ -1,7 +1,5 @@
-license = {file = "LICENSE"}
-readme = "README.md" # Optional
-
 [project]
+dynamic = ["version"]
 name="django-pyoidc"
 authors=[
     {name="Régis Leroy (Makina Corpus)", email="django_pyoidc@makina-corpus.net"},
@@ -24,9 +22,17 @@ classifiers=["Topic :: Utilities",
 ]
 description="Authenticate your users using OpenID Connect (OIDC)"
 requires-python=">=3.8"
-dynamic = ["version", "dependencies"]
 keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect", "authentication"]
 readme="README.md"
+license="GPL-3.0-only"
+dependencies = [
+        "oic==1.7.0",
+        "django>=3.2",
+        "jsonpickle",
+        "jwt",
+        "pycryptodomex",
+]
+license-files = ['LICENSE']
 
 [project.urls]
 repository="https://github.com/makinacorpus/django_pyoidc"
@@ -37,12 +43,8 @@ drf = ['djangorestframework', 'drf-spectacular']
 [build-system]
 # These are the assumed default build requirements from pip:
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.in"] }
-
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
@@ -54,3 +56,8 @@ show_error_codes = true
 [tool.django-stubs]
 django_settings_module = "mypy_settings"
 strict_settings = false
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.versioningit]
