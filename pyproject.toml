@@ -42,3 +42,15 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.in"] }
+
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+no_implicit_optional = true
+warn_unused_ignores = true
+check_untyped_defs = true
+show_error_codes = true
+
+[tool.django-stubs]
+django_settings_module = "mypy_settings"
+strict_settings = false

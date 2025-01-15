@@ -20,6 +20,20 @@ Run a live documentation server :
 sphinx-autobuild docs docs/_build/html
 ```
 
+## Running static type checking (mypy)
+
+First install the dev dependencies :
+
+```
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+Then run mypy :
+
+```
+mypy django_pyoidc
+```
+
 ## Running Tests
 
 Check database settings in `tests/test_settings.py`, target a real PostgreSQL Host (You need a PostgreSQL version 12 or greater), for e2e tests check the `tests/e2e/settings.py` file.
