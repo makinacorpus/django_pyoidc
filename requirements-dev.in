@@ -1,0 +1,11 @@
+-c requirements.txt
+
+pip-tools
+pre-commit
+ruff
+mypy
+djangorestframework-stubs[compatible-mypy]
+django-stubs[compatible-mypy]
+types-Markdown
+types-Pygments
+types-psycopg2

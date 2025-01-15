@@ -1,4 +1,4 @@
-# Makina Django OIDC
+# django-pyoidc
 
 
 <p align="center">
