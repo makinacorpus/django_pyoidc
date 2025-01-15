@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from importlib import import_module
-from typing import Any, Dict, Union
+from typing import Any, Mapping, MutableMapping, Union
 
 from django.core.cache import BaseCache, caches
 
@@ -90,11 +90,11 @@ class OIDCCacheBackendForDjango:
     def get_key(self, key):
         return f"oidc-{self.op_name}-{key}"
 
-    def set(self, key: str, value: Dict[str, Union[str, bool]], expiry: int) -> None:
+    def set(self, key: str, value: Mapping[str, Union[str, bool]], expiry: int) -> None:
         if self.enabled:
             self.storage.set(self.get_key(key), value, expiry)
 
-    def __getitem__(self, key: str) -> Dict[str, Union[str, bool]]:
+    def __getitem__(self, key: str) -> MutableMapping[str, Union[str, bool]]:
         if self.enabled:
             data = self.storage.get(self.get_key(key))
             if data is None:

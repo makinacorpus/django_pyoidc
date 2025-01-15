@@ -2,10 +2,10 @@ import base64
 import logging
 from typing import Dict, List, Union
 
-import jsonpickle
+import jsonpickle  # type: ignore[import-untyped]
 from Cryptodome.PublicKey.RSA import RsaKey, import_key
 from django.core.cache import BaseCache, caches
-from jsonpickle.handlers import BaseHandler
+from jsonpickle.handlers import BaseHandler  # type: ignore[import-untyped]
 from oic.utils.session_backend import SessionBackend
 
 from django_pyoidc.models import OIDCSession
@@ -53,15 +53,16 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
         return self.storage.get(self.get_key(key)) is not None
 
     def get_by_uid(self, uid: str) -> List[str]:
+        # FIXME : maybe .filter(cache_session_key=uid) ?
         result = OIDCSession.objects.filter(uid=uid).values_list("sid", flat=True)
         logger.debug(f"Fetched the following sid : {result} for {uid=}")
 
-        return result
+        return list(result)
 
     def get_by_sub(self, sub: str) -> List[str]:
         result = OIDCSession.objects.filter(sub=sub).values_list("sid", flat=True)
         logger.debug(f"Fetched fhe following sid : {result} for {sub=}")
-        return result
+        return list(result)
 
     def get(self, attr: str, val: str) -> List[str]:
         logger.debug(f"Fetch SID for sessions where [{attr}] = {val}")

@@ -24,12 +24,11 @@ class OIDCSessionAdmin(admin.ModelAdmin):
         "created_at",
     ]
 
+    @admin.display(boolean=True)
     def has_session_management(self, obj) -> bool:
         return obj.session_state is not None
 
+    @admin.display(boolean=True)
     def session_is_active(self, obj) -> bool:
         s = SessionStore()
         return obj.cache_session_key is not None and s.exists(obj.cache_session_key)
-
-    has_session_management.boolean = True
-    session_is_active.boolean = True
