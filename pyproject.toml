@@ -15,19 +15,24 @@ classifiers=["Topic :: Utilities",
         "Framework :: Django",
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Security"
 ]
 description="Authenticate your users using OpenID Connect (OIDC)"
-requires-python=">=3.7"
-dynamic = ["version", "dependencies", "optional-dependencies"]
-keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect"]
+requires-python=">=3.8"
+dynamic = ["version", "dependencies"]
+keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect", "authentication"]
 readme="README.md"
 
 [project.urls]
-repository="https://gitlab.makina-corpus.net/pfl/django-pyoidc"
+repository="https://github.com/makinacorpus/django_pyoidc"
+
+[project.optional-dependencies]
+drf = ['djangorestframework', 'drf-spectacular']
 
 [build-system]
 # These are the assumed default build requirements from pip:
@@ -37,4 +42,3 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.in"] }
-optional-dependencies.test = { file = ["requirements-test.txt"] }

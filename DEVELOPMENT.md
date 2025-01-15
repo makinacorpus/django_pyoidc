@@ -31,14 +31,14 @@ python3 run_e2e_tests.py  # for end to end tests
 
 ## Adding a dependency
 
-Add the dependency to either `requirements.in` or `requirements-test.in`.
+Add the dependency to either `requirements.in`, `requirements-test.in` or `requirements-dev.in` 
+depending on the usage of the dependency.
 
 Then run :
 
 ```
 pip install pip-tools
-pip-compile --output-file=requirements.txt pyproject.toml # freeze package versions
-pip-compile --output-file=requirements-test.txt requirements-test.in
+make update_all_deps
 ```
 
 FIXME: possible alternative for tests requirements would be:
