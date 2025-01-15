@@ -57,10 +57,9 @@ oic==1.7.0
     # via django-pyoidc (pyproject.toml)
 pycparser==2.22
     # via cffi
-pycryptodome==3.21.0
-    # via django-pyoidc (pyproject.toml)
 pycryptodomex==3.21.0
     # via
+    #   django-pyoidc (pyproject.toml)
     #   oic
     #   pyjwkest
 pydantic==2.10.5

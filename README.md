@@ -156,4 +156,3 @@ This project is sponsored by Makina Corpus. If you require assistance on your pr
 
 - [@gbip](https://www.github.com/gbip)
 - [@regilero](https://github.com/regilero)
-

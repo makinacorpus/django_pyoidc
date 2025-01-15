@@ -10,5 +10,5 @@ requirements.txt : pyproject.toml
 requirements-dev.txt : requirements-dev.in requirements.txt
 	pip-compile $<
 
-requirements-test.txt : requirements-test.in requirements.txt
+requirements-test.txt : requirements-test.in requirements.txt requirements-dev.txt
 	pip-compile $<
