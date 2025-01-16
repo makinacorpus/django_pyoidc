@@ -1,6 +1,6 @@
 import logging
 from importlib import import_module
-from typing import Any, Dict, Optional, TypeVar, Union, cast
+from typing import Any, Dict, Optional, TypeVar, Union
 
 # import oic
 from django.conf import settings
@@ -210,12 +210,9 @@ class OIDCLogoutView(OIDCView):
         }
 
         # Allow some more parameters for some actors
-        extra_logout_args = cast(
-            Dict[str, Any],
-            self.get_setting(
-                "oidc_logout_query_string_extra_parameters_dict",
-                {},
-            ),
+        extra_logout_args: Dict[str, Any] = self.get_setting(  # type: ignore[assignment] # we can assume that the configuration is right
+            "oidc_logout_query_string_extra_parameters_dict",
+            {},
         )
         request_args.update(extra_logout_args)
         if sid:
