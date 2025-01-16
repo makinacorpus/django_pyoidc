@@ -34,7 +34,7 @@ class OIDCSettings:
         "use_introspection_on_access_tokens": True,
     }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = f"Oidc Settings for {self.op_name}"
         for key, val in self.OP_SETTINGS.items():
             if val is None:

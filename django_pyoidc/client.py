@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, cast
+from typing import Optional, TypeVar, cast
 
 # import oic
 from oic.extension.client import Client as ClientExtension
@@ -12,10 +12,12 @@ from django_pyoidc.exceptions import (
     InvalidSIDException,
 )
 from django_pyoidc.session import OIDCCacheSessionBackendForDjango
-from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
+from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory, OidcSettingValue
 from django_pyoidc.utils import OIDCCacheBackendForDjango
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class OIDCClient:
@@ -104,5 +106,7 @@ class OIDCClient:
     def get_settings(self) -> OIDCSettings:
         return self.opsettings
 
-    def get_setting(self, name, default=None):
+    def get_setting(
+        self, name: str, default: Optional[T] = None
+    ) -> Optional[OidcSettingValue | T]:
         return self.opsettings.get(name, default)

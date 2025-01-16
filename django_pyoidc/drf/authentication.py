@@ -21,7 +21,7 @@ class OidcAuthException(Exception):
 
 
 class OIDCBearerAuthentication(BaseAuthentication):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super(OIDCBearerAuthentication, self).__init__(*args, **kwargs)
         self.opsettings = OIDCSettingsFactory.get("drf")
         self.general_cache_backend = OIDCCacheBackendForDjango(self.opsettings)

@@ -132,7 +132,7 @@ class OIDCLoginView(OIDCView):
 
     http_method_names = ["get"]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         super().get(request, *args, **kwargs)
 
         sid = request.session.get("oidc_sid")
@@ -370,7 +370,7 @@ class OIDCCallbackView(OIDCView):
             )
         )
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         super().get(request, *args, **kwargs)
         try:
             if "oidc_sid" in request.session:
@@ -461,7 +461,7 @@ class OIDCCallbackView(OIDCView):
                         OIDCSession.objects.create(
                             state=state,
                             sub=userinfo["sub"],
-                            cache_session_key=request.session.session_key,
+                            cache_session_key=request.session.session_key,  # type: ignore[misc] # we call auth.login right before, so session_key is set to a value
                             session_state=session_state,
                         )
                         self.call_user_login_callback_function(request, user)

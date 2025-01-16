@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from importlib import import_module
-from typing import Any, Mapping, MutableMapping, Union
+from typing import Any, Mapping, MutableMapping, Optional, Union
 
 from django.core.cache import BaseCache, caches
 
@@ -93,9 +93,10 @@ class OIDCCacheBackendForDjango:
         cache_key = h.hexdigest()
         return cache_key
 
-    def clear(self):
+    def clear(self) -> Optional[int]:
         if self.enabled:
-            return self.storage.clear()
+            self.storage.clear()
+            return None
         else:
             return 0
 

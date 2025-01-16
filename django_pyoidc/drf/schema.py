@@ -13,7 +13,7 @@ try:
         match_subclasses = True
         priority = -1
 
-        def get_security_definition(self, auto_schema):
+        def get_security_definition(self, auto_schema):  # type: ignore[no-untyped-def] # we do not want to type third party libraries
             # from django_pyoidc.drf.authentication import OIDCBearerAuthentication
 
             opsettings = OIDCSettingsFactory.get("drf")

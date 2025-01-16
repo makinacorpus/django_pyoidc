@@ -80,21 +80,21 @@ class Provider:
         )
 
     @property
-    def login_uri_name(self):
+    def login_uri_name(self) -> str:
         """
         The login viewname (use in :func:`django:django.urls.reverse` django directive for example) of this configuration
         """
         return f"{self.op_name}-login"
 
     @property
-    def logout_uri_name(self):
+    def logout_uri_name(self) -> str:
         """
         The logout viewname (use in :func:`django:django.urls.reverse` django directive for example) of this configuration
         """
         return f"{self.op_name}-logout"
 
     @property
-    def callback_uri_name(self):
+    def callback_uri_name(self) -> str:
         """
         The callback viewname (use in :func:`django:django.urls.reverse` django directive for example) of this configuration
         """
