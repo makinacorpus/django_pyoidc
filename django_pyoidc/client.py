@@ -1,9 +1,8 @@
 import logging
-from typing import Optional, TypeVar, cast
+from typing import Optional, TypeVar
 
 # import oic
 from oic.extension.client import Client as ClientExtension
-from oic.oauth2 import ASConfigurationResponse
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
@@ -79,11 +78,9 @@ class OIDCClient:
                     provider_discovery_uri
                 )
                 try:
-                    config = cast(
-                        ASConfigurationResponse, self.general_cache_backend[cache_key]
-                    )
+                    config = self.general_cache_backend[cache_key]
                     # this will for example register endpoints on the consumer object
-                    self.consumer.handle_provider_config(config, provider_discovery_uri)
+                    self.consumer.handle_provider_config(config, provider_discovery_uri)  # type: ignore[arg-type] # provider_discovery_uri is from the cache
                 except KeyError:
                     # This make an HTTP call on provider discovery uri
                     config = self.consumer.provider_config(provider_discovery_uri)
