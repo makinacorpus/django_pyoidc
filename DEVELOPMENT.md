@@ -25,7 +25,7 @@ sphinx-autobuild docs docs/_build/html
 First install the dev dependencies :
 
 ```
-pip install -r requirements.txt -r requirements-dev.txt
+pip install -r requirements/requirements.txt -r requirements/requirements-dev.txt
 ```
 
 Then run mypy :
@@ -45,7 +45,7 @@ python3 run_e2e_tests.py  # for end to end tests
 
 ## Adding a dependency
 
-Add the dependency to either `requirements.in`, `requirements-test.in` or `requirements-dev.in` 
+Add the dependency to either `requirements/requirements.in`, `requirements/requirements-test.in` or `requirements/requirements-dev.in` 
 depending on the usage of the dependency.
 
 Then run :
@@ -53,9 +53,4 @@ Then run :
 ```
 pip install pip-tools
 make update_all_deps
-```
-
-FIXME: possible alternative for tests requirements would be:
-```
-python -m piptools compile --extra test -o requirements-test.txt pyproject.toml
 ```

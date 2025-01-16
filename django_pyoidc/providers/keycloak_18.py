@@ -1,4 +1,4 @@
-from typing import override
+from typing_extensions import override
 
 from django_pyoidc.providers.keycloak_17 import Keycloak17Provider
 from django_pyoidc.providers.provider import ProviderConfig

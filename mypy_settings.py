@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, Dict
 
-DJANGO_PYOIDC: dict[str, dict[str, Any]] = {}
+DJANGO_PYOIDC: Dict[str, Dict[str, Any]] = {}
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",

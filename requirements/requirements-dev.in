@@ -1,4 +1,4 @@
--c requirements.txt
+-r requirements.in
 
 pip-tools
 pre-commit
