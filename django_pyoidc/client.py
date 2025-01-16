@@ -44,16 +44,21 @@ class OIDCClient:
             session_db=self.session_cache_backend,
             consumer_config=consumer_config,
             client_config=client_config,
-        )
+        )  # type: ignore[no-untyped-call] # oic.oic.consumer.Consumer is not typed yet
+
         # used in token introspection
-        self.client_extension = ClientExtension(**client_config)
+        self.client_extension = ClientExtension(**client_config)  # type: ignore[no-untyped-call] # oic.extension.client.Client is not typed yet
 
         provider_discovery_uri = self.opsettings.get("provider_discovery_uri", None)
+        if not isinstance(provider_discovery_uri, str):
+            raise InvalidOIDCConfigurationException(
+                f"Invalid oidc provider discovery uri {provider_discovery_uri}"
+            )
         self.client_extension.client_secret = client_secret
 
         if session_id is not None:
             try:
-                self.consumer.restore(session_id)
+                self.consumer.restore(session_id)  # type: ignore[no-untyped-call] # Consumer.restore is not typed yet
             except KeyError:
                 # This is an error as for example during the first communication round trips between
                 # the op and the client we'll have to find state elements in the oidc session
@@ -81,10 +86,15 @@ class OIDCClient:
                     # This make an HTTP call on provider discovery uri
                     config = self.consumer.provider_config(provider_discovery_uri)
                     # shared microcache for provider config
+                    ttl = self.opsettings.get("oidc_cache_provider_metadata_ttl")
+                    if not isinstance(ttl, int):
+                        raise InvalidOIDCConfigurationException(
+                            f"Invalid cache ttl {ttl}"
+                        )
                     self.general_cache_backend.set(
                         cache_key,
                         config,
-                        self.opsettings.get("oidc_cache_provider_metadata_ttl"),
+                        ttl,
                     )
             else:
                 # This make an HTTP call on provider discovery uri

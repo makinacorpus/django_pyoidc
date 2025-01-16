@@ -1,6 +1,7 @@
 import logging
 from functools import lru_cache
 from importlib import import_module
+from typing import Any, Dict, List, Optional, TypedDict, TypeVar
 
 from django.conf import settings as django_settings
 from django.urls import reverse_lazy
@@ -9,10 +10,22 @@ from django_pyoidc.exceptions import InvalidOIDCConfigurationException
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
+TypedOidcSettings = TypedDict(
+    "TypedOidcSettings",
+    {
+        "cache_django_backend": str,
+        "oidc_cache_provider_metadata": bool,
+        "oidc_cache_provider_metadata_ttl": int,
+        "use_introspection_on_access_tokens": bool,
+    },
+)
+
 
 class OIDCSettings:
 
-    GLOBAL_SETTINGS = {
+    GLOBAL_SETTINGS: TypedOidcSettings = {
         "cache_django_backend": "default",
         "oidc_cache_provider_metadata": False,
         "oidc_cache_provider_metadata_ttl": 120,
@@ -112,7 +125,7 @@ class OIDCSettings:
         self.OP_SETTINGS["op_name"] = self.op_name
         self._validate_settings()
 
-    def _fix_settings(self, op_definition):
+    def _fix_settings(self, op_definition: Dict[str, Any]) -> Dict[str, Any]:
         """Workarounds over specific settings and aliases."""
 
         # pyoidc wants the discovery uri WITHOUT the well-known part '.well-known/openid-configuration'
@@ -188,7 +201,7 @@ class OIDCSettings:
 
         return op_definition
 
-    def _validate_settings(self):
+    def _validate_settings(self) -> None:
         if (
             "hook_validate_access_token" in self.OP_SETTINGS
             and "use_introspection_on_access_tokens" in self.OP_SETTINGS
@@ -215,14 +228,16 @@ class OIDCSettings:
     def set(self, key: str, value=None):
         self.OP_SETTINGS[key] = value
 
-    def get(self, name: str, default=None):
+    def get(
+        self, name: str, default: Optional[bool | int | str | List[str] | T] = None
+    ) -> Optional[bool | int | str | List[str] | T]:
         "Get attr value for op or global, given last arg is the default value if None."
         res = self._get_attr(name)
         if res is None:
             return default
         return res
 
-    def _get_attr(self, key):
+    def _get_attr(self, key: str) -> Optional[bool | int | str | List[str]]:
         """Retrieve attr, if op value is None a check on globals is made.
 
         Note that op value is already a computation of provider defaults and user defined settings.
@@ -231,8 +246,8 @@ class OIDCSettings:
         if key in self.OP_SETTINGS and self.OP_SETTINGS[key] is not None:
             return self.OP_SETTINGS[key]
         else:
-            if key in self.GLOBAL_SETTINGS:
-                return self.GLOBAL_SETTINGS[key]
+            if key in self.GLOBAL_SETTINGS.keys():
+                return self.GLOBAL_SETTINGS[key]  # type: ignore[literal-required] #  we check that the key is available the line before
         return None
 
 

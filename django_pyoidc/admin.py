@@ -3,10 +3,12 @@ from importlib import import_module
 from django.conf import settings
 from django.contrib import admin
 
+from django_pyoidc.models import OIDCSession
+
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
-class OIDCSessionAdmin(admin.ModelAdmin):
+class OIDCSessionAdmin(admin.ModelAdmin[OIDCSession]):
     readonly_fields = (
         "state",
         "session_state",

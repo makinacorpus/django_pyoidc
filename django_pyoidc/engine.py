@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from django_pyoidc import get_user_by_email
 from django_pyoidc.client import OIDCClient
@@ -16,9 +16,9 @@ class OIDCEngine:
         self.opsettings = opsettings
         self.general_cache_backend = OIDCCacheBackendForDjango(opsettings)
 
-    def call_function(self, setting_func_name, *args, **kwargs):
+    def call_function(self, setting_func_name: str, *args, **kwargs) -> Any:
         function_path = self.opsettings.get(setting_func_name)
-        if function_path is not None:
+        if function_path is not None and isinstance(function_path, str):
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
@@ -65,7 +65,7 @@ class OIDCEngine:
             }
             client_auth_method = client.consumer.registration_response.get(
                 "introspection_endpoint_auth_method", "client_secret_basic"
-            )
+            )  # type: ignore[no-untyped-call] # oic is untyped
             introspection = client.client_extension.do_token_introspection(
                 request_args=request_args,
                 authn_method=client_auth_method,

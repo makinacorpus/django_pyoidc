@@ -1,11 +1,13 @@
 import logging
 from importlib import import_module
+from typing import Any, List, Optional, TypeVar, cast
 
 # import oic
 from django.conf import settings
 from django.contrib import auth, messages
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, resolve_url
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -17,7 +19,10 @@ from oic.utils.http_util import BadRequest
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
-from django_pyoidc.exceptions import InvalidSIDException
+from django_pyoidc.exceptions import (
+    InvalidOIDCConfigurationException,
+    InvalidSIDException,
+)
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
 from django_pyoidc.utils import import_object
@@ -26,6 +31,8 @@ SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 
 class OIDCMixin:
     op_name: str = ""
@@ -33,32 +40,44 @@ class OIDCMixin:
 
 
 class OIDCView(View, OIDCMixin):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         for key, value in kwargs.items():
             setattr(self, key, value)
             if key == "op_name":
                 self.opsettings = OIDCSettingsFactory.get(self.op_name)
+                self.allowed_hosts = self.get_setting(
+                    "login_uris_redirect_allowed_hosts"
+                )
 
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs) -> HttpResponse:
         if self.op_name is None:
             raise Exception(
                 "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
             )  # FIXME
+        raise NotImplementedError(
+            "When subclassing `OIDCView` you must implement get()"
+        )
 
-    def get_setting(self, name, default=None):
+    def get_setting(
+        self, name, default: Optional[T] = None
+    ) -> Optional[T | bool | int | str | List[str]]:
         return self.opsettings.get(name, default)
 
-    def call_function(self, setting_func_name, *args, **kwargs):
+    def call_function(self, setting_func_name: str, *args, **kwargs) -> Any:
         function_path = self.opsettings.get(setting_func_name)
-        if function_path:
+        if function_path is not None and isinstance(function_path, str):
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_user_login_callback_function(self, request, user):
+    def call_user_login_callback_function(
+        self, request: HttpRequest, user: AbstractUser
+    ):
         logger.debug("OIDC, Calling user hook on login")
         self.call_function("hook_user_login", request, user)
 
-    def call_logout_function(self, user_request, logout_request_args):
+    def call_logout_function(
+        self, user_request: HttpRequest, logout_request_args: dict[str, Any]
+    ) -> Any:
         """Function called right before local session removal and before final redirection to the SSO server.
 
         Parameters:
@@ -71,17 +90,18 @@ class OIDCView(View, OIDCMixin):
         """
         return self.call_function("hook_user_logout", user_request, logout_request_args)
 
-    def get_next_url(self, request, redirect_field_name):
+    def get_next_url(
+        self, request: HttpRequest, redirect_field_name: str
+    ) -> Optional[str]:
         """
         Adapted from https://github.com/mozilla/mozilla-django-oidc/blob/71e4af8283a10aa51234de705d34cd298e927f97/mozilla_django_oidc/views.py#L132
         """
         next_url = request.GET.get(redirect_field_name)
-        # print(f"{next_url=}")
         if next_url:
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
-                allowed_hosts=self.get_setting("login_uris_redirect_allowed_hosts"),
-                require_https=self.get_setting(
+                allowed_hosts=self.allowed_hosts,  # type: ignore[arg-type] # let's just assume that this settings is correctly set
+                require_https=self.get_setting(  # type: ignore[arg-type] # We can reasonably assume that this setting is a bool
                     "login_redirection_requires_https", True
                 ),
             )
@@ -135,7 +155,7 @@ class OIDCLoginView(OIDCView):
 
         request.session["oidc_login_next"] = next_redirect_uri
 
-        sid, location = client.consumer.begin(
+        sid, location = client.consumer.begin(  # type: ignore[no-untyped-call] # oic package is untyped
             scope=["openid"],
             response_type="code",
             use_nonce=True,
@@ -159,7 +179,7 @@ class OIDCLogoutView(OIDCView):
 
     http_method_names = ["get", "post"]
 
-    def post_logout_url(self, request):
+    def post_logout_url(self, request: HttpRequest) -> str:
         """Return the post logout url defined in settings."""
         return str(
             self.get_setting(
@@ -167,10 +187,10 @@ class OIDCLogoutView(OIDCView):
             )
         )
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return self.post(request)
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Log out the user."""
         url = self.post_logout_url(request)
         # If this url is not already an absolute url
@@ -190,18 +210,24 @@ class OIDCLogoutView(OIDCView):
             "LOGOUT_QUERY_STRING_REDIRECT_PARAMETER",
             "post_logout_redirect_uri",
         )
+        if not isinstance(redirect_arg_name, str):
+            raise InvalidOIDCConfigurationException(
+                f"Invalid redirect query string name : {redirect_arg_name}"
+            )
         request_args = {
             redirect_arg_name: post_logout_url,
             "client_id": self.get_setting("client_id"),
         }
 
         # Allow some more parameters for some actors
-        extra_logout_args = self.get_setting(
-            "oidc_logout_query_string_extra_parameters_dict",
-            {},
+        extra_logout_args = cast(
+            dict[str, Any],
+            self.get_setting(
+                "oidc_logout_query_string_extra_parameters_dict",
+                {},
+            ),
         )
         request_args.update(extra_logout_args)
-
         if sid:
             try:
                 client = OIDCClient(self.op_name, session_id=sid)
@@ -284,7 +310,7 @@ class OIDCBackChannelLogoutView(OIDCView):
         result = HttpResponse("")
         try:
             body = request.body.decode("utf-8")[13:]
-            decoded = JWT().decode(body, do_verify=False)
+            decoded = JWT().decode(body, do_verify=False)  # type: ignore[no-untyped-call] # jwt.JWT is not typed yet
 
             sid = decoded.get("sid")
             sub = decoded.get("sub")
@@ -323,19 +349,19 @@ class OIDCCallbackView(OIDCView):
 
     http_method_names = ["get"]
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self.engine = OIDCEngine(self.opsettings)
 
-    def success_url(self, request):
+    def success_url(self, request: HttpRequest) -> str:
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
         return next_url or resolve_url(
-            self.get_setting("post_login_uri_success", request.build_absolute_uri("/"))
+            self.get_setting("post_login_uri_success", request.build_absolute_uri("/"))  # type: ignore[arg-type] # we can assume that this setting is correctly configured
         )
 
-    def login_failure(self, request):
+    def login_failure(self, request: HttpRequest) -> HttpResponse:
         return redirect(
             str(
                 self.get_setting(
@@ -369,7 +395,7 @@ class OIDCCallbackView(OIDCView):
 
                 if aresp["state"] == request.session["oidc_sid"]:
                     state = aresp["state"]
-                    session_state = aresp.get("session_state")
+                    session_state = aresp.get("session_state")  # type: ignore[no-untyped-call] # oic is untyped yet
 
                     # pyoidc will make the next steps in OIDC login protocol
                     try:
@@ -385,7 +411,7 @@ class OIDCCallbackView(OIDCView):
 
                     # Collect data from userinfo endpoint
                     try:
-                        userinfo = self.client.consumer.get_user_info(state=state)
+                        userinfo = self.client.consumer.get_user_info(state=state)  # type: ignore[no-untyped-call] # oic is untyped yet
                     except Exception as e:
                         logger.exception(e)
                         logger.error(

@@ -8,6 +8,7 @@ from django.core.cache import BaseCache, caches
 from jsonpickle.handlers import BaseHandler  # type: ignore[import-untyped]
 from oic.utils.session_backend import SessionBackend
 
+from django_pyoidc.exceptions import InvalidOIDCConfigurationException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings
 
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # From https://github.com/alehuo/pyoidc-redis-session-backend/blob/master/pyoidc_redis_session_backend/__init__.py
-class RSAKeyHandler(BaseHandler):
+class RSAKeyHandler(BaseHandler):  # type: ignore
     def flatten(self, obj: RsaKey, data):
         data["rsa_key"] = base64.b64encode(obj.export_key()).decode("utf-8")
         return data
@@ -31,10 +32,13 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
     """Implement Session backend using django cache."""
 
     def __init__(self, opsettings: OIDCSettings):
-        self.storage: BaseCache = caches[opsettings.get("cache_django_backend")]
+        cache_key = opsettings.get("cache_django_backend")
+        if not isinstance(cache_key, str):
+            raise InvalidOIDCConfigurationException(f"Invalid cache name : {cache_key}")
+        self.storage: BaseCache = caches[cache_key]
         self.op_name = opsettings.get("op_name")
 
-    def get_key(self, key):
+    def get_key(self, key: str) -> str:
         return f"{self.op_name}-{key}"
 
     def __setitem__(self, key: str, value: Dict[str, Union[str, bool]]) -> None:

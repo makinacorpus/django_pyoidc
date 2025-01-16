@@ -5,13 +5,18 @@ from typing import Any, Mapping, MutableMapping, Union
 
 from django.core.cache import BaseCache, caches
 
-from django_pyoidc.exceptions import ClaimNotFoundError
+from django_pyoidc.exceptions import (
+    ClaimNotFoundError,
+    InvalidOIDCConfigurationException,
+)
 from django_pyoidc.settings import OIDCSettings
 
 logger = logging.getLogger(__name__)
 
 
-def import_object(path, def_name):
+def import_object(
+    path: str, def_name: str
+) -> Any:  # FIXME : this function is hard to type correctly
     try:
         mod, cls = path.split(":", 1)
     except ValueError:
@@ -21,7 +26,9 @@ def import_object(path, def_name):
     return getattr(import_module(mod), cls)
 
 
-def extract_claim_from_tokens(claim: str, tokens: dict, raise_exception=True) -> Any:
+def extract_claim_from_tokens(
+    claim: str, tokens: dict[str, Any], raise_exception=True
+) -> Any:
     """Given a dictionnary of tokens claims, extract the given claim.
 
     This function will seek in "info_token_claims", then "id_token_claims"
@@ -42,7 +49,7 @@ def extract_claim_from_tokens(claim: str, tokens: dict, raise_exception=True) ->
     return value
 
 
-def check_audience(client_id: str, access_token_claims: dict) -> bool:
+def check_audience(client_id: str, access_token_claims: dict[str, Any]) -> bool:
     """Verify that the current client_id is present in 'aud' claim.
 
     Audences are stored in 'aud' claim.
@@ -73,7 +80,12 @@ class OIDCCacheBackendForDjango:
 
         self.enabled = opsettings.get("oidc_cache_provider_metadata", False)
         if self.enabled:
-            self.storage: BaseCache = caches[opsettings.get("cache_django_backend")]
+            cache_key = opsettings.get("cache_django_backend")
+            if not isinstance(cache_key, str):
+                raise InvalidOIDCConfigurationException(
+                    f"Invalid cache name : {cache_key}"
+                )
+            self.storage: BaseCache = caches[cache_key]
 
     def generate_hashed_cache_key(self, value: str) -> str:
         h = hashlib.new("sha256")
@@ -87,7 +99,7 @@ class OIDCCacheBackendForDjango:
         else:
             return 0
 
-    def get_key(self, key):
+    def get_key(self, key: str) -> str:
         return f"oidc-{self.op_name}-{key}"
 
     def set(self, key: str, value: Mapping[str, Union[str, bool]], expiry: int) -> None:
