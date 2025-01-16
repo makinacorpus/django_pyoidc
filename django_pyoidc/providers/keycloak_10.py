@@ -1,8 +1,10 @@
 """
 Base Keycloak Provider class.
 """
-from typing import Optional, override
+from typing import Optional
 from urllib.parse import urlparse
+
+from typing_extensions import override
 
 from django_pyoidc.providers.provider import Provider, ProviderConfig
 
