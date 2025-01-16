@@ -46,14 +46,12 @@ class OIDCView(View, OIDCMixin):
                     "login_uris_redirect_allowed_hosts"
                 )
 
-    def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        super().setup(request, *args, **kwargs)
         if self.op_name is None:
             raise Exception(
                 "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
             )  # FIXME
-        raise NotImplementedError(
-            "When subclassing `OIDCView` you must implement get()"
-        )
 
     def get_setting(
         self, name: str, default: Optional[T] = None
@@ -130,7 +128,6 @@ class OIDCLoginView(OIDCView):
     http_method_names = ["get"]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        super().get(request, *args, **kwargs)
 
         sid = request.session.get("oidc_sid")
         if sid:
@@ -364,7 +361,6 @@ class OIDCCallbackView(OIDCView):
         )
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        super().get(request, *args, **kwargs)
         try:
             if "oidc_sid" in request.session:
                 self.client = OIDCClient(
