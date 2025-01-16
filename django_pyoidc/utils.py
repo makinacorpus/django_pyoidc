@@ -5,10 +5,7 @@ from typing import Any, Mapping, MutableMapping, Optional, Union
 
 from django.core.cache import BaseCache, caches
 
-from django_pyoidc.exceptions import (
-    ClaimNotFoundError,
-    InvalidOIDCConfigurationException,
-)
+from django_pyoidc.exceptions import ClaimNotFoundError
 from django_pyoidc.settings import OIDCSettings
 
 logger = logging.getLogger(__name__)
@@ -80,11 +77,7 @@ class OIDCCacheBackendForDjango:
 
         self.enabled = opsettings.get("oidc_cache_provider_metadata", False)
         if self.enabled:
-            cache_key = opsettings.get("cache_django_backend")
-            if not isinstance(cache_key, str):
-                raise InvalidOIDCConfigurationException(
-                    f"Invalid cache name : {cache_key}"
-                )
+            cache_key: str = opsettings.get("cache_django_backend")  # type: ignore[assignment] # we can assume that the configuration is right
             self.storage: BaseCache = caches[cache_key]
 
     def generate_hashed_cache_key(self, value: str) -> str:

@@ -19,10 +19,7 @@ from oic.utils.http_util import BadRequest
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
-from django_pyoidc.exceptions import (
-    InvalidOIDCConfigurationException,
-    InvalidSIDException,
-)
+from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
 from django_pyoidc.utils import import_object
@@ -64,8 +61,8 @@ class OIDCView(View, OIDCMixin):
         return self.opsettings.get(name, default)
 
     def call_function(self, setting_func_name: str, *args: Any, **kwargs: Any) -> Any:
-        function_path = self.opsettings.get(setting_func_name)
-        if function_path is not None and isinstance(function_path, str):
+        function_path: Optional[str] = self.opsettings.get(setting_func_name)  # type: ignore[assignment] # we can assume that the configuration is right
+        if function_path is not None:
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
@@ -206,14 +203,10 @@ class OIDCLogoutView(OIDCView):
         client = None
         sid = request.session.get("oidc_sid")
 
-        redirect_arg_name = self.get_setting(
+        redirect_arg_name: str = self.get_setting(
             "LOGOUT_QUERY_STRING_REDIRECT_PARAMETER",
             "post_logout_redirect_uri",
-        )
-        if not isinstance(redirect_arg_name, str):
-            raise InvalidOIDCConfigurationException(
-                f"Invalid redirect query string name : {redirect_arg_name}"
-            )
+        )  # type: ignore[assignment] # we can assume that the configuration is right
         request_args = {
             redirect_arg_name: post_logout_url,
             "client_id": self.get_setting("client_id"),

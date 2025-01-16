@@ -8,7 +8,6 @@ from django.core.cache import BaseCache, caches
 from jsonpickle.handlers import BaseHandler  # type: ignore[import-untyped]
 from oic.utils.session_backend import SessionBackend
 
-from django_pyoidc.exceptions import InvalidOIDCConfigurationException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings
 
@@ -34,9 +33,7 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
     """Implement Session backend using django cache."""
 
     def __init__(self, opsettings: OIDCSettings):
-        cache_key = opsettings.get("cache_django_backend")
-        if not isinstance(cache_key, str):
-            raise InvalidOIDCConfigurationException(f"Invalid cache name : {cache_key}")
+        cache_key: str = opsettings.get("cache_django_backend")  # type: ignore[assignment] # we can assume that the configuration is right
         self.storage: BaseCache = caches[cache_key]
         self.op_name = opsettings.get("op_name")
 

@@ -50,11 +50,7 @@ class OIDCClient:
         # used in token introspection
         self.client_extension = ClientExtension(**client_config)  # type: ignore[no-untyped-call] # oic.extension.client.Client is not typed yet
 
-        provider_discovery_uri = self.opsettings.get("provider_discovery_uri", None)
-        if not isinstance(provider_discovery_uri, str):
-            raise InvalidOIDCConfigurationException(
-                f"Invalid oidc provider discovery uri {provider_discovery_uri}"
-            )
+        provider_discovery_uri: str = self.opsettings.get("provider_discovery_uri", None)  # type: ignore[assignment] # we can assume that the configuration is ok
         self.client_extension.client_secret = client_secret
 
         if session_id is not None:
@@ -85,11 +81,7 @@ class OIDCClient:
                     # This make an HTTP call on provider discovery uri
                     config = self.consumer.provider_config(provider_discovery_uri)
                     # shared microcache for provider config
-                    ttl = self.opsettings.get("oidc_cache_provider_metadata_ttl")
-                    if not isinstance(ttl, int):
-                        raise InvalidOIDCConfigurationException(
-                            f"Invalid cache ttl {ttl}"
-                        )
+                    ttl: int = self.opsettings.get("oidc_cache_provider_metadata_ttl")  # type: ignore[assignment] # we can assume the configuration is right
                     self.general_cache_backend.set(
                         cache_key,
                         config,

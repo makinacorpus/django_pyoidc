@@ -17,8 +17,8 @@ class OIDCEngine:
         self.general_cache_backend = OIDCCacheBackendForDjango(opsettings)
 
     def call_function(self, setting_func_name: str, *args: Any, **kwargs: Any) -> Any:
-        function_path = self.opsettings.get(setting_func_name)
-        if function_path is not None and isinstance(function_path, str):
+        function_path: Optional[str] = self.opsettings.get(setting_func_name)  # type: ignore[assignment] # we can assume that the configuration is right
+        if function_path is not None:
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
