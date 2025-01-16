@@ -1,6 +1,7 @@
 import logging
 from functools import lru_cache
 from importlib import import_module
+from typing import Any, Dict, List, Optional, TypedDict, TypeVar, Union
 
 from django.conf import settings as django_settings
 from django.urls import reverse_lazy
@@ -9,17 +10,31 @@ from django_pyoidc.exceptions import InvalidOIDCConfigurationException
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
+TypedOidcSettings = TypedDict(
+    "TypedOidcSettings",
+    {
+        "cache_django_backend": str,
+        "oidc_cache_provider_metadata": bool,
+        "oidc_cache_provider_metadata_ttl": int,
+        "use_introspection_on_access_tokens": bool,
+    },
+)
+
+OidcSettingValue = Union[bool, int, str, List[str]]
+
 
 class OIDCSettings:
 
-    GLOBAL_SETTINGS = {
+    GLOBAL_SETTINGS: TypedOidcSettings = {
         "cache_django_backend": "default",
         "oidc_cache_provider_metadata": False,
         "oidc_cache_provider_metadata_ttl": 120,
         "use_introspection_on_access_tokens": True,
     }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = f"Oidc Settings for {self.op_name}"
         for key, val in self.OP_SETTINGS.items():
             if val is None:
@@ -50,18 +65,18 @@ class OIDCSettings:
                  See :ref:`Redirect the user after login` for more details.
                oidc_cache_provider_metadata (bool): default to False; if True calls to the provider_discovery_uri will be cached,
                 removing a lot of HTTP traffic. The provider metadata is the same for all your users, so when you havce a lot of
-                concurrent OIDC related operations this cache can be usefull even with a short duration.
+                concurrent OIDC related operations this cache can be useful even with a short duration.
                oidc_cache_provider_metadata_ttl (int): validity of the metadata cache in seconds, default is 120 (2 minutes).
-                you can use a long TTL (you known the SSO metadata does not move a lot) or a shorter one (microcache).
+                you can use a long TTL (you know the SSO metadata does not move a lot) or a shorter one (microcache).
                cache_django_backend(:obj:`str`, optional): Defaults to 'default'. The cache backend that should be used to store
                  this provider sessions. Take a look at :ref:`Cache Management`
-               hook_user_login (str): path to a function hook to be run after sucessful login.
+               hook_user_login (str): path to a function hook to be run after successful login.
                hook_user_logout (str):  path to a function hook to be run during logout(before local session removal and redirection to SSO
                 remote logout).
                hook_validate_access_token (str):  path to a function hook to extract access tokens claims from the raw jwt.
                 this is not used if 'use_introspection_on_access_tokens' is True
                use_introspection_on_access_tokens (bool): extract access tokens claims by sending the access token to the sso server on
-                the introspection route. This deleagtes validation of the token to the SSO server. If you do not use hook_validate_access_token
+                the introspection route. This delegates validation of the token to the SSO server. If you do not use hook_validate_access_token
                 or use_introspection_on_access_tokens you will just have the raw jwt for the access token, that you can use to send HTTP queries
                 on behalf of the user.
         """
@@ -112,7 +127,7 @@ class OIDCSettings:
         self.OP_SETTINGS["op_name"] = self.op_name
         self._validate_settings()
 
-    def _fix_settings(self, op_definition):
+    def _fix_settings(self, op_definition: Dict[str, Any]) -> Dict[str, Any]:
         """Workarounds over specific settings and aliases."""
 
         # pyoidc wants the discovery uri WITHOUT the well-known part '.well-known/openid-configuration'
@@ -188,7 +203,7 @@ class OIDCSettings:
 
         return op_definition
 
-    def _validate_settings(self):
+    def _validate_settings(self) -> None:
         if (
             "hook_validate_access_token" in self.OP_SETTINGS
             and "use_introspection_on_access_tokens" in self.OP_SETTINGS
@@ -212,17 +227,19 @@ class OIDCSettings:
                 f"OIDC settings for {self.op_name} has no client_secret. You are maybe using a public OIDC client, you should not."
             )
 
-    def set(self, key: str, value=None):
+    def set(self, key: str, value: Optional[OidcSettingValue] = None) -> None:
         self.OP_SETTINGS[key] = value
 
-    def get(self, name: str, default=None):
+    def get(
+        self, name: str, default: Optional[Union[OidcSettingValue, T]] = None
+    ) -> Optional[Union[OidcSettingValue, T]]:
         "Get attr value for op or global, given last arg is the default value if None."
         res = self._get_attr(name)
         if res is None:
             return default
         return res
 
-    def _get_attr(self, key):
+    def _get_attr(self, key: str) -> Optional[OidcSettingValue]:
         """Retrieve attr, if op value is None a check on globals is made.
 
         Note that op value is already a computation of provider defaults and user defined settings.
@@ -231,8 +248,8 @@ class OIDCSettings:
         if key in self.OP_SETTINGS and self.OP_SETTINGS[key] is not None:
             return self.OP_SETTINGS[key]
         else:
-            if key in self.GLOBAL_SETTINGS:
-                return self.GLOBAL_SETTINGS[key]
+            if key in self.GLOBAL_SETTINGS.keys():
+                return self.GLOBAL_SETTINGS[key]  # type: ignore[literal-required] #  we check that the key is available the line before
         return None
 
 

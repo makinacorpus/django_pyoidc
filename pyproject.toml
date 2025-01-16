@@ -48,10 +48,30 @@ build-backend = "hatchling.build"
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
-no_implicit_optional = true
+
+
+warn_unused_configs = true
+warn_redundant_casts = true
 warn_unused_ignores = true
+warn_unreachable = true
+
+strict_equality = true
+
 check_untyped_defs = true
+
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+disallow_any_unimported = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+no_implicit_reexport = true
+no_implicit_optional = true
+
 show_error_codes = true
+extra_checks = true
 
 [tool.django-stubs]
 django_settings_module = "mypy_settings"

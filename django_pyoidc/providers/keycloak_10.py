@@ -1,7 +1,7 @@
 """
 Base Keycloak Provider class.
 """
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 from typing_extensions import override
@@ -18,9 +18,9 @@ class Keycloak10Provider(Provider):
         self,
         keycloak_base_uri: Optional[str] = None,
         keycloak_realm: Optional[str] = None,
-        *args,
+        *args: Any,
         op_name: str,
-        **kwargs,
+        **kwargs: Any,
     ):
         if keycloak_base_uri is None or keycloak_realm is None:
             # Usage of this provider SHOULD be providing keycloak_base_uri and keycloak_realm so we generate provider_discovery_uri
