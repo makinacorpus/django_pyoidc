@@ -31,7 +31,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
     def client(self) -> OIDCClient:
         return OIDCClient("drf")
 
-    def extract_access_token(self, request) -> str:
+    def extract_access_token(self, request: Request) -> str:
         val = request.headers.get("Authorization")
         if not val:
             msg = "Request missing the authorization header."

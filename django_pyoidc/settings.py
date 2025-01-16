@@ -22,6 +22,8 @@ TypedOidcSettings = TypedDict(
     },
 )
 
+OidcSettingValue = bool | int | str | List[str]
+
 
 class OIDCSettings:
 
@@ -225,19 +227,19 @@ class OIDCSettings:
                 f"OIDC settings for {self.op_name} has no client_secret. You are maybe using a public OIDC client, you should not."
             )
 
-    def set(self, key: str, value=None):
+    def set(self, key: str, value: Optional[OidcSettingValue] = None) -> None:
         self.OP_SETTINGS[key] = value
 
     def get(
-        self, name: str, default: Optional[bool | int | str | List[str] | T] = None
-    ) -> Optional[bool | int | str | List[str] | T]:
+        self, name: str, default: Optional[OidcSettingValue | T] = None
+    ) -> Optional[OidcSettingValue | T]:
         "Get attr value for op or global, given last arg is the default value if None."
         res = self._get_attr(name)
         if res is None:
             return default
         return res
 
-    def _get_attr(self, key: str) -> Optional[bool | int | str | List[str]]:
+    def _get_attr(self, key: str) -> Optional[OidcSettingValue]:
         """Retrieve attr, if op value is None a check on globals is made.
 
         Note that op value is already a computation of provider defaults and user defined settings.

@@ -1,6 +1,6 @@
 import base64
 import logging
-from typing import Dict, List, Union
+from typing import Any, Dict, List, MutableMapping, Union
 
 import jsonpickle  # type: ignore[import-untyped]
 from Cryptodome.PublicKey.RSA import RsaKey, import_key
@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 # From https://github.com/alehuo/pyoidc-redis-session-backend/blob/master/pyoidc_redis_session_backend/__init__.py
 class RSAKeyHandler(BaseHandler):  # type: ignore
-    def flatten(self, obj: RsaKey, data):
+    def flatten(
+        self, obj: RsaKey, data: MutableMapping[str, Any]
+    ) -> MutableMapping[str, Any]:
         data["rsa_key"] = base64.b64encode(obj.export_key()).decode("utf-8")
         return data
 

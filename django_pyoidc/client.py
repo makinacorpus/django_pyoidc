@@ -1,5 +1,5 @@
 import logging
-from typing import cast
+from typing import Optional, cast
 
 # import oic
 from oic.extension.client import Client as ClientExtension
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class OIDCClient:
-    def __init__(self, op_name: str, session_id=None):
+    def __init__(self, op_name: str, session_id: Optional[str] = None):
         self.opsettings = OIDCSettingsFactory.get(op_name)
 
         self.session_cache_backend = OIDCCacheSessionBackendForDjango(self.opsettings)

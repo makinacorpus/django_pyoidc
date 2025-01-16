@@ -31,7 +31,7 @@ class Provider:
     use this class directly. Instead, you should but subclass it to implement the configuration logic.
     """
 
-    def __init__(self, *args, op_name: str, **kwargs):
+    def __init__(self, *args: Any, op_name: str, **kwargs: Any):
         """
         Parameters:
             op_name (str): the name of the sso provider that you are using

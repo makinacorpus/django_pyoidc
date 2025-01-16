@@ -27,7 +27,7 @@ def import_object(
 
 
 def extract_claim_from_tokens(
-    claim: str, tokens: dict[str, Any], raise_exception=True
+    claim: str, tokens: dict[str, Any], raise_exception: bool = True
 ) -> Any:
     """Given a dictionnary of tokens claims, extract the given claim.
 

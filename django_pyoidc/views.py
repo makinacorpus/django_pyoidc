@@ -49,7 +49,7 @@ class OIDCView(View, OIDCMixin):
                     "login_uris_redirect_allowed_hosts"
                 )
 
-    def get(self, *args, **kwargs) -> HttpResponse:
+    def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
         if self.op_name is None:
             raise Exception(
                 "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
@@ -59,11 +59,11 @@ class OIDCView(View, OIDCMixin):
         )
 
     def get_setting(
-        self, name, default: Optional[T] = None
+        self, name: str, default: Optional[T] = None
     ) -> Optional[T | bool | int | str | List[str]]:
         return self.opsettings.get(name, default)
 
-    def call_function(self, setting_func_name: str, *args, **kwargs) -> Any:
+    def call_function(self, setting_func_name: str, *args: Any, **kwargs: Any) -> Any:
         function_path = self.opsettings.get(setting_func_name)
         if function_path is not None and isinstance(function_path, str):
             func = import_object(function_path, "")
@@ -71,7 +71,7 @@ class OIDCView(View, OIDCMixin):
 
     def call_user_login_callback_function(
         self, request: HttpRequest, user: AbstractUser
-    ):
+    ) -> Any:
         logger.debug("OIDC, Calling user hook on login")
         self.call_function("hook_user_login", request, user)
 
@@ -282,7 +282,7 @@ class OIDCBackChannelLogoutView(OIDCView):
 
     http_method_names = ["post"]
 
-    def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body):
+    def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body: str) -> None:
         validated_sid = client.consumer.backchannel_logout(
             request_args={"logout_token": body}
         )
@@ -292,19 +292,19 @@ class OIDCBackChannelLogoutView(OIDCView):
         for session in sessions:
             self._logout_session(session)
 
-    def logout_sessions_by_sub(self, client: OIDCClient, sub: str, body):
+    def logout_sessions_by_sub(self, client: OIDCClient, sub: str, body: str) -> None:
         sessions = OIDCSession.objects.filter(sub=sub)
         for session in sessions:
             client.consumer.backchannel_logout(request_args={"logout_token": body})
             self._logout_session(session)
 
-    def _logout_session(self, session: OIDCSession):
+    def _logout_session(self, session: OIDCSession) -> None:
         s = SessionStore()
         s.delete(session.cache_session_key)
         session.delete()
         logger.info(f"Backchannel logout request received and validated for {session}")
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         if request.content_type != "application/x-www-form-urlencoded":
             return HttpResponse("", status=415)
         result = HttpResponse("")
