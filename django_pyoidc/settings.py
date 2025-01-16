@@ -65,18 +65,18 @@ class OIDCSettings:
                  See :ref:`Redirect the user after login` for more details.
                oidc_cache_provider_metadata (bool): default to False; if True calls to the provider_discovery_uri will be cached,
                 removing a lot of HTTP traffic. The provider metadata is the same for all your users, so when you havce a lot of
-                concurrent OIDC related operations this cache can be usefull even with a short duration.
+                concurrent OIDC related operations this cache can be useful even with a short duration.
                oidc_cache_provider_metadata_ttl (int): validity of the metadata cache in seconds, default is 120 (2 minutes).
-                you can use a long TTL (you known the SSO metadata does not move a lot) or a shorter one (microcache).
+                you can use a long TTL (you know the SSO metadata does not move a lot) or a shorter one (microcache).
                cache_django_backend(:obj:`str`, optional): Defaults to 'default'. The cache backend that should be used to store
                  this provider sessions. Take a look at :ref:`Cache Management`
-               hook_user_login (str): path to a function hook to be run after sucessful login.
+               hook_user_login (str): path to a function hook to be run after successful login.
                hook_user_logout (str):  path to a function hook to be run during logout(before local session removal and redirection to SSO
                 remote logout).
                hook_validate_access_token (str):  path to a function hook to extract access tokens claims from the raw jwt.
                 this is not used if 'use_introspection_on_access_tokens' is True
                use_introspection_on_access_tokens (bool): extract access tokens claims by sending the access token to the sso server on
-                the introspection route. This deleagtes validation of the token to the SSO server. If you do not use hook_validate_access_token
+                the introspection route. This delegates validation of the token to the SSO server. If you do not use hook_validate_access_token
                 or use_introspection_on_access_tokens you will just have the raw jwt for the access token, that you can use to send HTTP queries
                 on behalf of the user.
         """
