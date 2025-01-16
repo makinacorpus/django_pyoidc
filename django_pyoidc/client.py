@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, TypeVar
+from typing import Optional, TypeVar, Union
 
 # import oic
 from oic.extension.client import Client as ClientExtension
@@ -97,5 +97,5 @@ class OIDCClient:
 
     def get_setting(
         self, name: str, default: Optional[T] = None
-    ) -> Optional[OidcSettingValue | T]:
+    ) -> Optional[Union[OidcSettingValue, T]]:
         return self.opsettings.get(name, default)

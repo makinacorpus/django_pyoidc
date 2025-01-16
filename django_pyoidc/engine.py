@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, MutableMapping, Optional
+from typing import Any, Dict, MutableMapping, Optional, Union
 
 from django_pyoidc import get_user_by_email
 from django_pyoidc.client import OIDCClient
@@ -23,7 +23,7 @@ class OIDCEngine:
             return func(*args, **kwargs)
 
     def call_get_user_function(
-        self, client: OIDCClient, tokens: Optional[dict[str, Any]] = None
+        self, client: OIDCClient, tokens: Optional[Dict[str, Any]] = None
     ) -> Any:
         if tokens is None:
             tokens = {}
@@ -52,7 +52,7 @@ class OIDCEngine:
 
     def _call_introspection(
         self, access_token_jwt: str, client: OIDCClient
-    ) -> MutableMapping[str, str | bool]:
+    ) -> MutableMapping[str, Union[str, bool]]:
         cache_key = self.general_cache_backend.generate_hashed_cache_key(
             access_token_jwt
         )

@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from importlib import import_module
-from typing import Any, Mapping, MutableMapping, Optional, Union
+from typing import Any, Dict, Mapping, MutableMapping, Optional, Union
 
 from django.core.cache import BaseCache, caches
 
@@ -24,7 +24,7 @@ def import_object(
 
 
 def extract_claim_from_tokens(
-    claim: str, tokens: dict[str, Any], raise_exception: bool = True
+    claim: str, tokens: Dict[str, Any], raise_exception: bool = True
 ) -> Any:
     """Given a dictionnary of tokens claims, extract the given claim.
 
@@ -46,7 +46,7 @@ def extract_claim_from_tokens(
     return value
 
 
-def check_audience(client_id: str, access_token_claims: dict[str, Any]) -> bool:
+def check_audience(client_id: str, access_token_claims: Dict[str, Any]) -> bool:
     """Verify that the current client_id is present in 'aud' claim.
 
     Audences are stored in 'aud' claim.

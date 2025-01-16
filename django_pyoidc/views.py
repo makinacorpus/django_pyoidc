@@ -1,6 +1,6 @@
 import logging
 from importlib import import_module
-from typing import Any, List, Optional, TypeVar, cast
+from typing import Any, Dict, Optional, TypeVar, Union, cast
 
 # import oic
 from django.conf import settings
@@ -21,7 +21,7 @@ from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
+from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory, OidcSettingValue
 from django_pyoidc.utils import import_object
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
@@ -57,7 +57,7 @@ class OIDCView(View, OIDCMixin):
 
     def get_setting(
         self, name: str, default: Optional[T] = None
-    ) -> Optional[T | bool | int | str | List[str]]:
+    ) -> Optional[Union[T, OidcSettingValue]]:
         return self.opsettings.get(name, default)
 
     def call_function(self, setting_func_name: str, *args: Any, **kwargs: Any) -> Any:
@@ -73,7 +73,7 @@ class OIDCView(View, OIDCMixin):
         self.call_function("hook_user_login", request, user)
 
     def call_logout_function(
-        self, user_request: HttpRequest, logout_request_args: dict[str, Any]
+        self, user_request: HttpRequest, logout_request_args: Dict[str, Any]
     ) -> Any:
         """Function called right before local session removal and before final redirection to the SSO server.
 
@@ -214,7 +214,7 @@ class OIDCLogoutView(OIDCView):
 
         # Allow some more parameters for some actors
         extra_logout_args = cast(
-            dict[str, Any],
+            Dict[str, Any],
             self.get_setting(
                 "oidc_logout_query_string_extra_parameters_dict",
                 {},

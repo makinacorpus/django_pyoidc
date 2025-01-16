@@ -1,7 +1,7 @@
 import logging
 from functools import lru_cache
 from importlib import import_module
-from typing import Any, Dict, List, Optional, TypedDict, TypeVar
+from typing import Any, Dict, List, Optional, TypedDict, TypeVar, Union
 
 from django.conf import settings as django_settings
 from django.urls import reverse_lazy
@@ -22,7 +22,7 @@ TypedOidcSettings = TypedDict(
     },
 )
 
-OidcSettingValue = bool | int | str | List[str]
+OidcSettingValue = Union[bool, int, str, List[str]]
 
 
 class OIDCSettings:
@@ -231,8 +231,8 @@ class OIDCSettings:
         self.OP_SETTINGS[key] = value
 
     def get(
-        self, name: str, default: Optional[OidcSettingValue | T] = None
-    ) -> Optional[OidcSettingValue | T]:
+        self, name: str, default: Optional[Union[OidcSettingValue, T]] = None
+    ) -> Optional[Union[OidcSettingValue, T]]:
         "Get attr value for op or global, given last arg is the default value if None."
         res = self._get_attr(name)
         if res is None:

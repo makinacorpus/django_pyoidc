@@ -1,11 +1,12 @@
 import functools
 import logging
-from typing import Any, Optional, override
+from typing import Any, Optional, Tuple
 
 from django.core.exceptions import PermissionDenied
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.request import Request
+from typing_extensions import override
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
@@ -45,7 +46,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
         return access_token_jwt
 
     @override
-    def authenticate(self, request: Request) -> Optional[tuple[Any, Any]]:
+    def authenticate(self, request: Request) -> Optional[Tuple[Any, Any]]:
         """
         Returns two-tuple of (user, token) if authentication succeeds,
         or None otherwise.

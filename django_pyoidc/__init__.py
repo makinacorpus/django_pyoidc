@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
@@ -7,7 +7,7 @@ from django_pyoidc.exceptions import ClaimNotFoundError
 from django_pyoidc.utils import extract_claim_from_tokens
 
 
-def get_user_by_email(tokens: dict[str, Any]) -> Any:
+def get_user_by_email(tokens: Dict[str, Any]) -> Any:
     User = get_user_model()
 
     username = None

@@ -22,7 +22,7 @@ class RSAKeyHandler(BaseHandler):  # type: ignore
         data["rsa_key"] = base64.b64encode(obj.export_key()).decode("utf-8")
         return data
 
-    def restore(self, obj: dict[str, str]) -> RsaKey:
+    def restore(self, obj: Dict[str, str]) -> RsaKey:
         return import_key(base64.b64decode(obj["rsa_key"]))
 
 
