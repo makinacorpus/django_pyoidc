@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from importlib import import_module
-from typing import Any, Dict, Union
+from typing import Any, Dict, Mapping, MutableMapping, Optional, Union
 
 from django.core.cache import BaseCache, caches
 
@@ -11,7 +11,9 @@ from django_pyoidc.settings import OIDCSettings
 logger = logging.getLogger(__name__)
 
 
-def import_object(path, def_name):
+def import_object(
+    path: str, def_name: str
+) -> Any:  # FIXME : this function is hard to type correctly
     try:
         mod, cls = path.split(":", 1)
     except ValueError:
@@ -21,7 +23,9 @@ def import_object(path, def_name):
     return getattr(import_module(mod), cls)
 
 
-def extract_claim_from_tokens(claim: str, tokens: dict, raise_exception=True) -> Any:
+def extract_claim_from_tokens(
+    claim: str, tokens: Dict[str, Any], raise_exception: bool = True
+) -> Any:
     """Given a dictionnary of tokens claims, extract the given claim.
 
     This function will seek in "info_token_claims", then "id_token_claims"
@@ -42,7 +46,7 @@ def extract_claim_from_tokens(claim: str, tokens: dict, raise_exception=True) ->
     return value
 
 
-def check_audience(client_id: str, access_token_claims: dict) -> bool:
+def check_audience(client_id: str, access_token_claims: Dict[str, Any]) -> bool:
     """Verify that the current client_id is present in 'aud' claim.
 
     Audences are stored in 'aud' claim.
@@ -73,7 +77,8 @@ class OIDCCacheBackendForDjango:
 
         self.enabled = opsettings.get("oidc_cache_provider_metadata", False)
         if self.enabled:
-            self.storage: BaseCache = caches[opsettings.get("cache_django_backend")]
+            cache_key: str = opsettings.get("cache_django_backend")  # type: ignore[assignment] # we can assume that the configuration is right
+            self.storage: BaseCache = caches[cache_key]
 
     def generate_hashed_cache_key(self, value: str) -> str:
         h = hashlib.new("sha256")
@@ -81,20 +86,21 @@ class OIDCCacheBackendForDjango:
         cache_key = h.hexdigest()
         return cache_key
 
-    def clear(self):
+    def clear(self) -> Optional[int]:
         if self.enabled:
-            return self.storage.clear()
+            self.storage.clear()
+            return None
         else:
             return 0
 
-    def get_key(self, key):
+    def get_key(self, key: str) -> str:
         return f"oidc-{self.op_name}-{key}"
 
-    def set(self, key: str, value: Dict[str, Union[str, bool]], expiry: int) -> None:
+    def set(self, key: str, value: Mapping[str, Union[str, bool]], expiry: int) -> None:
         if self.enabled:
             self.storage.set(self.get_key(key), value, expiry)
 
-    def __getitem__(self, key: str) -> Dict[str, Union[str, bool]]:
+    def __getitem__(self, key: str) -> MutableMapping[str, Union[str, bool]]:
         if self.enabled:
             data = self.storage.get(self.get_key(key))
             if data is None:

@@ -18,7 +18,6 @@ class OIDCTestSuccessView(OIDCView):
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
         messages.success(request, f"message: {request.user.email} is logged in.")
 
         op_name = self.get_setting("op_name")
@@ -47,7 +46,6 @@ class OIDCTestFailureView(OIDCView):
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
         messages.error(request, "message: something went bad.")
 
         op_name = self.get_setting("op_name")
@@ -77,7 +75,6 @@ class OIDCTestLogoutView(OIDCView):
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
         messages.success(request, "message: post logout view.")
 
         op_name = self.get_setting("op_name")

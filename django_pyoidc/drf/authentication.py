@@ -1,9 +1,12 @@
 import functools
 import logging
+from typing import Any, Optional, Tuple
 
 from django.core.exceptions import PermissionDenied
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication
+from rest_framework.request import Request
+from typing_extensions import override
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
@@ -19,17 +22,17 @@ class OidcAuthException(Exception):
 
 
 class OIDCBearerAuthentication(BaseAuthentication):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super(OIDCBearerAuthentication, self).__init__(*args, **kwargs)
         self.opsettings = OIDCSettingsFactory.get("drf")
         self.general_cache_backend = OIDCCacheBackendForDjango(self.opsettings)
         self.engine = OIDCEngine(self.opsettings)
 
     @functools.cached_property
-    def client(self):
+    def client(self) -> OIDCClient:
         return OIDCClient("drf")
 
-    def extract_access_token(self, request) -> str:
+    def extract_access_token(self, request: Request) -> str:
         val = request.headers.get("Authorization")
         if not val:
             msg = "Request missing the authorization header."
@@ -37,12 +40,13 @@ class OIDCBearerAuthentication(BaseAuthentication):
         val = val.strip()
         bearer_name, access_token_jwt = val.split(maxsplit=1)
         requested_bearer_name = self.opsettings.get("oidc_api_bearer_name", "Bearer")
-        if not bearer_name.lower() == requested_bearer_name.lower():
+        if not bearer_name.lower() == requested_bearer_name.lower():  # type: ignore[union-attr] # we can assume that this setting is a string
             msg = f"Bad authorization header, invalid Keyword for the bearer, expecting {requested_bearer_name} (check setting oidc_api_bearer_name)."
             raise OidcAuthException(msg)
         return access_token_jwt
 
-    def authenticate(self, request):
+    @override
+    def authenticate(self, request: Request) -> Optional[Tuple[Any, Any]]:
         """
         Returns two-tuple of (user, token) if authentication succeeds,
         or None otherwise.
@@ -85,7 +89,7 @@ class OIDCBearerAuthentication(BaseAuthentication):
                 logger.debug("Request has valid access token.")
 
                 # FIXME: Add a setting to disable
-                client_id = self.opsettings.get("client_id")
+                client_id: str = self.opsettings.get("client_id")  # type: ignore[assignment] # we can assume that client_id is correctly configured
                 if not check_audience(client_id, access_token_claims):
                     raise PermissionDenied(
                         f"Invalid result for acces token audiences check for {client_id}."

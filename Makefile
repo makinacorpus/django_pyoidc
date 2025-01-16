@@ -1,14 +1,14 @@
 .PHONY: update_all_deps
 
-update_all_deps : requirements.txt requirements-dev.txt requirements-test.txt
+update_all_deps : requirements/requirements.txt requirements/requirements-dev.txt requirements/requirements-test.txt
 
 
-requirements.txt : pyproject.toml
-	pip-compile $< --extra drf
+requirements/requirements.txt : pyproject.toml requirements/requirements.in
+	pip-compile -o $@ $< --extra drf
 
 
-requirements-dev.txt : requirements-dev.in requirements.txt
-	pip-compile $<
+requirements/requirements-dev.txt : requirements/requirements-dev.in requirements/requirements.in
+	pip-compile -o $@ $<
 
-requirements-test.txt : requirements-test.in requirements.txt
-	pip-compile $<
+requirements/requirements-test.txt : requirements/requirements-test.in requirements/requirements.in requirements/requirements-dev.in
+	pip-compile -o $@ $<
