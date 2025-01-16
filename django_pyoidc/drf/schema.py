@@ -7,13 +7,13 @@ try:
 
     from django_pyoidc.settings import OIDCSettingsFactory
 
-    class OIDCScheme(OpenApiAuthenticationExtension):
+    class OIDCScheme(OpenApiAuthenticationExtension):  # type: ignore[no-untyped-call] # drf_spectacular.plumbing.OpenApiGeneratorExtension.__init_subclass__ is untyped
         target_class = "django_pyoidc.drf.authentication.OIDCBearerAuthentication"
         name = "openIdConnect"
         match_subclasses = True
         priority = -1
 
-        def get_security_definition(self, auto_schema):
+        def get_security_definition(self, auto_schema):  # type: ignore[no-untyped-def] # we do not want to type third party libraries
             # from django_pyoidc.drf.authentication import OIDCBearerAuthentication
 
             opsettings = OIDCSettingsFactory.get("drf")

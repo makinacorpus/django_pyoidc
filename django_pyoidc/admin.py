@@ -3,10 +3,12 @@ from importlib import import_module
 from django.conf import settings
 from django.contrib import admin
 
+from django_pyoidc.models import OIDCSession
+
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
-class OIDCSessionAdmin(admin.ModelAdmin):
+class OIDCSessionAdmin(admin.ModelAdmin[OIDCSession]):
     readonly_fields = (
         "state",
         "session_state",
@@ -25,10 +27,10 @@ class OIDCSessionAdmin(admin.ModelAdmin):
     ]
 
     @admin.display(boolean=True)
-    def has_session_management(self, obj) -> bool:
+    def has_session_management(self, obj: OIDCSession) -> bool:
         return obj.session_state is not None
 
     @admin.display(boolean=True)
-    def session_is_active(self, obj) -> bool:
+    def session_is_active(self, obj: OIDCSession) -> bool:
         s = SessionStore()
         return obj.cache_session_key is not None and s.exists(obj.cache_session_key)
