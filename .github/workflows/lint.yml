@@ -21,7 +21,22 @@ jobs:
         with:
           version: "~= 24.0"
 
-  linting:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for versioningit to find the repo version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build python package
+        run: python -m build
+
+  formatting:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -50,6 +65,3 @@ jobs:
 
     - name: Run isort
       run : isort --profile black .
-
-    - name: Build package
-      run: python -m build .
