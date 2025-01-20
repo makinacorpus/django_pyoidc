@@ -73,12 +73,6 @@ class UrlsTestCase(OIDCTestCase):
         self.assertIn(f"redirect_uri=http%3A%2F%2F{host}%2Fcallback-wtf%2F", arguments)
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_get_urlpatterns(self, *args):
-        """ """
-        # FIXME: test get_urlpatterns used on sso10
-        pass
-
-    @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_helper_callback_path_with_callback_uri_name_and_url_prefix(self, *args):
         """ """
         host = settings.DJANGO_PYOIDC["sso10"]["login_uris_redirect_allowed_hosts"][0]
