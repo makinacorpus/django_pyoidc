@@ -2,7 +2,9 @@
 
 pip-tools
 pre-commit
-ruff
+isort
+flake8
+black
 mypy
 djangorestframework-stubs[compatible-mypy]
 django-stubs[compatible-mypy]

@@ -82,4 +82,3 @@ source = "versioningit"
 
 [tool.versioningit.vcs]
 method = "git"
-
