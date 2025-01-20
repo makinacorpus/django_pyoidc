@@ -51,10 +51,28 @@ URI_CONFIG
 
 This settings configures the path to your OIDC configuration. **TODO : example**.
 
+oidc_paths_prefix
+*************
+Prefix of the various paths created by the OIDCHelper when using get_urlpatterns. If not set it defaults to the op_name.
+On of the created paths is the oidc callback path.
+
 oidc_callback_path
 *************
 
 This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
+A defaut path ``{op_name}-callback`` will be used if nothing is provided. This path is used internally to manage the authentication.
+You can alternatively use **callback_uri_name** to provide a named route for this path, this alternative will be better because using
+only oidc_callback_path you need to know the route prefix used on your oidc routes if any.
+
+
+callback_uri_name
+*************
+
+Name of a Django route that can be used to generate the oidc_callback_path value.
+If you used the OIDCHelper get_urlpatterns the default callback was created with a name ``"{op_name}-callback"`` (which is also the default path value).
+But the routes namespaces used with get_urlpatterns may be needed. So your final value for this route name should
+be something like "oidc_auth:mysso-callback" if "oidc_auth" was your route namespace and my_sso is your op_name.
+
 
 login_redirection_requires_https
 ***********************

@@ -44,24 +44,6 @@ class OIDCE2ETestCase(LiveServerTestCase):
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
     ],
-    DJANGO_PYOIDC={
-        "lemon1": {
-            "provider_class": "LemonLDAPng2Provider",
-            "client_id": "app1",
-            "cache_django_backend": "default",
-            "provider_discovery_uri": "http://localhost:8070/",
-            "client_secret": "secret_app1",
-            "oidc_callback_path": "/callback-ll-1",
-            "post_logout_redirect_uri": "/test-ll-logout-done-1",
-            "login_uris_redirect_allowed_hosts": ["testserver"],
-            "login_redirection_requires_https": False,
-            "post_login_uri_success": "/test-ll-success-1",
-            "post_login_uri_failure": "/test-ll-failure-1",
-            "HOOK_USER_LOGIN": "tests.e2e.test_app.callback:login_callback",
-            "HOOK_USER_LOGOUT": "tests.e2e.test_app.callback:logout_callback",
-            # "oidc_logout_query_string_extra_parameters_dict": {"confirm": 1},
-        },
-    },
 )
 class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
     @classmethod
@@ -213,7 +195,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "app1",
             "secret_app1",
             cls.live_server_url,
-            callback_url=f"{cls.live_server_url}/callback-ll-1",
+            callback_url=f"{cls.live_server_url}/prefix_lemon1/lemon1-callback",
             post_login_url=f"{cls.live_server_url}/test-ll-logout-done-1",
         )
         cls.registerClient(
@@ -226,7 +208,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             "app2-full",
             "secret_app2-full",
             cls.live_server_url,
-            callback_url=f"{cls.live_server_url}/callback-ll-2",
+            callback_url=f"{cls.live_server_url}/prefix_lemon2/lemon2-callback",
             post_login_url=f"{cls.live_server_url}/test-ll-logout-done-2",
         )
         cls.registerClient(

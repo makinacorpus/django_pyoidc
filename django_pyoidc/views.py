@@ -135,9 +135,12 @@ class OIDCLoginView(OIDCView):
         else:
             client = OIDCClient(self.op_name)
 
-        client.consumer.consumer_config["authz_page"] = self.get_setting(
-            "oidc_callback_path"
-        )
+        callback_path = str(self.get_setting("oidc_callback_path"))
+        if not callback_path.startswith("/"):
+            # issue in pyoidc when base_url ends with "/" and path does not start witj "/" there's an extra "/" added (doubling)
+            # to prevent that we finally enforce the "/" prefix on the path
+            callback_path = f"/{callback_path}"
+        client.consumer.consumer_config["authz_page"] = callback_path
         next_redirect_uri = self.get_next_url(request, "next")
 
         if not next_redirect_uri:
@@ -153,6 +156,7 @@ class OIDCLoginView(OIDCView):
             scope=["openid"],
             response_type="code",
             use_nonce=True,
+            # FIXME: here error, need the callback path
             path=self.request.build_absolute_uri("/"),
         )
         request.session["oidc_sid"] = sid

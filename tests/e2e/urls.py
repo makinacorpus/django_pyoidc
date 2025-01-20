@@ -3,6 +3,7 @@ from django.urls import include, path
 from rest_framework import routers, serializers, viewsets
 from rest_framework.permissions import AllowAny
 
+from django_pyoidc.helper import OIDCHelper
 from django_pyoidc.views import (
     OIDCBackChannelLogoutView,
     OIDCCallbackView,
@@ -49,17 +50,13 @@ apirouter = routers.DefaultRouter()
 apirouter.register(r"users", UserViewSet)
 apirouter.register(r"publics", PublicViewSet)
 
+helper_lemon1 = OIDCHelper(op_name="lemon1")
 urlpatterns = [
     path("login-1/", OIDCLoginView.as_view(op_name="sso1"), name="e2e_test_login_1"),
     path("login-2/", OIDCLoginView.as_view(op_name="sso2"), name="e2e_test_login_2"),
     path("login-3/", OIDCLoginView.as_view(op_name="sso3"), name="e2e_test_login_3"),
     path("login-4/", OIDCLoginView.as_view(op_name="sso4"), name="e2e_test_login_4"),
     path("login-5/", OIDCLoginView.as_view(op_name="sso5"), name="e2e_test_login_5"),
-    path(
-        "login-ll-1/",
-        OIDCLoginView.as_view(op_name="lemon1"),
-        name="e2e_test_ll_login_1",
-    ),
     path(
         "callback-1/",
         OIDCCallbackView.as_view(op_name="sso1"),
@@ -86,9 +83,26 @@ urlpatterns = [
         name="e2e_test_callback_5",
     ),
     path(
-        "callback-ll-1/",
-        OIDCCallbackView.as_view(op_name="lemon1"),
-        name="e2e_test_callback_ll_1",
+        "prefix_lemon1/",
+        include(
+            (helper_lemon1.get_urlpatterns(), "django_pyoidc"),
+            namespace="lemon1_namespace",
+        ),
+    ),
+    path(
+        "test-ll-success-1/",
+        OIDCTestSuccessView.as_view(op_name="lemon1"),
+        name="e2e_test_ll_success_1",
+    ),
+    path(
+        "test-ll-failure-1/",
+        OIDCTestFailureView.as_view(op_name="lemon1"),
+        name="e2e_test_ll_failure_1",
+    ),
+    path(
+        "test-ll-logout-done-1/",
+        OIDCTestLogoutView.as_view(op_name="lemon1"),
+        name="e2e_test_ll_logout_done_1",
     ),
     path(
         "logout-1/",
@@ -114,11 +128,6 @@ urlpatterns = [
         "logout-5/",
         OIDCLogoutView.as_view(op_name="sso5"),
         name="e2e_test_logout_5",
-    ),
-    path(
-        "logout-ll-1/",
-        OIDCLogoutView.as_view(op_name="lemon1"),
-        name="e2e_test_ll_logout_1",
     ),
     path(
         "back_channel_logout-1/",
@@ -171,11 +180,6 @@ urlpatterns = [
         name="e2e_test_success_5",
     ),
     path(
-        "test-ll-success-1/",
-        OIDCTestSuccessView.as_view(op_name="lemon1"),
-        name="e2e_test_ll_success_1",
-    ),
-    path(
         "test-logout-done-1/",
         OIDCTestLogoutView.as_view(op_name="sso1"),
         name="e2e_test_logout_done_1",
@@ -201,11 +205,6 @@ urlpatterns = [
         name="e2e_test_logout_done_5",
     ),
     path(
-        "test-ll-logout-done-1/",
-        OIDCTestLogoutView.as_view(op_name="lemon1"),
-        name="e2e_test_ll_logout_done_1",
-    ),
-    path(
         "test-failure-1/",
         OIDCTestFailureView.as_view(op_name="sso1"),
         name="e2e_test_failure_1",
@@ -229,11 +228,6 @@ urlpatterns = [
         "test-failure-5/",
         OIDCTestFailureView.as_view(op_name="sso5"),
         name="e2e_test_failure_5",
-    ),
-    path(
-        "test-ll-failure-1/",
-        OIDCTestFailureView.as_view(op_name="lemon1"),
-        name="e2e_test_ll_failure_1",
     ),
     path("api/", include(apirouter.urls)),
 ]

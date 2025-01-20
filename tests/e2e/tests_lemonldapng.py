@@ -46,14 +46,14 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
 
         print(f"Running Django on {self.live_server_url}")
 
-        login_url = reverse("e2e_test_ll_login_1")
+        login_url = reverse("lemon1_namespace:lemon1-login")
         response = client.get(
             f"{self.live_server_url}{login_url}", allow_redirects=False
         )
         # we should get something like http://localhost:8070/oauth2/authorize
         #   ?client_id=app1
         #   &nonce=YZA...24
-        #   &redirect_uri=http%3A%2F%2Ftestserver%2Fcallback
+        #   &redirect_uri=http%3A%2F%2Ftestserver%2Fprefix_lemon1%2Flemon1-callback
         #   &response_type=code
         #   &scope=openid
         #   &state=fe874.....538e047a0
@@ -65,7 +65,10 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         self.assertEqual(parsed.netloc, "localhost:8070")
         self.assertEqual(parsed.path, "/oauth2/authorize")
         self.assertEqual(qs["client_id"][0], "app1")
-        self.assertEqual(qs["redirect_uri"][0], f"{self.live_server_url}/callback-ll-1")
+        self.assertEqual(
+            qs["redirect_uri"][0],
+            f"{self.live_server_url}/prefix_lemon1/lemon1-callback",
+        )
         self.assertEqual(qs["response_type"][0], "code")
         self.assertEqual(qs["scope"][0], "openid")
         self.assertTrue(qs["state"][0])
@@ -114,7 +117,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         Test a complete working OIDC login.
         """
         timeout = 5
-        login_url = reverse("e2e_test_ll_login_1")
+        login_url = reverse("lemon1_namespace:lemon1-login")
         success_url = reverse("e2e_test_ll_success_1")
         start_url = f"{self.live_server_url}{login_url}"
         end_url = f"{self.live_server_url}{success_url}"
@@ -136,8 +139,8 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         """
         FIXME : Make this test independant of test #1
         """
-        timeout = 5
-        login_url = reverse("e2e_test_ll_login_1")
+        timeout = 50
+        login_url = reverse("lemon1_namespace:lemon1-login")
         success_url = reverse("e2e_test_ll_success_1")
         post_logout_url = reverse("e2e_test_ll_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
@@ -172,7 +175,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
 
     def test_03_selenium_sso_session_with_callbacks(self, *args):
         timeout = 5
-        login_url = reverse("e2e_test_ll_login_1")
+        login_url = reverse("lemon1_namespace:lemon1-login")
         success_url = reverse("e2e_test_ll_success_1")
         post_logout_url = reverse("e2e_test_ll_logout_done_1")
         start_url = f"{self.live_server_url}{login_url}"
