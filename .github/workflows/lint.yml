@@ -7,7 +7,21 @@ on:
 
 jobs:
 
-  mypy:
+  black:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: psf/black@stable
+        with:
+          version: "~= 24.0"
+
+  linting:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,7 +34,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: psf/black@stable
     - name: Install dependencies
       run: python -m pip download .[drf]
 

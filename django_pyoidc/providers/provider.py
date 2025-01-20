@@ -18,7 +18,7 @@ ProviderConfig = TypedDict(
         # Rare usages ---
         "client_authn_method": Optional[bool],
         "oidc_logout_query_string_redirect_parameter": Optional[str],
-        "oidc_logout_query_string_extra_parameters_dict": Optional[Dict[str, Any]]
+        "oidc_logout_query_string_extra_parameters_dict": Optional[Dict[str, Any]],
         # "client_consumer_config_dict": None,
         # some providers may return even more stuff (...) ---
     },

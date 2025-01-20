@@ -218,7 +218,9 @@ class OIDCLogoutView(OIDCView):
         if sid:
             try:
                 client = OIDCClient(self.op_name, session_id=sid)
-            except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
+            except (
+                Exception
+            ) as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
                 logger.error("OIDC Logout call error when loading OIDC state: ")
                 logger.exception(e)
 
