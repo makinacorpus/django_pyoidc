@@ -9,3 +9,4 @@ django-stubs[compatible-mypy]
 types-Markdown
 types-Pygments
 types-psycopg2
+hatch
