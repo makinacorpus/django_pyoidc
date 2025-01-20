@@ -80,4 +80,6 @@ strict_settings = false
 [tool.hatch.version]
 source = "versioningit"
 
-[tool.versioningit]
+[tool.versioningit.vcs]
+method = "git"
+

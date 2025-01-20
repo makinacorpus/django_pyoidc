@@ -1,5 +1,15 @@
 # Dev setup
 
+## Publishing (test pypy)
+
+First create an account on [test pypi]() and generate a token.
+
+Then, run : 
+
+```
+make clean && make build && make publish-test
+```
+
 ## Installation
 
 ```bash
