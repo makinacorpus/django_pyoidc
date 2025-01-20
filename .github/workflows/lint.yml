@@ -32,7 +32,7 @@ jobs:
       - name: Build python package
         run: python -m build
 
-  formatting:
+  linting:
     runs-on: ubuntu-latest
     strategy:
       matrix:
