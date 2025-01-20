@@ -1,4 +1,4 @@
--r requirements.in
+-c requirements.txt
 
 pip-tools
 pre-commit
@@ -9,3 +9,4 @@ django-stubs[compatible-mypy]
 types-Markdown
 types-Pygments
 types-psycopg2
+hatch

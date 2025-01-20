@@ -8,7 +8,7 @@ from django_pyoidc.models import OIDCSession
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
-class OIDCSessionAdmin(admin.ModelAdmin[OIDCSession]):
+class OIDCSessionAdmin(admin.ModelAdmin):  # type: ignore[type-arg] # https://github.com/typeddjango/django-stubs/issues/507
     readonly_fields = (
         "state",
         "session_state",

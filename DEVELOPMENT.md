@@ -1,9 +1,52 @@
 # Dev setup
 
+## Publishing (test pypy)
+
+First create an account on [test pypi]() and generate a token.
+
+Clean your worktree and tag your release to generate a valid version number (otherwise pypi will reject your release) :
+
+```
+git stash # clean your worktree
+git tag 0.0.18rc1
+git stash pop # restore your worktree
+```
+
+Then, publish using the Makefile to build and push the library : 
+
+```
+make clean && make build && make publish-test
+```
+
+## Publishing (production)
+
+Make sure that you are on the maintainer list of the [pypi project](https://pypi.org/project/django-pyoidc/) and generate an API token for this project.
+
+Clean your worktree and tag your release :
+
+```
+git stash # clean your worktree
+git tag 0.0.1 # tag the release
+git stash pop # tag your release
+```
+
+Build the python package :
+
+```
+make clean && make build
+```
+
+Publish it :
+
+```
+make publish
+```
+
+
 ## Installation
 
 ```bash
-pip install -r requirements.txt -r requirements-test.txt
+pip install -r requirements/requirements.txt -r requirements/requirements-test.txt
 ```
 
 ## Enable pre-commit
@@ -53,4 +96,12 @@ Then run :
 ```
 pip install pip-tools
 make update_all_deps
+```
+
+## Building local packages
+
+You can build the package locally by running :
+
+```
+python -m build
 ```
