@@ -15,6 +15,9 @@ requirements/requirements-test.txt : requirements/requirements-test.in requireme
 publish-test: 
 	hatch publish -r test -u __token__
 
+publish: 
+	hatch publish -r main -u __token__
+
 build:
 	hatch build
 

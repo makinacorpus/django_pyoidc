@@ -1,14 +1,47 @@
 # Dev setup
 
-## Publishing (test pypy)
+## Publishing (test pypy)
 
 First create an account on [test pypi]() and generate a token.
 
-Then, run : 
+Clean your worktree and tag your release to generate a valid version number (otherwise pypi will reject your release) :
+
+```
+git stash # clean your worktree
+git tag 0.0.18rc1
+git stash pop # restore your worktree
+```
+
+Then, publish using the Makefile to build and push the library : 
 
 ```
 make clean && make build && make publish-test
 ```
+
+## Publishing (production)
+
+Make sure that you are on the maintainer list of the [pypi project](https://pypi.org/project/django-pyoidc/) and generate an API token for this project.
+
+Clean your worktree and tag your release :
+
+```
+git stash # clean your worktree
+git tag 0.0.1 # tag the release
+git stash pop # tag your release
+```
+
+Build the python package :
+
+```
+make clean && make build
+```
+
+Publish it :
+
+```
+make publish
+```
+
 
 ## Installation
 
