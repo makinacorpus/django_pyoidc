@@ -131,7 +131,12 @@ class OIDCLoginView(OIDCView):
 
         sid = request.session.get("oidc_sid")
         if sid:
-            client = OIDCClient(self.op_name, session_id=sid)
+            try:
+                client = OIDCClient(self.op_name, session_id=sid)
+            except InvalidSIDException:
+                # maybe a failed attempt trace in the session.
+                # we ignore the session sid and get back on the first steps.
+                client = OIDCClient(self.op_name)
         else:
             client = OIDCClient(self.op_name)
 
