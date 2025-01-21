@@ -62,6 +62,10 @@ def check_audience(client_id: str, access_token_claims: Dict[str, Any]) -> bool:
     if "aud" not in access_token_claims:
         return False
     if client_id not in access_token_claims["aud"]:
+        # in case we are current requester of the access token the audience may not be presence in
+        # 'aud' (that's the case in recent keycloak) but it should then be in azp (requester of the token).
+        if "azp" in access_token_claims and client_id == access_token_claims["azp"]:
+            return True
         logger.error(
             f"{client_id} not found in access_token_claims['aud']: {access_token_claims['aud']}"
         )
