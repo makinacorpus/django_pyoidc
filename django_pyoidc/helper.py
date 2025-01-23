@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from django.urls import path
+from django.urls import URLPattern, path
 
 from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
 
@@ -48,7 +48,7 @@ class OIDCHelper:
         """
         return f"{self.op_name}-backchannel-logout"
 
-    def get_urlpatterns(self) -> List[Any]:
+    def get_urlpatterns(self) -> List[URLPattern]:
         """
         Returns:
             A list of urllpatterns to be included using :func:`django:django.urls.include` in your url configuration
