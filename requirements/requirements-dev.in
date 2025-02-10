@@ -2,8 +2,10 @@
 
 pip-tools
 pre-commit
-ruff
-mypy
+isort
+flake8
+black
+mypy==1.11.2
 djangorestframework-stubs[compatible-mypy]
 django-stubs[compatible-mypy]
 types-Markdown

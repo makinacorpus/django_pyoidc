@@ -1,6 +1,7 @@
 """
 Base Keycloak Provider class.
 """
+
 from typing import Any, Optional
 from urllib.parse import urlparse
 

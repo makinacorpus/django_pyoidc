@@ -501,7 +501,6 @@ class CallbackViewTestCase(OIDCTestCase):
 class BackchannelLogoutTestCase(OIDCTestCase):
     @classmethod
     def setUpTestData(cls):
-
         """
         To generate an other jwk key : 'jose jwk gen -i '{"alg":"HS256"}' -o oct.jwk'
         """
