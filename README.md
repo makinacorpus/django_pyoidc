@@ -13,18 +13,22 @@ It can be used to setup a Single Sign On using an identity provider (Keycloak, e
 
 **Warning** : this library has not been audited. However, we are based on [pyoidc](https://github.com/CZ-NIC/pyoidc/) which we believe is a sane OIDC implementation.
 
+We tried to make OpenID Connect (OIDC) configuration as easy and secure as possible. However 
+everything can be customized and we tried to take into account every use case in the library design.
+If you are not satisfied with the default configuration, take a look at the setting wiki page TODO.
+
 ## Features
 
 - Easy configuration through premade [`Provider`](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers) classes.
-- Multiple provider support
+- Authenticate users from multiple providers
 - Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/en/latest/how-to.html#use-the-django-permission-system-with-oidc)
 - Highly customizable design that should suit most needs
-- Back-channel Logout
+- Support back-channel logout
+- Support service accounts (accounts for machine-to-machine uses)
 - Sane and secure defaults settings
 
 ## Roadmap
 
-- `Bearer` authentication support for `django-rest-framework` integration
 - Frontchannel logout
 
 ## Acknowledgement
@@ -47,7 +51,7 @@ The documentation is graciously hosted at [readthedocs](https://django-pyoidc.re
 First, install the python package :
 
 ```bash
-pip install makina-django-doic
+pip install django_pyoidc
 ```
 
 Then add the library app to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
@@ -69,6 +73,17 @@ MIDDLEWARE = [
 ]
 ```
 
+**If you use `django-rest-framework`** you can configure `DEFAULT_AUTHENTICATION_CLASSES` to use `django_pyoidc.drf.authentication.OIDCBearerAuthentication` :
+
+```python
+# settings.py
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "django_pyoidc.drf.authentication.OIDCBearerAuthentication"
+    ]
+}
+```
+
 Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#cache-management)). Run in your project dir :
 
 ```
@@ -86,46 +101,44 @@ CACHES = {
 }
 ```
 
-Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers). Providers class are a quick way to generate the library configuration and URLs for a givenv identity provider. You can also use [manual set] if you wish.
+Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers). Providers class are a quick way to generate the library configuration and URLs. You can also configure the settings manually, but this is not recommended if you are not familiar with the OpendID Connect (OIDC) protocol.
 
-Create a file named `oidc.py` next to your settings file and initialize your provider there :
-
-FIXME: Here config as settings only OR using custom provider
+Add the following `DJANGO_PYOIDC` to your `settings.py` :
 
 ```python
-from django_pyoidc.providers.keycloak import KeycloakProvider
-
-my_oidc_provider = KeycloakProvider(
-    op_name="keycloak",
-    keycloak_base_uri="http://keycloak.local:8080/auth/", # we use the auth/ path prefix option on Keycloak
-    keycloak_realm="Demo",
-    client_secret="s3cret",
-    client_id="my_client_id",
-    logout_redirect="http://app.local:8082/",
-    failure_redirect="http://app.local:8082/",
-    success_redirect="http://app.local:8082/",
-    redirect_requires_https=False,
-    login_uris_redirect_allowed_hosts=["app.local:8082"],
-)
-```
-
-You can then add to your django configuration the following line :
-
-```python
-from .oidc_providers import my_oidc_provider
-
+# settings
 DJANGO_PYOIDC = {
-    **my_oidc_provider.get_config(),
-}
+    # This is the name that your identity provider will have within the library
+    "sso": {
+        # change the following line to use your provider
+        "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
+        
+        # your secret should not be stored in settings.py, load them from an env variable
+        "client_secret": os.getenv("SSO_CLIENT_SECRET"),
+        "client_id": os.getenv("SSO_CLIENT_ID"),
+        
+        "provider_discovery_uri": "https://keycloak.example.com/auth/realms/fixme",
+        
+        # This setting allow the library to cache the provider configuration auto-detected using
+        # the `provider_discovery_uri` setting
+        "oidc_cache_provider_metadata": True,
+    },
+
 ```
 
 Finally, add OIDC views to your url configuration (`urls.py`):
 
 ```python
-from .oidc_providers import my_oidc_provider
+from django_pyoidc.helper import OIDCHelper
+
+# `op_name` must be the name of your identity provider as used in the `DJANGO_PYOIDC` setting
+oidc_helper = OIDCHelper(op_name="sso")
 
 urlpatterns = [
-    path("auth", include(my_oidc_provider.get_urlpatterns())),
+    path(
+        "auth/",
+        include((oidc_helper.get_urlpatterns(), "django_pyoidc"), namespace="auth"),
+    ),
 ]
 ```
 
