@@ -1,8 +1,19 @@
-Makina Django OIDC Tutorials
-============================
+Connecting a django project to an identity provider
+===================================================
 
-Getting started
----------------
+In this tutorial, you will learn how to use this library along with an identity provider (IP) to setup
+a single-sign-on system. For the purpose of this tutorial, we will use Keycloak as an IP.
+
+Requirements
+~~~~~~~~~~~~
+
+To use this library, make sure that you meet the following requirements :
+
+- ``django>=4.2``
+- ``python>=3.8``
+- the `Session middleware <https://docs.djangoproject.com/en/5.1/ref/middleware/#module-django.contrib.sessions.middleware>`_ is enabled
+- a cache backend for django (redis, etc.)
+- an OIDC-compliant identity provider
 
 Installation
 ~~~~~~~~~~~~
@@ -66,11 +77,13 @@ Take note of your ``Client ID`` and visit the *Credentials Page* to find your ``
 .. image:: images/keycloak/keycloak_client_secret.png
     :alt: Screenshot of the Credentials page from a test client
 
+Finally, click on ``Realm Settings`` in the left menu, and scroll down to the *Endpoints* section. Copy the ``
+OpenID Endpoint Configuration`` URL as you will need it later (this is the autodiscovery URL).
+
 Congratulation, your Keycloak configuration is complete ! 🎉
 
 Other Identity provider
 ***********************
-
 
 Configuring your Django project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,97 +132,130 @@ For the sake of this tutorial, you can use this cache management snippet (it sho
 Configure the library
 *********************
 
-.. note::
-    In this part we use :ref:`providers <Providers>` as a quick way to generate the library configuration and URL patterns.
-    However you can also :ref:`configure the settings <Django settings>` manually if you wish to dig into the configuration.
+First, make sure that the `Session middleware <https://docs.djangoproject.com/en/5.1/ref/middleware/#module-django.contrib.sessions.middleware>`_ is enabled.
 
-First, create a file named ``oidc.py`` and instantiate a :py:class:`django_pyoidc.providers.Keyloack20Provider`
-as this is the provider that should be used with Keycloak.
+We will use django_pyoidc provider system to generate the library configuration and views.
 
-We have many settings to provide :
+When using provider, you must provide 4 settings :
 
-* ``op_name`` is the name that this library associate internally with your provider.
-* ``client_id`` the client id that you got from your identity provider
-* ``client_secret`` the client secret that you got from your identity provider
-* ``keycloak_base_uri`` is the URI of your keycloak instance
-* ``keycloak_realm`` is the name of your keycloak realm
+- the provider class to use
+- the OIDC client ID : this is your identifier on the IP side (this is not a user account, this must be a *client* in the OIDC terminology)
+- the OIDC client secret : this is your secret on the IP side
+- the OIDC discovery URL : this url allows us to discover the various endpoint of the identity provider, easing the configuration
 
-Some extra settings are also available :
+You must also define a provider name that will be used with other classes from this library. In the following
+example, we define a provider named *sso* which uses ``Keycloak18Provider`` and fetches it's credential from
+two environment variables :
 
-* ``success_redirect`` the default uri where the user is redirected on login success
-* ``failure_redirect`` the default uri where the user is redirected on login failure
-* ``logout_redirect`` the default uri that will be used to redirect the user on logo
-* ``redirect_requires_https`` the login view allows the user to be redirected to a dynamic URI. This setting enforce HTTPS on this uri.
-
-TODO: provide good defaults for these settings
-
-Here is my configuration for this tutorial :
-
-.. code-block:: python
-    :caption: oidc.py
-
-    from django_pyoidc.providers.keycloak import KeycloakProvider
-
-    my_oidc_provider = KeycloakProvider(
-        op_name="keycloak",
-        client_secret="s3cret",
-        client_id="demo_django_pyoidc",
-        keycloak_base_uri="http://keycloak.local:8080/auth/",
-        keycloak_realm="Demo",
-        #logout_redirect="http://app.local:8082/",
-        #failure_redirect="http://app.local:8082/",
-        success_redirect="http://app.local:8082/user",
-        redirect_requires_https=False, # useful in dev
-    )
-
-**Note**: after Keycloak 17 the ``auth/`` prefix is removed by default on Keycloak base paths.
-Here we use a Keycloak where the ``KC_HTTP_RELATIVE_PATH=/auth`` setting was set, to maintain compatibility
-with an older version. If you did not use that setting in your Keycloak instance the ``keycloak_base_uri``
-parameter would simply be "http://keycloak.local:8080/".
-
-.. tip:
-
-You may have the auto-configuration json link provided, for our example this url is http://keycloak.local:8080/auth/realms/Demo/.well-known/openid-configuration
-If you check this json you can extract paths from this file. For example the first information is :
-``http://keycloak.local:8080/auth/realms/Demo``. Everything before the ``realms`` keyword is the
-``keycloak_base_uri`` that this library needs, the word following ``realms/`` is the ``keycloak_realm`` parameter.
-
-FIXME  Then you can use the methods :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>` and
-:py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>` to easily generate the settings
-and url configuration for your provider.
-
-Edit your django configuration to add your configuration to ``DJANGO_PYOIDC`` settings :
 
 .. code-block:: python
     :caption: settings.py
 
-    from .oidc import my_oidc_provider
-
     DJANGO_PYOIDC = {
-        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["app.local:8082"]),
-    }
+        # This is the name that your identity provider will have within the library
+        "sso": {
+            # change the following line to use your provider
+            "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
 
-TODO: remove login_uris_redirect_allowed_hosts from this step, should be in settings
+            # your secret should not be stored in settings.py, load them from an env variable
+            "client_secret": os.getenv("SSO_CLIENT_SECRET"),
+            "client_id": os.getenv("SSO_CLIENT_ID"),
+
+            # Your autodiscovery url should go here
+            "provider_discovery_uri": "https://keycloak.example.com/auth/realms/fixme",
+
+            # This setting allow the library to cache the provider configuration auto-detected using
+            # the `provider_discovery_uri` setting
+            "oidc_cache_provider_metadata": True,
+        },
+
+
+When you need to configure a setting for your identity provider, it means that you have to update the  dictionnary in this setting. For example, if you were to configure ``oidc_paths_prefix`` for your Keycloak provider,  you would add ``oidc_paths_prefix : <your value>`` to the ``sso`` dictionnary.
+
+Please note that ``drf`` is a reserved provider name (see :ref:`Configuring django_rest_framework` for more details)
+
+Copy-paste this snippet to your ``settings.py``. Make sure to modify ``provider_discovery_uri``.
 
 Generate the URLs
 *****************
 
-Finally, add OIDC views to your url configuration (`urls.py`):
+We provide a facility that generates all the views needed for a provider. This is implemented by the
+``OIDCHelper`` class. This class reads the ``DJANGO_PYOIDC`` setting and uses it's configuration to
+generate views.
+
+To use it, you must instantiate it with ``op_name=<the name of your identity provider>``.
+
+Here is how to do it for our tutorial :
 
 .. code-block:: python
     :caption: urls.py
 
-    from .oidc import my_oidc_provider
+    from django_pyoidc.helper import OIDCHelper
+
+    # `op_name` must be the name of your identity provider as used in the `DJANGO_PYOIDC` setting
+    oidc_helper = OIDCHelper(op_name="sso")
 
     urlpatterns = [
-        path("auth", include(my_oidc_provider.get_urlpatterns())),
+        path(
+            "auth/",
+            include((oidc_helper.get_urlpatterns(), "django_pyoidc"), namespace="auth"),
+        ),
     ]
 
-This will include 4 views in your URL configuration. They all have a name that derives from the ``op_name`` that you used to create your provider.
+This will create 4 views in your URL configuration. They all have a name that derives from the ``op_name`` that you used to create your provider.
 
 * a :class:`login view <django_pyoidc.views.OIDCLoginView>` named ``<op_name>-login``, here handled on the ``/auth/login`` path
 * a :class:`logout view <django_pyoidc.views.OIDCLogoutView>` named ``<op_name>-logout``, here handled on the ``/auth/logout`` path
 * a :class:`callback view <django_pyoidc.views.OIDCCallbackView>` named ``<op_name>-callback``, here handled on the ``/auth/callback`` path
 * a :class:`backchannel logout view <django_pyoidc.views.OIDCBackChannelLogoutView>` named ``<op_name>-backchannel-logout``, here handled on the ``/auth/backchannel-logout`` path
 
+.. tip::
+
+    You can override the naming behaviour by configuring the setting ``oidc_paths_prefix`` of your
+    identity provider. The view names would then be ``<oidc_paths_prefix>_<view_name>``.
+
 You should now be able to use the view names from this library to redirect the user to a login/logout page.
+
+Configuring django_rest_framework
+=================================
+
+To configure *django_rest_framework*, you must create a special provider named ``drf``. The configuration
+is similar to the one made in :ref:`Configure the library`.
+
+.. code-block:: python
+    :caption: settings.py
+
+    DJANGO_PYOIDC = {
+        # This is the name that your identity provider will have within the library
+        "drf": {
+            "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
+            "client_secret": os.getenv("SSO_CLIENT_SECRET"),
+            "client_id": os.getenv("SSO_CLIENT_ID"),
+            "provider_discovery_uri": os.getenv(
+                "SSO_ENDPOINT", "https://keycloak.example.com/auth/realms/fixme"
+            ),
+            "oidc_cache_provider_metadata": True,
+        },
+
+Once you declared those settings, you can configure ``DEFAULT_AUTHENTICATION_CLASSES`` to use ``django_pyoidc.drf.authentication.OIDCBearerAuthentication`` to use this authentication class on all your views :
+
+.. code-block:: python
+    :caption: settings.py
+
+    REST_FRAMEWORK = {
+        "DEFAULT_AUTHENTICATION_CLASSES": [
+            "django_pyoidc.drf.authentication.OIDCBearerAuthentication"
+        ]
+    }
+
+You can also set this class on a per-view basis using the ``authentication_classes`` attribute :
+
+.. code-block:: python
+    :caption: views.py
+
+    from django_pyoidc.drf.authentication import OIDCBearerAuthentication
+
+    class ExampleViewSet(ModelViewSet) :
+        authentication_classes = [OIDCBearerAuthentication]
+
+Please refer to `the drf documentation <https://www.django-rest-framework.org/api-guide/authentication/>`_ for more details.

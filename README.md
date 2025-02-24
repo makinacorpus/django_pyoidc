@@ -122,8 +122,7 @@ DJANGO_PYOIDC = {
         # This setting allow the library to cache the provider configuration auto-detected using
         # the `provider_discovery_uri` setting
         "oidc_cache_provider_metadata": True,
-    },
-
+    }
 ```
 
 Finally, add OIDC views to your url configuration (`urls.py`):
