@@ -30,6 +30,7 @@ If you are not satisfied with the default configuration, take a look at the sett
 ## Roadmap
 
 - Frontchannel logout
+- Switch to django signal system login/logout hooks
 
 ## Acknowledgement
 
@@ -143,7 +144,7 @@ urlpatterns = [
 
 And you are ready to go !
 
-If you struggle with those instructions, take a look at [the quickstart tutorial](https://django-pyoidc.readthedocs.io/en/latest/tutorial.html#getting-started).
+If you struggle with those instructions, take a look at [the quickstart tutorial](https://django-pyoidc.readthedocs.io/en/latest/tutorial.html#requirements).
 
 ## Usage/Examples
 

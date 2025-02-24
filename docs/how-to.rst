@@ -1,11 +1,7 @@
-How-to guides
-=============
-
-
 Display custom message on login/logout
---------------------------------------
+======================================
 
-This library provides a hook system to call custom code. Hooks are configured on a provider by provider basis.
+This library provides a hook system to call custom code. Hooks are configured on an identity provider basis.
 In this guide we will setup two hook function that add login/logout messages using `Django's message system
 <https://docs.djangoproject.com/en/stable/ref/contrib/messages/>`_.
 
@@ -29,31 +25,48 @@ Add in those two functions :
 
 
 Next, we plug those functions in the library configuration. In your ``settings.py`` you should set the
-:ref:`HOOK_USER_LOGIN` and :ref:`HOOK_USER_LOGOUT` to point to those two functions.
+``hook_user_login`` and ``hook_user_logout`` to point to those two functions.
 
-If you used a provider, the best way to achieve that is by modifying the configuration value as such :
+Here is how it looks if we extend the configuration made in :ref:`Configure the library` :
 
 .. code-block:: python
+    :caption: settings.py
 
     DJANGO_PYOIDC = {
-        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["myhost"]),
-    }
+        # This is the name that your identity provider will have within the library
+        "sso": {
+            # change the following line to use your provider
+            "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
 
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGIN"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGOUT"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
+            # your secret should not be stored in settings.py, load them from an env variable
+            "client_secret": os.getenv("SSO_CLIENT_SECRET"),
+            "client_id": os.getenv("SSO_CLIENT_ID"),
+
+            # Your autodiscovery url should go here
+            "provider_discovery_uri": "https://keycloak.example.com/auth/realms/fixme",
+
+            # This setting allow the library to cache the provider configuration auto-detected using
+            # the `provider_discovery_uri` setting
+            "oidc_cache_provider_metadata": True,
+
+            # New configuration
+            'hook_user_login' : 'my_project.oidc.login_function',
+            'hook_user_logout' : 'my_project.oidc.logout_function'
+        },
 
 
-If you configured your settings manually, juste add the LOGIN/LOGOUT function keys to your configuration. See
-:ref:`Hook settings` for more information on the function path syntax.
+See :ref:`Hook settings` for more information on the function path syntax.
 
 You should now see a message on login/logout ! 🎉
 
-If not, make sure that you modified your template to display messages. See
+Make sure that you modified your template to display messages. See
 :func:`django:django.contrib.messages.get_messages` for more information.
 
 
 Customize how token data is mapped to User attributes
------------------------------------------------------
+=====================================================
+
+**TODO**
 
 By default, this library only uses the **email** field in a userinfo token to retrieve/create users.
 
@@ -134,7 +147,9 @@ Using a provider, edith your configuration like this :
 
 
 Add application-wide access control rules based on audiences
-------------------------------------------------------------
+============================================================
+
+**TODO**
 
 Open ID Connect supports a system of audience which can be used to indicate the list of applications a user has access to.
 
@@ -172,7 +187,9 @@ TODO: audience check outside of get_user, settings based
 
 
 Use the Django permission system with OIDC
-------------------------------------------
+==========================================
+
+**TODO**
 
 Django provides a rich authentication system that handles groups and permissions.
 
@@ -217,7 +234,9 @@ Then, you can grant group level permissions and it will be applied to your users
     from groups depending on your use cases.
 
 Redirect the user after login
-------------------------------
+=============================
+
+**TODO**
 
 By default the ``success_redirect`` url defined in your provider is used to redirect the user after login.
 
@@ -247,7 +266,9 @@ However you will need to tweak the settings according to your use-case. You shou
 TODO: RedirectDemo now exists, where do I connect it?
 
 Use multiple identity providers
--------------------------------
+===============================
+
+**TODO**
 
 This library natively supports multiples identity providers.
 

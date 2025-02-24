@@ -26,18 +26,18 @@ You should define them as a nested dictionary. The key to this dictionary is cal
     }
 
 post_login_uri_failure
-***********
+**********************
 
 This setting configures where a user is redirected on login failure, defaults to Django base url.
 
 post_login_uri_success
-*******************
+**********************
 
 This setting configures the default redirection URI on login success, defaults to Django base url.
 
 
 post_logout_redirect_uri
-**********
+************************
 
 This setting configures where a user is redirected after successful SSO logout, defaults to Django base url.
 
