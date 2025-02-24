@@ -1,11 +1,13 @@
 import logging
 from importlib import import_module
+from typing import Any, Dict, Optional, TypeVar, Union
 
 # import oic
 from django.conf import settings
 from django.contrib import auth, messages
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, resolve_url
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -13,43 +15,64 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwt import JWT
 from jwt.exceptions import JWTDecodeError
+from oic.utils.http_util import BadRequest
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.utils import get_setting_for_sso_op, import_object
+from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory, OidcSettingValue
+from django_pyoidc.utils import import_object
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 
 class OIDCMixin:
-    op_name = None
+    op_name: str = ""
+    opsettings: OIDCSettings
 
 
 class OIDCView(View, OIDCMixin):
-    def get(self, *args, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+            if key == "op_name":
+                self.opsettings = OIDCSettingsFactory.get(self.op_name)
+                self.allowed_hosts = self.get_setting(
+                    "login_uris_redirect_allowed_hosts"
+                )
+
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        super().setup(request, *args, **kwargs)
         if self.op_name is None:
             raise Exception(
                 "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
             )  # FIXME
 
-    def get_setting(self, name, default=None):
-        return get_setting_for_sso_op(self.op_name, name, default)
+    def get_setting(
+        self, name: str, default: Optional[T] = None
+    ) -> Optional[Union[T, OidcSettingValue]]:
+        return self.opsettings.get(name, default)
 
-    def call_function(self, setting_name, *args, **kwargs):
-        function_path = get_setting_for_sso_op(self.op_name, setting_name)
-        if function_path:
+    def call_function(self, setting_func_name: str, *args: Any, **kwargs: Any) -> Any:
+        function_path: Optional[str] = self.opsettings.get(setting_func_name)  # type: ignore[assignment] # we can assume that the configuration is right
+        if function_path is not None:
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_callback_function(self, request, user):
+    def call_user_login_callback_function(
+        self, request: HttpRequest, user: AbstractUser
+    ) -> Any:
         logger.debug("OIDC, Calling user hook on login")
-        self.call_function("HOOK_USER_LOGIN", request, user)
+        self.call_function("hook_user_login", request, user)
 
-    def call_logout_function(self, user_request, logout_request_args):
+    def call_logout_function(
+        self, user_request: HttpRequest, logout_request_args: Dict[str, Any]
+    ) -> Any:
         """Function called right before local session removal and before final redirection to the SSO server.
 
         Parameters:
@@ -60,20 +83,21 @@ class OIDCView(View, OIDCMixin):
         Returns:
             dict: extra query string arguments to add to the SSO disconnection url
         """
-        return self.call_function("HOOK_USER_LOGOUT", user_request, logout_request_args)
+        return self.call_function("hook_user_logout", user_request, logout_request_args)
 
-    def get_next_url(self, request, redirect_field_name):
+    def get_next_url(
+        self, request: HttpRequest, redirect_field_name: str
+    ) -> Optional[str]:
         """
         Adapted from https://github.com/mozilla/mozilla-django-oidc/blob/71e4af8283a10aa51234de705d34cd298e927f97/mozilla_django_oidc/views.py#L132
         """
         next_url = request.GET.get(redirect_field_name)
-        # print(f"{next_url=}")
         if next_url:
             is_safe = url_has_allowed_host_and_scheme(
                 next_url,
-                allowed_hosts=self.get_setting("LOGIN_URIS_REDIRECT_ALLOWED_HOSTS"),
-                require_https=self.get_setting(
-                    "LOGIN_REDIRECTION_REQUIRES_HTTPS", True
+                allowed_hosts=self.allowed_hosts,  # type: ignore[arg-type] # let's just assume that this settings is correctly set
+                require_https=self.get_setting(  # type: ignore[arg-type] # We can reasonably assume that this setting is a bool
+                    "login_redirection_requires_https", True
                 ),
             )
             if is_safe:
@@ -86,44 +110,52 @@ class OIDCLoginView(OIDCView):
     When receiving a GET request, this views redirects the user to the SSO identified by `op_name`.
     This view is named ``<op_name>-login`` if you used ``get_urlpatterns``.
 
-
     This view supports the *http query parameter* ``next`` (ie ``?next=http://...``) to specify which url the user should be redirected to on success.
 
-    The redirection behaviour is configured with the following settings :
+    First, an OIDC redirection is made to the sso, with a callback (redirection) set to a local url defined by the setting:
 
-    * :ref:`LOGIN_REDIRECTION_REQUIRES_HTTPS` controls if non https URIs are accepted.
-    * :ref:`LOGIN_URIS_REDIRECT_ALLOWED_HOSTS` controls if which hosts the user can be redirected to.
-    * :ref:`POST_LOGIN_URI_SUCCESS` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
+    * :ref:`oidc_callback_path` local path to be redirected after authentication on the sso, to finalize the local auth.
+
+    After this somewhat internal redirection where the local auth is validated and the session created, a final redirection
+    will be made.
+    The final redirection behaviour is configured with the following settings :
+
+    * :ref:`login_redirection_requires_https` controls if non https URIs are accepted.
+    * :ref:`login_uris_redirect_allowed_hosts` controls which hosts the user can be redirected to.
+    * :ref:`post_login_uri_success` defines the redirection URI when no 'next' redirect uri were provided in the HTTP request.
     """
 
     http_method_names = ["get"]
 
-    def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
 
-        client = OIDCClient(self.op_name)
+        sid = request.session.get("oidc_sid")
+        if sid:
+            client = OIDCClient(self.op_name, session_id=sid)
+        else:
+            client = OIDCClient(self.op_name)
+
         client.consumer.consumer_config["authz_page"] = self.get_setting(
-            "OIDC_CALLBACK_PATH"
+            "oidc_callback_path"
         )
-        redirect_uri = self.get_next_url(request, "next")
+        next_redirect_uri = self.get_next_url(request, "next")
 
-        if not redirect_uri:
-            redirect_uri = str(
+        if not next_redirect_uri:
+            next_redirect_uri = str(
                 self.get_setting(
-                    "POST_LOGIN_URI_SUCCESS", request.build_absolute_uri("/")
+                    "post_login_uri_success", request.build_absolute_uri("/")
                 )
             )
 
-        request.session["oidc_login_next"] = redirect_uri
+        request.session["oidc_login_next"] = next_redirect_uri
 
-        sid, location = client.consumer.begin(
+        sid, location = client.consumer.begin(  # type: ignore[no-untyped-call] # oic package is untyped
             scope=["openid"],
             response_type="code",
             use_nonce=True,
             path=self.request.build_absolute_uri("/"),
         )
         request.session["oidc_sid"] = sid
-
         return redirect(location)
 
 
@@ -134,25 +166,25 @@ class OIDCLogoutView(OIDCView):
 
     It supports both ``GET`` and ``POST`` http methods.
 
-    The response is a redirection to the SSO logout endpoint, if a provider configuration :ref:`POST_LOGOUT_REDIRECT_URI` exists it as used as
+    The response is a redirection to the SSO logout endpoint, if a provider configuration :ref:`post_logout_redirect_uri` exists it as used as
     post logout redirection argument on the SSO redirection link.
 
     """
 
     http_method_names = ["get", "post"]
 
-    def post_logout_url(self, request):
+    def post_logout_url(self, request: HttpRequest) -> str:
         """Return the post logout url defined in settings."""
         return str(
             self.get_setting(
-                "POST_LOGOUT_REDIRECT_URI", request.build_absolute_uri("/")
+                "post_logout_redirect_uri", request.build_absolute_uri("/")
             )
         )
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return self.post(request)
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Log out the user."""
         url = self.post_logout_url(request)
         # If this url is not already an absolute url
@@ -168,26 +200,27 @@ class OIDCLogoutView(OIDCView):
         client = None
         sid = request.session.get("oidc_sid")
 
-        redirect_arg_name = self.get_setting(
+        redirect_arg_name: str = self.get_setting(
             "LOGOUT_QUERY_STRING_REDIRECT_PARAMETER",
             "post_logout_redirect_uri",
-        )
+        )  # type: ignore[assignment] # we can assume that the configuration is right
         request_args = {
             redirect_arg_name: post_logout_url,
-            "client_id": self.get_setting("OIDC_CLIENT_ID"),
+            "client_id": self.get_setting("client_id"),
         }
 
         # Allow some more parameters for some actors
-        extra_logout_args = self.get_setting(
-            "LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT",
+        extra_logout_args: Dict[str, Any] = self.get_setting(  # type: ignore[assignment] # we can assume that the configuration is right
+            "oidc_logout_query_string_extra_parameters_dict",
             {},
         )
         request_args.update(extra_logout_args)
-
         if sid:
             try:
                 client = OIDCClient(self.op_name, session_id=sid)
-            except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
+            except (
+                Exception
+            ) as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
                 logger.error("OIDC Logout call error when loading OIDC state: ")
                 logger.exception(e)
 
@@ -238,7 +271,7 @@ class OIDCBackChannelLogoutView(OIDCView):
 
     http_method_names = ["post"]
 
-    def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body):
+    def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body: str) -> None:
         validated_sid = client.consumer.backchannel_logout(
             request_args={"logout_token": body}
         )
@@ -248,25 +281,25 @@ class OIDCBackChannelLogoutView(OIDCView):
         for session in sessions:
             self._logout_session(session)
 
-    def logout_sessions_by_sub(self, client: OIDCClient, sub: str, body):
+    def logout_sessions_by_sub(self, client: OIDCClient, sub: str, body: str) -> None:
         sessions = OIDCSession.objects.filter(sub=sub)
         for session in sessions:
             client.consumer.backchannel_logout(request_args={"logout_token": body})
             self._logout_session(session)
 
-    def _logout_session(self, session: OIDCSession):
+    def _logout_session(self, session: OIDCSession) -> None:
         s = SessionStore()
         s.delete(session.cache_session_key)
         session.delete()
-        logger.debug(f"Backchannel logout request received and validated for {session}")
+        logger.info(f"Backchannel logout request received and validated for {session}")
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         if request.content_type != "application/x-www-form-urlencoded":
             return HttpResponse("", status=415)
         result = HttpResponse("")
         try:
             body = request.body.decode("utf-8")[13:]
-            decoded = JWT().decode(body, do_verify=False)
+            decoded = JWT().decode(body, do_verify=False)  # type: ignore[no-untyped-call] # jwt.JWT is not typed yet
 
             sid = decoded.get("sid")
             sub = decoded.get("sub")
@@ -305,48 +338,52 @@ class OIDCCallbackView(OIDCView):
 
     http_method_names = ["get"]
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
-        self.engine = OIDCEngine(self.op_name)
+        self.engine = OIDCEngine(self.opsettings)
 
-    def success_url(self, request):
+    def success_url(self, request: HttpRequest) -> str:
         # Pull the next url from the session or settings --we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get("oidc_login_next", None)
         return next_url or resolve_url(
-            self.get_setting("POST_LOGIN_URI_SUCCESS", request.build_absolute_uri("/"))
+            self.get_setting("post_login_uri_success", request.build_absolute_uri("/"))  # type: ignore[arg-type] # we can assume that this setting is correctly configured
         )
 
-    def login_failure(self, request):
+    def login_failure(self, request: HttpRequest) -> HttpResponse:
         return redirect(
             str(
                 self.get_setting(
-                    "POST_LOGIN_URI_FAILURE", request.build_absolute_uri("/")
+                    "post_login_uri_failure", request.build_absolute_uri("/")
                 )
             )
         )
 
-    def _introspect_access_token(self, access_token_jwt):
-        """
-        Perform a cached intropesction call to extract claims from encoded jwt of the access_token
-        """
-        return
-
-    def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
             if "oidc_sid" in request.session:
                 self.client = OIDCClient(
                     self.op_name, session_id=request.session["oidc_sid"]
                 )
 
-                aresp, atr, idt = self.client.consumer.parse_authz(
+                parsing_result = self.client.consumer.parse_authz(
                     query=request.GET.urlencode()
                 )
+                if isinstance(parsing_result, BadRequest):
+                    logger.error(
+                        "OIDC login process failure; cannot parse OIDC response"
+                    )
+                    return self.login_failure(request)
+
+                aresp, atr, idt = parsing_result
+
+                if aresp is None:
+                    logger.error("OIDC login process failure; empty OIDC response")
+                    return self.login_failure(request)
 
                 if aresp["state"] == request.session["oidc_sid"]:
                     state = aresp["state"]
-                    session_state = aresp.get("session_state")
+                    session_state = aresp.get("session_state")  # type: ignore[no-untyped-call] # oic is untyped yet
 
                     # pyoidc will make the next steps in OIDC login protocol
                     try:
@@ -362,7 +399,7 @@ class OIDCCallbackView(OIDCView):
 
                     # Collect data from userinfo endpoint
                     try:
-                        userinfo = self.client.consumer.get_user_info(state=state)
+                        userinfo = self.client.consumer.get_user_info(state=state)  # type: ignore[no-untyped-call] # oic is untyped yet
                     except Exception as e:
                         logger.exception(e)
                         logger.error(
@@ -371,11 +408,12 @@ class OIDCCallbackView(OIDCView):
                         return self.login_failure(request)
 
                     # TODO: add a setting to allow/disallow session storage of the tokens
-                    # FIXME: token introspection for access_token deserialization?
                     access_token_jwt = (
                         tokens["access_token"] if "access_token" in tokens else None
                     )
 
+                    # this will call token instrospection or user defined validator
+                    # or return None
                     access_token_claims = self.engine.introspect_access_token(
                         access_token_jwt, self.client
                     )
@@ -387,15 +425,18 @@ class OIDCCallbackView(OIDCView):
                     #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
                     # )
                     userinfo_claims = userinfo.to_dict()
-
+                    tokens = {
+                        "info_token_claims": userinfo_claims,
+                        "access_token_jwt": access_token_jwt,
+                        "access_token_claims": access_token_claims,
+                        "id_token_claims": id_token_claims,
+                    }
+                    # simplify check code, if any dict is None remove the entry
+                    filtered_tokens = {k: v for k, v in tokens.items() if v is not None}
                     # Call user hook
                     user = self.engine.call_get_user_function(
-                        tokens={
-                            "info_token_claims": userinfo_claims,
-                            "access_token_jwt": access_token_jwt,
-                            "access_token_claims": access_token_claims,
-                            "id_token_claims": id_token_claims,
-                        }
+                        tokens=filtered_tokens,
+                        client=self.client,
                     )
 
                     if not user or not user.is_authenticated:
@@ -408,10 +449,10 @@ class OIDCCallbackView(OIDCView):
                         OIDCSession.objects.create(
                             state=state,
                             sub=userinfo["sub"],
-                            cache_session_key=request.session.session_key,
+                            cache_session_key=request.session.session_key,  # type: ignore[misc] # we call auth.login right before, so session_key is set to a value
                             session_state=session_state,
                         )
-                        self.call_callback_function(request, user)
+                        self.call_user_login_callback_function(request, user)
                         redir = self.success_url(request)
                         return redirect(redir)
                 else:

@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/ambv/black
-    rev: 22.3.0
+    rev: 24.10.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -15,4 +15,10 @@ repos:
       - id: isort
         args: ["--profile", "black"]
         name: isort (python)
-
+  - repo: local
+    hooks:
+      - id: mypy
+        name: Mypy
+        entry: ./run_mypy.sh
+        language: script
+        pass_filenames: false

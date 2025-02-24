@@ -1,35 +1,28 @@
 import logging
-from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
 try:
     from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
-    from django_pyoidc.utils import get_setting_for_sso_op
+    from django_pyoidc.settings import OIDCSettingsFactory
 
-    class OIDCScheme(OpenApiAuthenticationExtension):
+    class OIDCScheme(OpenApiAuthenticationExtension):  # type: ignore[no-untyped-call] # drf_spectacular.plumbing.OpenApiGeneratorExtension.__init_subclass__ is untyped
         target_class = "django_pyoidc.drf.authentication.OIDCBearerAuthentication"
         name = "openIdConnect"
         match_subclasses = True
         priority = -1
 
-        def get_security_definition(self, auto_schema):
-            from django_pyoidc.drf.authentication import OIDCBearerAuthentication
+        def get_security_definition(self, auto_schema):  # type: ignore[no-untyped-def] # we do not want to type third party libraries
+            # from django_pyoidc.drf.authentication import OIDCBearerAuthentication
 
-            op = OIDCBearerAuthentication.extract_drf_opname()
-            well_known_url = get_setting_for_sso_op(op, "OIDC_PROVIDER_DISCOVERY_URI")
-            if not well_known_url.endswith(".well-known/openid-configuration"):
-                if not well_known_url.endswith("/"):
-                    well_known_url += "/"
-                well_known_url = urljoin(
-                    well_known_url, ".well-known/openid-configuration"
-                )
+            opsettings = OIDCSettingsFactory.get("drf")
+            well_known_url = opsettings.get("provider_discovery_uri")
 
-            header_name = get_setting_for_sso_op(op, "OIDC_API_BEARER_NAME", "Bearer")
+            header_name = opsettings.get("oidc_api_bearer_name", "Bearer")
             if header_name != "Bearer":
                 logger.warning(
-                    "The configuration for 'OIDC_API_BEARER_NAME' will cause issue with swagger UI :"
+                    "The configuration for 'oidc_api_bearer_name' will cause issue with swagger UI :"
                     "it is not yet possible to change the header name for swagger UI, you should stick to"
                     "'Bearer'."
                 )

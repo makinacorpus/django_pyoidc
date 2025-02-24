@@ -1,6 +1,6 @@
-from typing import Any, Dict
+from typing_extensions import override
 
-from django_pyoidc.providers.base import Provider
+from django_pyoidc.providers.provider import Provider, ProviderConfig
 
 
 class LemonLDAPng2Provider(Provider):
@@ -8,10 +8,8 @@ class LemonLDAPng2Provider(Provider):
     Provide Django settings/urlconf based on LemonLDAP-ng behaviour (v2)
     """
 
-    def get_config(self, allowed_hosts) -> Dict[str, Dict[str, Any]]:
-        result = super().get_config(allowed_hosts)
-        # logout is by default asking for confirmation unless you pass confirm=1
-        result[self.op_name]["LOGOUT_QUERY_STRING_EXTRA_PARAMETERS_DICT"] = {
-            "confirm": 1
-        }
+    @override
+    def get_default_config(self) -> ProviderConfig:
+        result = super().get_default_config()
+        result["oidc_logout_query_string_extra_parameters_dict"] = {"confirm": 1}
         return result

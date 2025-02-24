@@ -1,4 +1,4 @@
-# Makina Django OIDC
+# django-pyoidc
 
 
 <p align="center">
@@ -90,19 +90,22 @@ Now you can pick an identity provider from the [available providers](https://dja
 
 Create a file named `oidc.py` next to your settings file and initialize your provider there :
 
+FIXME: Here config as settings only OR using custom provider
+
 ```python
 from django_pyoidc.providers.keycloak import KeycloakProvider
 
 my_oidc_provider = KeycloakProvider(
     op_name="keycloak",
-    client_secret="s3cret",
-    client_id="my_client_id",
     keycloak_base_uri="http://keycloak.local:8080/auth/", # we use the auth/ path prefix option on Keycloak
     keycloak_realm="Demo",
+    client_secret="s3cret",
+    client_id="my_client_id",
     logout_redirect="http://app.local:8082/",
     failure_redirect="http://app.local:8082/",
     success_redirect="http://app.local:8082/",
     redirect_requires_https=False,
+    login_uris_redirect_allowed_hosts=["app.local:8082"],
 )
 ```
 
@@ -112,7 +115,7 @@ You can then add to your django configuration the following line :
 from .oidc_providers import my_oidc_provider
 
 DJANGO_PYOIDC = {
-    **my_oidc_provider.get_config(allowed_hosts=["app.local:8082"]),
+    **my_oidc_provider.get_config(),
 }
 ```
 
@@ -153,4 +156,3 @@ This project is sponsored by Makina Corpus. If you require assistance on your pr
 
 - [@gbip](https://www.github.com/gbip)
 - [@regilero](https://github.com/regilero)
-

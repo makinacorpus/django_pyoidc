@@ -29,10 +29,10 @@
     <div>
         <div class="session-container">
             {% if user.is_authenticated %}
-                <a id="oidc-logout-link" href="{% url 'test_logout' %}">OIDC-LOGOUT-LINK</a>
+            <a id="oidc-logout-link" href="{% url op_logout_url %}">OIDC-LOGOUT-LINK</a>
             {% else %}
-                <a id="oidc-anon-logout-link" href="{% url 'test_logout' %}">OIDC-ANON-LOGOUT-LINK</a>
-                <a id="oidc-login-link" href="{% url 'test_login' %}">OIDC-LOGIN-LINK</a>
+                <a id="oidc-anon-logout-link" href="{% url op_logout_url %}">OIDC-ANON-LOGOUT-LINK</a>
+                <a id="oidc-login-link" href="{% url op_login_url %}">OIDC-LOGIN-LINK</a>
             {% endif %}
         </div>
             <hr />

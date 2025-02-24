@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
@@ -7,7 +7,7 @@ from django_pyoidc.exceptions import ClaimNotFoundError
 from django_pyoidc.utils import extract_claim_from_tokens
 
 
-def get_user_by_email(tokens: Dict):
+def get_user_by_email(tokens: Dict[str, Any]) -> Any:
     User = get_user_model()
 
     username = None
@@ -71,5 +71,6 @@ def get_user_by_email(tokens: Dict):
         email=email,
         username=django_username,
     )
-    user.backend = "django.contrib.auth.backends.ModelBackend"
+    if hasattr(user, "backend"):
+        user.backend = "django.contrib.auth.backends.ModelBackend"
     return user

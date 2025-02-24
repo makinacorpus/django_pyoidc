@@ -1,0 +1,14 @@
+-c requirements.txt
+
+pip-tools
+pre-commit
+isort
+flake8
+black
+mypy==1.11.2
+djangorestframework-stubs[compatible-mypy]
+django-stubs[compatible-mypy]
+types-Markdown
+types-Pygments
+types-psycopg2
+hatch

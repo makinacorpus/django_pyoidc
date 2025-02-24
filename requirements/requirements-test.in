@@ -1,4 +1,6 @@
+-r requirements-dev.in
 -c requirements.txt
+
 python-decouple
 psycopg2
 sphinx<7

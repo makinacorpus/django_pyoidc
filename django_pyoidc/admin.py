@@ -3,10 +3,12 @@ from importlib import import_module
 from django.conf import settings
 from django.contrib import admin
 
+from django_pyoidc.models import OIDCSession
+
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
-class OIDCSessionAdmin(admin.ModelAdmin):
+class OIDCSessionAdmin(admin.ModelAdmin):  # type: ignore[type-arg] # https://github.com/typeddjango/django-stubs/issues/507
     readonly_fields = (
         "state",
         "session_state",
@@ -24,12 +26,11 @@ class OIDCSessionAdmin(admin.ModelAdmin):
         "created_at",
     ]
 
-    def has_session_management(self, obj) -> bool:
+    @admin.display(boolean=True)
+    def has_session_management(self, obj: OIDCSession) -> bool:
         return obj.session_state is not None
 
-    def session_is_active(self, obj) -> bool:
+    @admin.display(boolean=True)
+    def session_is_active(self, obj: OIDCSession) -> bool:
         s = SessionStore()
         return obj.cache_session_key is not None and s.exists(obj.cache_session_key)
-
-    has_session_management.boolean = True
-    session_is_active.boolean = True

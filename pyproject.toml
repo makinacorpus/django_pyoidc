@@ -1,7 +1,5 @@
-license = {file = "LICENSE"}
-readme = "README.md" # Optional
-
 [project]
+dynamic = ["version"]
 name="django-pyoidc"
 authors=[
     {name="Régis Leroy (Makina Corpus)", email="django_pyoidc@makina-corpus.net"},
@@ -15,26 +13,72 @@ classifiers=["Topic :: Utilities",
         "Framework :: Django",
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Security"
 ]
 description="Authenticate your users using OpenID Connect (OIDC)"
-requires-python=">=3.7"
-dynamic = ["version", "dependencies", "optional-dependencies"]
-keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect"]
+requires-python=">=3.8"
+keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect", "authentication"]
 readme="README.md"
+license="GPL-3.0-only"
+dependencies = [
+        "oic==1.7.0",
+        "django>=3.2",
+        "jsonpickle",
+        "jwt",
+        "pycryptodomex",
+]
+license-files = ['LICENSE']
 
 [project.urls]
-repository="https://gitlab.makina-corpus.net/pfl/django-pyoidc"
+repository="https://github.com/makinacorpus/django_pyoidc"
+
+[project.optional-dependencies]
+drf = ['djangorestframework', 'drf-spectacular']
 
 [build-system]
 # These are the assumed default build requirements from pip:
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.in"] }
-optional-dependencies.test = { file = ["requirements-test.txt"] }
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+
+strict_equality = true
+
+check_untyped_defs = true
+
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+disallow_any_unimported = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+no_implicit_reexport = true
+no_implicit_optional = true
+
+show_error_codes = true
+extra_checks = true
+
+[tool.django-stubs]
+django_settings_module = "mypy_settings"
+strict_settings = false
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.versioningit.vcs]
+method = "git"

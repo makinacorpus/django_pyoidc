@@ -14,7 +14,7 @@ INSTALLED_APPS = [
     "django_pyoidc",
 ]
 
-ALLOWED_HOSTS = ["test.django-pyoidc.notatld"]
+ALLOWED_HOSTS = ["test.django-pyoidc.notatld", "test2.django-pyoidc.notatld"]
 
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",

@@ -2,6 +2,8 @@ from django.db import models
 
 
 class OIDCSession(models.Model):
+    objects: models.Manager["OIDCSession"]
+
     id = models.BigAutoField(primary_key=True)
 
     # Used by pyoidc to save the client when no session state is available
@@ -17,7 +19,7 @@ class OIDCSession(models.Model):
     cache_session_key = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.session_state:
             return f"Session with id : {self.session_state}"
         else:

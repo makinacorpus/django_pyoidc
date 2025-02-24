@@ -1,0 +1,85 @@
+name: Lint source code
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+
+jobs:
+
+  black:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: psf/black@stable
+        with:
+          version: "~= 24.0"
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for versioningit to find the repo version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip build
+      - name: Build python package
+        run: python -m build
+
+  mypy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for versioningit to find the repo version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: python -m pip install .[drf]
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip
+          -r requirements/requirements-dev.in
+          -r requirements/requirements-test.in
+
+      - name: Run mypy
+        run: mypy --version && ./run_mypy.sh
+
+
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Needed for versioningit to find the repo version
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: python -m pip download .[drf]
+
+    - name: Install dependencies
+      run: python -m pip install --upgrade pip
+        -r requirements/requirements-dev.in
+        -r requirements/requirements-test.in
+
+    - name: Run flake8
+      run : flake8 --version && flake8 --extend-ignore=E501,E503,E203 --max-line-len=88 .
+
+    - name: Run isort
+      run : isort --profile black .
