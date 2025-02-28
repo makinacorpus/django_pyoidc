@@ -12,6 +12,12 @@ Here are our criteria :
 * is it still maintained ?
 * does it supports *Bearer* authentication (for ``django-rest-framework``).
 
+
+`django-allauth <https://github.com/pennersr/django-allauth/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Todo**
+
 `django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -296,8 +302,8 @@ Note: if your Django acts as an OIDC SSO server for other applications, receivin
 containing an iframe with front channel logouts links for all the client applications of your Django. In this library we consider the
 Django website to be only an OIDC client (not server) and we did not implement this cascading front channel logout specification.
 
-Cache Management
-================
+About caching
+=============
 
 This library depends on **Django cache system**. Why do an OIDC client depends on a cache ?
 

@@ -1,29 +1,96 @@
-User API Reference
-==================
+About settings
+==============
 
-Django settings
----------------
+.. tip::
 
-
-.. note::
-    We provide a set of predefined settings for some identity providers. As such, you can avoid having to configure by yourself this library and it's views.
-    Take a look at the :ref:`tutorial <Configure the library>` !
+    We provide a way to autoconfigure many settings using your identity provider autoconfiguration endpoints.
 
 
-Providers settings
-~~~~~~~~~~~~~~~~~~
+.. tip::
+    We provide ``Provider`` classes which implement setting generation for some popular identity providers (Keycloak, etc.).
+
 
 All those settings must be defined in ``settings.py`` under the variable name ``DJANGO_PYOIDC``.
 You should define them as a nested dictionary. The key to this dictionary is called your **provider name** (or **op_name** in some places). All your settings configuration are local to this provider. This allows multi-provider configurations.
 
-.. code-block:: python
+.. important::
 
-    DJANGO_PYOIDC = {
-        'my_provider_name' : {
-            'setting_1' : 'value',
-            'setting_2' : 'value'
-        }
-    }
+    Manually defined settings replaces settings from providers.
+
+Identity provider configuration
+===============================
+
+.. _provider-class-setting:
+
+provider_class
+**************
+
+**Default** : "django_pyoidc.providers.Provider"
+
+Use this setting to plug in a provider class that will be used to generate the settings of your identity provider.
+Some providers expect to receives custom arguments : you should defines them as settings.
+
+For example, the ``Keycloak10Provider`` can use two arguments : ``keycloak_base_uri`` and ``keycloak_realm``. If you wish to use them, define them in ``DJANGO_PYOIDC`` as your identity provider setting.
+
+provider_discovery_uri
+**********************
+
+This settings should be the URL of an OIDC autoconfiguration endpoint. We will use this
+setting to discover and store all the URLs needed to perform user authentication.
+
+client_secret
+*************
+
+This setting configures the client secret used to authenticate your application with an identity provider.
+
+client_id
+*********
+
+This setting configures the client id used to authenticate your application with an identity provider.
+
+use_introspection_on_access_tokens
+**********************************
+
+**Default** : ``True``
+
+This setting is only used for DRF authentication. When enabled, we will not try to parse the token and we will use the introspection endpoint of the
+identity provider to perform token validation.
+
+oidc_paths_prefix
+*****************
+
+**Default** : dynamically computed using the name of your identity provide
+
+You can use this setting to change how the OIDC views are named. By default they are named ``<op_name>_[login|callback]``.
+
+Configuring this setting allows you to swap ``<op_name`` with an other value.
+
+Advanced identity provider configuration
+========================================
+
+oidc_logout_query_string_redirect_parameter
+*******************************************
+
+**Todo**
+
+oidc_logout_query_string_extra_parameters_dict
+**********************************************
+
+**Default** : ``{}``
+
+All the key/values of this dictionary are used as http query params when performing a logout request
+to the identity provider.
+
+client_authn_method
+*******************
+
+**Default** : see ``oic/utils/authn/client.py:437``
+
+Methods that the OIDC client can use to authenticate itself. It's a dictionary with method names as
+keys and method classes as values.
+
+Login/Logout redirections
+=========================
 
 post_login_uri_failure
 **********************
@@ -35,24 +102,15 @@ post_login_uri_success
 
 This setting configures the default redirection URI on login success, defaults to Django base url.
 
-
 post_logout_redirect_uri
 ************************
 
 This setting configures where a user is redirected after successful SSO logout, defaults to Django base url.
 
-URI_PROVIDER
-************
-
-This setting configures your provider root URI. **TODO** : rename to PROVIDER_HOST or something like that.
-
-URI_CONFIG
-**********
-
-This settings configures the path to your OIDC configuration. **TODO : example**.
-
 oidc_callback_path
-*************
+******************
+
+**Default** : <op_name
 
 This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
 
@@ -66,24 +124,37 @@ login_uris_redirect_allowed_hosts
 
 This setting configures the list of allowed host in dynamic URI redirections.
 
-client_secret
-*************
+Cache settings
+==============
 
-This setting configures the client secret used to authentify your application with an identity provider.
+oidc_cache_provider_metadata
+****************************
 
-client_id
-*********
+**Default** : ``False``
 
-This setting configures the client id used to authentify your application with an identity provider.
+When this setting is enabled, we will cache the calls to the autoconfiguration endpoint of the OIDC
+identity provider.
+
+oidc_cache_provider_metadata_ttl
+********************************
+
+**Default** : ``120``
+
+
+This settings has no effect if ``oidc_cache_provider_metadata`` is disabled.
+
+Otherwise, it configures the lifetime (in seconds) of cached response for the autoconfiguration of
+the identity provider.
 
 cache_django_backend
-*************
+********************
 
-This setting configures the cache backend that is used to store OIDC sessions details.
+This setting configures the cache backend that is used to store OIDC sessions details. It should be
+the name of a cache defined in the ``CACHES` django settings.
 You can read more about *Cache Management* :ref:`here <Cache Management>`.
 
 Hook settings
-~~~~~~~~~~~~~
+=============
 
 Hook settings are path to a python function that should be called in specific context. We use a custom syntax to reference a function of a module.
 
@@ -99,20 +170,20 @@ So for example, if you were to have a module named ``oidc.py`` next to your proj
 .. note::
     All those settings are optional
 
-HOOK_USER_LOGOUT
-***************
+hook_user_logout
+****************
 
 Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
 
 This function takes two arguments :
 
 1. a request instance :class:`django:django.http.HttpRequest`
-2. TODO FIXME RLE
+2. the request args sent to the sso server (missing the id_token_hint element)
 
 If the user was logged in, you can get the user using ``request.user``.
 
-HOOK_USER_LOGIN
-**************
+hook_user_login
+****************
 
 Calls the provided function on user login. The functions is called if the login is successful.
 
@@ -132,61 +203,3 @@ Calls the provided function on user login. It takes two arguments :
 * the id token
 
 It is expected to return a :class:`django.contrib.auth.models.User` instance.
-
-Views
------
-
-.. note::
-    When instantiating a view from this library (ie through django's 'as_view()') you **must** set the named argument ``op_name`` to point to a valid ``DJANGO_PYOIDC`` settings entry.
-    If you use :ref:`Providers` then this behaviour is automatically implemented.
-
-    Here is an example :
-
-    .. code-block:: python
-
-        from .oidc_providers import my_project_provider
-
-        urlpatterns = [
-            path("auth/callback", OIDCCallbackView.as_view(op_name="keycloak"),),
-        ]
-
-
-
-.. autoclass:: django_pyoidc.views.OIDCLoginView
-    :members:
-    :special-members: http_method_names
-
-.. autoclass:: django_pyoidc.views.OIDCCallbackView
-    :members:
-
-.. autoclass:: django_pyoidc.views.OIDCLogoutView
-    :members:
-
-.. autoclass:: django_pyoidc.views.OIDCBackChannelLogoutView
-    :members:
-
-
-
-
-Providers
----------
-
-Providers classes allows the final user to configure their project without having to understand how to map their Identity Provider configuration settings to this library settings.
-
-Each provider implements the configuration logic and provides mostly two methods :
-
-
-* One to generate a configuration dict to be inserted in the ``DJANGO_PYOIDC`` value of your django settings FIXME  : :py:meth:`get_config() <django_pyoidc.providers.base.Provider.get_config>`
-* One to generate urls to be :func:`included <django:django.urls.reverse>` in your url configuration : :py:meth:`get_urlpatterns() <django_pyoidc.providers.base.Provider.get_urlpatterns>`
-
-.. autoclass:: django_pyoidc.providers.KeycloakProvider
-    :members:
-    :undoc-members:
-    :special-members: __init__
-
-
-
-.. automodule:: django_pyoidc.providers.base
-    :members:
-    :undoc-members:
-    :special-members: __init__
