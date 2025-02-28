@@ -20,7 +20,7 @@ Welcome to Makina Django OIDC's documentation!
    :hidden:
    :caption: ⚙️ Settings
 
-   user.rst
+   settings.rst
 
 
 .. toctree::

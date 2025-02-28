@@ -124,8 +124,8 @@ login_uris_redirect_allowed_hosts
 
 This setting configures the list of allowed host in dynamic URI redirections.
 
-Cache settings
-==============
+Cache
+=====
 
 oidc_cache_provider_metadata
 ****************************
@@ -153,8 +153,8 @@ This setting configures the cache backend that is used to store OIDC sessions de
 the name of a cache defined in the ``CACHES` django settings.
 You can read more about *Cache Management* :ref:`here <Cache Management>`.
 
-Hook settings
-=============
+Hook
+====
 
 Hook settings are path to a python function that should be called in specific context. We use a custom syntax to reference a function of a module.
 
