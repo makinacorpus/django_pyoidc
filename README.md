@@ -31,6 +31,7 @@ If you are not satisfied with the default configuration, take a look at the sett
 
 - Frontchannel logout
 - Switch to django signal system login/logout hooks
+- Allow for audience check without customizing `get_user` using a setting
 
 ## Acknowledgement
 
