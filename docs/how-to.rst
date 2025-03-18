@@ -1,11 +1,7 @@
-How-to guides
-=============
-
-
 Display custom message on login/logout
---------------------------------------
+======================================
 
-This library provides a hook system to call custom code. Hooks are configured on a provider by provider basis.
+This library provides a hook system to call custom code. Hooks are configured on an identity provider basis.
 In this guide we will setup two hook function that add login/logout messages using `Django's message system
 <https://docs.djangoproject.com/en/stable/ref/contrib/messages/>`_.
 
@@ -29,88 +25,111 @@ Add in those two functions :
 
 
 Next, we plug those functions in the library configuration. In your ``settings.py`` you should set the
-:ref:`HOOK_USER_LOGIN` and :ref:`HOOK_USER_LOGOUT` to point to those two functions.
+``hook_user_login`` and ``hook_user_logout`` to point to those two functions.
 
-If you used a provider, the best way to achieve that is by modifying the configuration value as such :
+Here is how it looks if we extend the configuration made in :ref:`Configure the library` :
 
 .. code-block:: python
+    :caption: settings.py
 
     DJANGO_PYOIDC = {
-        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["myhost"]),
-    }
+        # This is the name that your identity provider will have within the library
+        "sso": {
+            # change the following line to use your provider
+            "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
 
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGIN"] = "<my_app>.oidc:login_function" # <- my_app is a placeholder, alter it for your root module
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["HOOK_USER_LOGOUT"] = "<my_app>.oidc:logout_function" # <- my_app is a placeholder, alter it for your root module
+            # your secret should not be stored in settings.py, load them from an env variable
+            "client_secret": os.getenv("SSO_CLIENT_SECRET"),
+            "client_id": os.getenv("SSO_CLIENT_ID"),
+
+            # Your autodiscovery url should go here
+            "provider_discovery_uri": "https://keycloak.example.com/auth/realms/fixme",
+
+            # This setting allow the library to cache the provider configuration auto-detected using
+            # the `provider_discovery_uri` setting
+            "oidc_cache_provider_metadata": True,
+
+            # New configuration
+            'hook_user_login' : 'my_project.oidc.login_function',
+            'hook_user_logout' : 'my_project.oidc.logout_function'
+        },
 
 
-If you configured your settings manually, juste add the LOGIN/LOGOUT function keys to your configuration. See
-:ref:`Hook settings` for more information on the function path syntax.
+See :ref:`Hook settings` for more information on the function path syntax.
 
 You should now see a message on login/logout ! 🎉
 
-If not, make sure that you modified your template to display messages. See
+Make sure that you modified your template to display messages. See
 :func:`django:django.contrib.messages.get_messages` for more information.
 
 
 Customize how token data is mapped to User attributes
------------------------------------------------------
+=====================================================
 
-By default, this library only uses the **email** field in a userinfo token to retrieve/create users.
+When a user succesfully logs-in, we provide an implementation that maps the received OIDC token to
+``User`` model instances. The default implementation extracts the email and the username from the token
+and uses it to create a User instance.
 
-However you can implement more complex behaviour by specifying a :ref:`hook_get_user` in your provider
+However you can implement more complex behaviour by specifying a :ref:`hook_get_user` in your setting
 configuration. In this guide we will look at the ``groups`` attribute in a userinfo token and set the
 :attr:`is_staff <django.contrib.auth.models.User.is_staff>` attribute depending on the value.
 
 First, if you don't already have a Python module holding OIDC related code in your projet, create a file
 named ``oidc.py`` next to your settings.
 
-Add in a function that takes two arguments : the *userinfo token* and the *id token*. It should return a
-:class:`User <django.contrib.auth.models.User>` instance.
+Add in a function that takes one arguments : a list of tokens received during the authentication process. There are multiple tokens because OIDC defines multiple tokens, and some providers put the information in one token an some in an other one :
+* the userinfo token
+* the access token
 
-We will start from this library's default get_user function :
+We provide the function ``django_pyoidc.utils.extract_claim_from_tokens`` to extract a *claim* (a key) from the list of tokens.
+
+Let's start our implementation by reusing the default implementation provided by this library:
 
 .. code-block:: python
 
     from django.contrib.auth import get_user_model
-
-    def get_user(userinfo_token, id_token):
-        User = get_user_model()
-        user, created = User.objects.get_or_create(email=userinfo_token["email"])
-        user.backend = "django.contrib.auth.backends.ModelBackend"
+    from django_pyoidc import get_user_by_email
+    def get_user(tokens):
+        # Here, we reuse the implementation of our library
+        user = get_user_by_email(tokens)
         return user
 
-You can also print the *userinfo token* here. If you use Keycloak, you should have something like this :
+.. tip::
 
-.. code-block:: json
+    To see what kind of data is available, you can print the content of tokens in this function.
 
-    {
-      "sub": "40861311-0c53-4ad9-bc5c-d5fee81b0503",
-      "email_verified": true,
-      "name": "Admin User",
-      "groups": [
-        "basic-users",
-        "default-role-my-realm",
-        "admins"
-      ],
-      "preferred_username": "admin",
-      "given_name": "Admin",
-      "family_name": "User",
-      "email": "admin@example.com"
-    }
+    If you use Keycloak, you should have something like this for the userinfo token:
 
-We can see that here we want to lookup the ``groups`` key and test if ``admins`` is in the list.
+    .. code-block:: json
+
+        {
+          "sub": "40861311-0c53-4ad9-bc5c-d5fee81b0503",
+          "email_verified": true,
+          "name": "Admin User",
+          "groups": [
+            "basic-users",
+            "default-role-my-realm",
+            "admins"
+          ],
+          "preferred_username": "admin",
+          "given_name": "Admin",
+          "family_name": "User",
+          "email": "admin@example.com"
+        }
+
+Since we are familiar with OIDC tokens, we know that we want to check the ``groups`` claim, and look for a
+group named *admin*. If you are not familiar with the claims available in your tokens, print them !
 
 .. code-block:: python
 
     from django.contrib.auth import get_user_model
+    from django_pyoidc.utils import extract_claim_from_tokens
 
     def get_user(userinfo_token, id_token):
-        User = get_user_model()
-        user, created = User.objects.get_or_create(email=userinfo_token["email"])
-
-        user.is_superuser = "admins" in userinfo_token["groups"]
-
-        user.backend = "django.contrib.auth.backends.ModelBackend"
+        # Here, we reuse the implementation of our library
+        user = get_user_by_email(tokens)
+        groups = extract_claim_from_tokens('groups', tokens)
+        user.is_staff = "admins" in groups
         user.save()
         return user
 
@@ -121,20 +140,21 @@ The value of this setting should be : ``<my_app>.oidc:login_function`` (see :ref
 
 If you configured your settings manually (without using the providers system), you can add the key directly.
 
-Using a provider, edith your configuration like this :
+Edit your configuration to add the following key to your provider settings :
 
 .. code-block:: python
 
     DJANGO_PYOIDC = {
-        FIXME **my_oidc_provider.get_config(login_uris_redirect_allowed_hosts=["myhost"]),
+        'sso' : {
+            'hook_get_user' : 'my_app.oidc:get_huser' # <- my_app is a placeholder, alter it for your root module
+        }
     }
-
-    DJANGO_PYOIDC[my_oidc_provider.op_name]["hook_get_user"] = "<my_app>.oidc:get_user" # <- my_app is a placeholder, alter it for your root module
-
 
 
 Add application-wide access control rules based on audiences
-------------------------------------------------------------
+============================================================
+
+**TODO**
 
 Open ID Connect supports a system of audience which can be used to indicate the list of applications a user has access to.
 
@@ -146,33 +166,31 @@ By the specification, the audience in a token is a list of strings or a single s
 so let's .....
 Since we already defined our client ID in the settings, we fetch it from there ! This example assumes that your provider is named `keycloak`.
 
-TODO: audience check outside of get_user, settings based
 
 .. code-block:: python
 
+
     from django.contrib.auth import get_user_model
+    from django_pyoidc.utils import extract_claim_from_tokens
     from django.core.exceptions import PermissionDenied
     from django.conf import settings
 
     def get_user(userinfo_token, id_token):
-
-        audiences = id_token["aud"]
+        audiences = extract_clam_from_tokens("aud", tokens)
 
         # Perform audience check
         if settings.DJANGO_PYOIDC["keycloak"]["client_id"] not in audiences:
             raise PermissionDenied("You do not have access to this application")
 
-        User = get_user_model()
-        user, created = User.objects.get_or_create(email=userinfo_token["email"])
-        user.is_superuser = "admins" in userinfo_token["groups"]
-        user.backend = "django.contrib.auth.backends.ModelBackend"
+        user = get_user_by_email(tokens)
+        groups = extract_claim_from_tokens('groups', tokens)
+        user.is_staff = "admins" in groups
         user.save()
-
         return user
 
 
 Use the Django permission system with OIDC
-------------------------------------------
+==========================================
 
 Django provides a rich authentication system that handles groups and permissions.
 
@@ -189,24 +207,22 @@ Here is how to do it :
 
 .. code-block:: python
 
+
     from django.contrib.auth import get_user_model
+    from django_pyoidc.utils import extract_claim_from_tokens
 
     def get_user(userinfo_token, id_token):
+        # Here, we reuse the implementation of our library
+        user = get_user_by_email(tokens)
+        groups = extract_claim_from_tokens('groups', tokens)
+        user.is_staff = "admins" in groups
 
+        for group_name in groups:
+            group, _ = Group.objects.get_or_create(name=group_name)
+            group.user_set.add(user)
+            group.save()
 
-        User = get_user_model()
-        user, created = User.objects.get_or_create(email=userinfo_token["email"])
-
-        if "groups" in userinfo_token:
-            for group_name in userinfo_token["groups"]:
-                group, _ = Group.objects.get_or_create(name=group_name)
-                group.user_set.add(user)
-                group.save()
-
-        user.is_superuser = "admins" in userinfo_token["groups"]
-        user.backend = "django.contrib.auth.backends.ModelBackend"
         user.save()
-
         return user
 
 And that's it. Groups will be created on the fly as your users connect to your application.
@@ -217,7 +233,9 @@ Then, you can grant group level permissions and it will be applied to your users
     from groups depending on your use cases.
 
 Redirect the user after login
-------------------------------
+=============================
+
+**TODO**
 
 By default the ``success_redirect`` url defined in your provider is used to redirect the user after login.
 
@@ -247,7 +265,9 @@ However you will need to tweak the settings according to your use-case. You shou
 TODO: RedirectDemo now exists, where do I connect it?
 
 Use multiple identity providers
--------------------------------
+===============================
+
+**TODO**
 
 This library natively supports multiples identity providers.
 
@@ -266,18 +286,6 @@ In a multi-provider setup, the settings look like this :
         }
      }
 
-If you are using our premade providers configuration, your ``settings.py`` will look like this :
-
-
-.. code-block:: python
-
-    from .oidc_providers import oidc_provider_1, oidc_provider_2
-
-    DJANGO_PYOIDC = {
-        FIXME **oidc_provider_1.get_config(login_uris_redirect_allowed_hosts=["app.local:8082"]),
-        FIXME **oidc_provider_2.get_config(login_uris_redirect_allowed_hosts=["app.local:8082"]),
-     }
-
 Then you have to include all your provider url configuration in your ``urlpatterns``. Since view names includes the identity provider name,
 they should not collide.
 
@@ -289,12 +297,18 @@ Here is an example of such a configuration :
     from .oidc import oidc_provider_1, oidc_provider_2
 
     urlpatterns = [
-        path("auth", include(oidc_provider_1.get_urlpatterns())),
-        path("auth", include(oidc_provider_2.get_urlpatterns())),
+        path("auth", include((oidc_helper.get_urlpatterns(), "oidc_provider_name_1"), namespace="auth"),),
+        path("auth", include((oidc_helper.get_urlpatterns(), "oidc_provider_name_2"), namespace="auth"),),
     ]
 
 You can then use those view names to redirect a user to one or the other provider.
-TODO: what are the 'different' view names here?
+
+This will create 4 views for each provider in your URL configuration. They all have a name that derives from the ``op_name`` that you used to create your provider :
+
+* ``<op_name>-login``
+* ``<op_name>-logout``
+* ``<op_name>-callback``
+* ``<op_name>-backchannel-logout``
 
 Since settings are local to a provider, you can also provide different :ref:`hook_get_user` for each to implement custom
 behaviours based on which identity provider a user is coming from.

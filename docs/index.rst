@@ -5,32 +5,37 @@ Welcome to Makina Django OIDC's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: 🚀 Tutorials
+   :caption: 🚀 Getting started
 
    tutorial
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
-   :caption: 🪄 How-to guides
+   :caption: 🪄 Advanced usages
 
    how-to
 
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :hidden:
-   :caption: 💡 Explanation
+   :caption: ⚙️ Settings
 
-   explanation
+   settings.rst
 
 
 .. toctree::
    :maxdepth: 4
    :hidden:
-   :caption: 📚 Reference
+   :caption: 📚 API Reference
 
-   user.rst
+   reference.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: 💡 About this library
+
+   explanation
+
 
 Indices and tables
 ==================

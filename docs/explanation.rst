@@ -1,8 +1,5 @@
-Makina Django OIDC Explanations
-===============================
-
-Other OIDC libraries
---------------------
+Why make a new OIDC library ?
+=============================
 
 We decided to role our own OIDC integration with Django, and that is not a small work. As such we first performed an analysis of the existing libraries, evaluating whether or not we should contribute to them or implement our own.
 
@@ -14,6 +11,12 @@ Here are our criteria :
 * is security sensitive code based on a well known, well maintained library ?
 * is it still maintained ?
 * does it supports *Bearer* authentication (for ``django-rest-framework``).
+
+
+`django-allauth <https://github.com/pennersr/django-allauth/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Todo**
 
 `django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +72,7 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 
 - Very old and unmaintained
  
- `Django OAuth Toolkit <https://github.com/jazzband/django-oauth-toolkit>`_
+`Django OAuth Toolkit <https://github.com/jazzband/django-oauth-toolkit>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -85,10 +88,11 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 - Documentation (which needs to covers also the *server* part) is not easy to use for an *simple* oidc client integration
 
 This Project Goals
--------------------
+==================
 
-This project aim to make OIDC client integration with Django easier while still being robust, exapandable and flexible.
+This project aim to make OIDC client integration with Django easier while still being robust, expandable and flexible.
 To reach this goal we wanted a project with:
+
 - good documentations, based on use cases and helping users doing the right things in the quite complex OIDC world
 - robust security components (handling the cryptography and security aspects of OIDC)
 - more real world usage than the too simple 'handle OIDC login' examples (like API modes, logouts, asynchronous logouts, MtoM mode, multi-tenant setup, etc.)
@@ -97,7 +101,7 @@ Handling the 'login' part in OIDC is quite easy, on the client side. And this pa
 
 Direct Logout and Asynchronous logouts are more complex to understand and manage. The next section is a deeper explanation on this subject.
 
-MtoM mode is about Machine-To-Machine communication, like B-to-B, the fact that you application may need to use OIDC not only to handle real
+MtoM mode is about Machine-To-Machine communication, like B-to-B, the fact that your application may need to use OIDC not only to handle real
 (human) users sessions, but also maybe connections made by some other applications, or you may also need to perform such operation (connecting
 a remote web service using OIDC, not using an human account but a service account instead, identifying as an application and not as a human).
 
@@ -298,8 +302,8 @@ Note: if your Django acts as an OIDC SSO server for other applications, receivin
 containing an iframe with front channel logouts links for all the client applications of your Django. In this library we consider the
 Django website to be only an OIDC client (not server) and we did not implement this cascading front channel logout specification.
 
-Cache Management
-----------------
+About caching
+=============
 
 This library depends on **Django cache system**. Why do an OIDC client depends on a cache ?
 
