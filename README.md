@@ -7,6 +7,8 @@
 </a>
 </p>
 
+[![PyPI version](https://badge.fury.io/py/django-pyoidc.svg)](https://pypi.org/project/django-pyoidc/)
+
 This library allow *Single Sign On* (SSO) integration into Django through the [Open ID Connect (OIDC)]() protocol.
 
 It can be used to setup a Single Sign On using an identity provider (Keycloak, etc.) or to login using Google, Twitter, etc.
