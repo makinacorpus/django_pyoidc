@@ -171,9 +171,9 @@ class OIDCSettings:
                 ]
 
             if "oidc_callback_path" not in op_definition:
-                op_definition[
-                    "oidc_callback_path"
-                ] = f"{op_definition['oidc_paths_prefix']}-callback"
+                op_definition["oidc_callback_path"] = (
+                    f"{op_definition['oidc_paths_prefix']}-callback"
+                )
 
         if "oidc_callback_path" in op_definition:
             # remove '/' prefix if any.
