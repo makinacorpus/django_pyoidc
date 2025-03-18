@@ -71,11 +71,33 @@ When disabled the access token claims are not extracted, you only have the ``acc
 oidc_paths_prefix
 *****************
 
-**Default** : dynamically computed using the name of your identity provide
+**Default** : dynamically computed using the name of your identity provider.
+
+This is the prefix of the various url names created by the OIDCHelper when using get_urlpatterns. If not set it defaults to the op_name.
+
+.. note::
+    One of the created paths is the one referenced by the setting ``oidc_callback_path``.
 
 You can use this setting to change how the OIDC views are named. By default they are named ``<op_name>_[login|callback]``.
 
-Configuring this setting allows you to swap ``<op_name`` with an other value.
+Configuring this setting allows you to swap ``<op_name>`` with an other value.
+
+oidc_callback_path
+*************
+
+This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
+A default path ``<op_name>-callback`` will be used if nothing is provided. This path is used internally to manage the authentication.
+You can alternatively use **callback_uri_name** to provide a named route for this path, this alternative will be better because using
+only oidc_callback_path you need to know the route prefix used on your oidc routes if any.
+
+
+callback_uri_name
+*************
+
+Name of a Django route that can be used to generate the ``oidc_callback_path`` value.
+If you used the OIDCHelper get_urlpatterns the default callback was created with a name ``<op_name>-callback`` (which is also the default path value).
+But the routes namespaces used with get_urlpatterns may be needed. So your final value for this route name should
+be something like "oidc_auth:mysso-callback" if "oidc_auth" was your route namespace and my_sso is your op_name.
 
 Advanced identity provider configuration
 ========================================

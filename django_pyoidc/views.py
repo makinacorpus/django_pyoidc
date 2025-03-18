@@ -131,13 +131,21 @@ class OIDCLoginView(OIDCView):
 
         sid = request.session.get("oidc_sid")
         if sid:
-            client = OIDCClient(self.op_name, session_id=sid)
+            try:
+                client = OIDCClient(self.op_name, session_id=sid)
+            except InvalidSIDException:
+                # maybe a failed attempt trace in the session.
+                # we ignore the session sid and get back on the first steps.
+                client = OIDCClient(self.op_name)
         else:
             client = OIDCClient(self.op_name)
 
-        client.consumer.consumer_config["authz_page"] = self.get_setting(
-            "oidc_callback_path"
-        )
+        callback_path = str(self.get_setting("oidc_callback_path"))
+        if not callback_path.startswith("/"):
+            # issue in pyoidc when base_url ends with "/" and path does not start with "/" there's an extra "/" added (doubling)
+            # to prevent that we finally enforce the "/" prefix on the path
+            callback_path = f"/{callback_path}"
+        client.consumer.consumer_config["authz_page"] = callback_path
         next_redirect_uri = self.get_next_url(request, "next")
 
         if not next_redirect_uri:

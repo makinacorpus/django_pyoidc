@@ -1,6 +1,4 @@
-from typing import Any, Dict, List, Optional, TypedDict
-
-from django.urls import path
+from typing import Any, Dict, Optional, TypedDict
 
 ProviderConfig = TypedDict(
     "ProviderConfig",
@@ -9,6 +7,7 @@ ProviderConfig = TypedDict(
         "client_id": Optional[str],
         "client_secret": Optional[str],
         "oidc_cache_provider_metadata": Optional[str],
+        "oidc_paths_prefix": str,
         "oidc_callback_path": str,
         # less important ---
         "provider_discovery_uri": str,
@@ -51,10 +50,14 @@ class Provider:
         else:
             self.oidc_logout_redirect_parameter_name = "post_logout_redirect"
 
+        if "oidc_paths_prefix" in kwargs:
+            self.oidc_paths_prefix = kwargs["oidc_paths_prefix"]
+        else:
+            self.oidc_paths_prefix = self.op_name
         if "oidc_callback_path" in kwargs:
             self.oidc_callback_path = kwargs["oidc_callback_path"]
         else:
-            self.oidc_callback_path = "/oidc-callback/"
+            self.oidc_callback_path = f"{self.oidc_paths_prefix}-callback"
 
     def get_default_config(self) -> ProviderConfig:
         """Get the default configuration settings for this provider.
@@ -67,6 +70,7 @@ class Provider:
             client_id=None,
             client_secret=None,
             oidc_cache_provider_metadata=None,
+            oidc_paths_prefix=self.oidc_paths_prefix,
             oidc_callback_path=self.oidc_callback_path,
             # less important ---
             provider_discovery_uri=self.provider_discovery_uri,
@@ -78,50 +82,3 @@ class Provider:
             oidc_logout_query_string_redirect_parameter=None,
             oidc_logout_query_string_extra_parameters_dict=None,
         )
-
-    @property
-    def login_uri_name(self) -> str:
-        """
-        The login viewname (use in :func:`django:django.urls.reverse` django directive for example) of this configuration
-        """
-        return f"{self.op_name}-login"
-
-    @property
-    def logout_uri_name(self) -> str:
-        """
-        The logout viewname (use in :func:`django:django.urls.reverse` django directive for example) of this configuration
-        """
-        return f"{self.op_name}-logout"
-
-    @property
-    def callback_uri_name(self) -> str:
-        """
-        The callback viewname (use in :func:`django:django.urls.reverse` django directive for example) of this configuration
-        """
-        return f"{self.op_name}-callback"
-
-    def get_urlpatterns(self) -> List[Any]:
-        """
-        Returns:
-            A list of urllpatterns to be included using :func:`django:django.urls.include` in your url configuration
-        """
-        from django_pyoidc.views import OIDCCallbackView, OIDCLoginView, OIDCLogoutView
-
-        result = [
-            path(
-                f"{self.oidc_callback_path}",
-                OIDCCallbackView.as_view(op_name=self.op_name),
-                name=self.callback_uri_name,
-            ),
-            path(
-                f"{self.oidc_callback_path}-login",
-                OIDCLoginView.as_view(op_name=self.op_name),
-                name=self.login_uri_name,
-            ),
-            path(
-                f"{self.oidc_callback_path}-logout",
-                OIDCLogoutView.as_view(op_name=self.op_name),
-                name=self.logout_uri_name,
-            ),
-        ]
-        return result

@@ -23,7 +23,7 @@ class SettingsTestCase(OIDCTestCase):
                 "provider_class": "django_pyoidc.providers.KeycloakProvider",
                 "keycloak_base_uri": "http://sso_tutut",
                 "keycloak_realm": "realm_foo",
-                "oidc_callback_path": "/callback-foo-abc",
+                "oidc_paths_prefix": "foo-abc",
                 "login_uris_redirect_allowed_hosts": ["foo", "bar"],
                 "login_redirection_requires_https": True,
                 "post_login_uri_success": "/abc-123",
@@ -51,7 +51,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("cache_django_backend"), "default")
         self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
         self.assertEqual(settings.get("oidc_cache_provider_metadata_ttl"), 75)
-        self.assertEqual(settings.get("oidc_callback_path"), "/callback-foo-abc")
+        self.assertEqual(settings.get("oidc_callback_path"), "foo-abc-callback")
         self.assertEqual(
             settings.get("login_uris_redirect_allowed_hosts"), ["foo", "bar"]
         )
@@ -95,7 +95,8 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("post_login_uri_success"), "/")
         self.assertEqual(settings.get("post_login_uri_failure"), "/")
         self.assertEqual(settings.get("post_logout_redirect_uri"), "/")
-        self.assertEqual(settings.get("oidc_callback_path"), "/oidc-callback/")
+        self.assertEqual(settings.get("oidc_paths_prefix"), "lib_238")
+        self.assertEqual(settings.get("oidc_callback_path"), "lib_238-callback")
         self.assertEqual(settings.get("login_uris_redirect_allowed_hosts"), None)
         self.assertEqual(settings.get("hook_user_login"), None)
         self.assertEqual(settings.get("hook_user_logout"), None)
@@ -445,7 +446,8 @@ class SettingsTestCase(OIDCTestCase):
         )
         self.assertEqual(settings.get("cache_django_backend"), "default")
         self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
-        self.assertEqual(settings.get("oidc_callback_path"), "/callback-foo-def")
+        self.assertEqual(settings.get("oidc_paths_prefix"), "lib_885")
+        self.assertEqual(settings.get("oidc_callback_path"), "callback-foo-def")
         self.assertEqual(
             settings.get("login_uris_redirect_allowed_hosts"), ["foo2", "bar2"]
         )

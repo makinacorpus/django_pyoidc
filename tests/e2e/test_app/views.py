@@ -24,8 +24,8 @@ class OIDCTestSuccessView(OIDCView):
         if op_name[:5] == "lemon":
             number = op_name[-1]
             context = {
-                "op_login_url": f"e2e_test_ll_login_{number}",
-                "op_logout_url": f"e2e_test_ll_logout_{number}",
+                "op_login_url": f"lemon{number}_namespace:lemon{number}-login",
+                "op_logout_url": f"lemon{number}_namespace:lemon{number}-logout",
             }
         else:
             number = op_name[-1]
@@ -52,8 +52,8 @@ class OIDCTestFailureView(OIDCView):
         if op_name[:5] == "lemon":
             number = op_name[-1]
             context = {
-                "op_login_url": f"e2e_test_ll_login_{number}",
-                "op_logout_url": f"e2e_test_ll_logout_{number}",
+                "op_login_url": f"lemon{number}_namespace:lemon{number}-login",
+                "op_logout_url": f"lemon{number}_namespace:lemon{number}-logout",
             }
         else:
             number = op_name[-1]
@@ -81,8 +81,8 @@ class OIDCTestLogoutView(OIDCView):
         if op_name[:5] == "lemon":
             number = op_name[-1]
             context = {
-                "op_login_url": f"e2e_test_ll_login_{number}",
-                "op_logout_url": f"e2e_test_ll_logout_{number}",
+                "op_login_url": f"lemon{number}_namespace:lemon{number}-login",
+                "op_logout_url": f"lemon{number}_namespace:lemon{number}-logout",
             }
         else:
             number = op_name[-1]

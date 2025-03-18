@@ -55,8 +55,8 @@ class UrlsTestCase(OIDCTestCase):
         """
         Test that using only oidc_callback_path we have the right callback path.
 
-        "sso2" definition does not contain callback_uri_name but oidc_callback_path
-        instead.
+        "sso2" definition does not contain callback_uri_name not oidc_paths_prefix
+        but oidc_callback_path instead.
         """
         host = settings.DJANGO_PYOIDC["sso2"]["login_uris_redirect_allowed_hosts"][0]
         response = self.client.get(
@@ -71,3 +71,86 @@ class UrlsTestCase(OIDCTestCase):
         arguments = query_string.split("&")
         self.assertIn("client_id=2", arguments)
         self.assertIn(f"redirect_uri=http%3A%2F%2F{host}%2Fcallback-wtf%2F", arguments)
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_helper_callback_path_with_callback_uri_name_and_url_prefix(self, *args):
+        """ """
+        host = settings.DJANGO_PYOIDC["sso10"]["login_uris_redirect_allowed_hosts"][0]
+        response = self.client.get(
+            reverse("op10_namespace:sso10-login"),
+            data={"next": f"https://{host}/foo/bar"},
+            SERVER_NAME=host,
+        )
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["Location"]
+        elements = location.split("?")
+        query_string = elements[1]
+        arguments = query_string.split("&")
+        self.assertIn("client_id=10", arguments)
+        self.assertIn("response_type=code", arguments)
+        self.assertIn(f"redirect_uri=http%3A%2F%2F{host}%2Fsso10-callback", arguments)
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_helper_callback_path_with_oidc_paths_prefix_and_url_prefix(self, *args):
+        """ """
+        host = settings.DJANGO_PYOIDC["sso11"]["login_uris_redirect_allowed_hosts"][0]
+        response = self.client.get(
+            reverse("op11_namespace:sso11-login"),
+            data={"next": f"https://{host}/foo/bar"},
+            SERVER_NAME=host,
+        )
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["Location"]
+        elements = location.split("?")
+        query_string = elements[1]
+        arguments = query_string.split("&")
+        self.assertIn("client_id=11", arguments)
+        self.assertIn("response_type=code", arguments)
+        # No path prefix for sso11, as we do not use a named route or any way to fix the route prefix.
+        self.assertIn(f"redirect_uri=http%3A%2F%2F{host}%2Foidc11-callback", arguments)
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_helper_callback_path_with_oidc_paths_prefix_and_oidc_callback_path_and_url_prefix(
+        self, *args
+    ):
+        """ """
+        host = settings.DJANGO_PYOIDC["sso12"]["login_uris_redirect_allowed_hosts"][0]
+        response = self.client.get(
+            reverse("op12_namespace:sso12-login"),
+            data={"next": f"https://{host}/foo/bar"},
+            SERVER_NAME=host,
+        )
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["Location"]
+        elements = location.split("?")
+        query_string = elements[1]
+        arguments = query_string.split("&")
+        self.assertIn("client_id=12", arguments)
+        self.assertIn("response_type=code", arguments)
+        self.assertIn(
+            f"redirect_uri=http%3A%2F%2F{host}%2Fprefix12%2Foidc12-zz-callback",
+            arguments,
+        )
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_helper_allback_path_with_oidc_paths_prefix_and_callback_uri_name_and_route_prefix(
+        self, *args
+    ):
+        """ """
+        host = settings.DJANGO_PYOIDC["sso13"]["login_uris_redirect_allowed_hosts"][0]
+        response = self.client.get(
+            reverse("op13_namespace:sso13-login"),
+            data={"next": f"https://{host}/foo/bar"},
+            SERVER_NAME=host,
+        )
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["Location"]
+        elements = location.split("?")
+        query_string = elements[1]
+        arguments = query_string.split("&")
+        self.assertIn("client_id=13", arguments)
+        self.assertIn("response_type=code", arguments)
+        self.assertIn(
+            f"redirect_uri=http%3A%2F%2F{host}%2Fprefix13%2Foidc13-ww-callback",
+            arguments,
+        )

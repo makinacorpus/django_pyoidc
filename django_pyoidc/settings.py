@@ -7,6 +7,7 @@ from django.conf import settings as django_settings
 from django.urls import reverse_lazy
 
 from django_pyoidc.exceptions import InvalidOIDCConfigurationException
+from django_pyoidc.providers.provider import Provider
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,10 @@ class OIDCSettings:
                provider_discovery_uri (str): URL of the SSO server (the .well-known/openid-configuration part is added to this path).
                 Some providers like the keycloak provider can instead generate this settings by combining 'keycloak_base_uri' (str) and
                 'keycloak_realm' (str) settings.
-               oidc_callback_path (str): the path used to call this library during the login round-trips, the default is "/oidc-callback/".
-               callback_uri_name (str): the route giving the path for oidc_callback_path that you can use instead of oidc_callback_path
+               oidc_paths_prefix (str): the string prefix for all paths created by the OIDCHelper when creating routes in get_urlpatterns, the default is "{op_name}".
+               oidc_callback_path (str): the path used to call this library during the login round-trips, the default is "{oidc_paths_prefix}-callback".
+                if you use namespaced and prefixed routes for the routes created via get_urlpatterns prefer using callback_uri_name.
+               callback_uri_name (str): the route giving the path for oidc_callback_path that you can use instead of oidc_callback_path.
                post_logout_redirect_uri (str): the URI where a user should be redirected to on logout success
                post_login_uri_failure (str): the URI where a user should be redirected to on login failure
                post_login_uri_success (str): the URI a user should be redirected to on login success if no redirection url where provided
@@ -82,6 +85,10 @@ class OIDCSettings:
         """
 
         self.op_name = op_name
+        if not hasattr(django_settings, "DJANGO_PYOIDC"):
+            raise InvalidOIDCConfigurationException(
+                "DJANGO_PYOIDC settings are undefined."
+            )
         if self.op_name not in django_settings.DJANGO_PYOIDC:
             raise InvalidOIDCConfigurationException(
                 f"{self.op_name} provider name must be configured in DJANGO_PYOIDC settings."
@@ -107,14 +114,14 @@ class OIDCSettings:
         )
 
         # This call can fail if required attributes are not set
-        provider = provider_real_class(op_name=self.op_name, **op_definition)
+        self._provider = provider_real_class(op_name=self.op_name, **op_definition)
 
         # Init a local final operator settings with user given values
         self.OP_SETTINGS = op_definition
         # get some defaults and variation set by the provider
         # For example it could be a newly computed value (provider_discovery_uri from uri and realm for keycloak)
         # or some defaults altered
-        provider_default_settings = provider.get_default_config()
+        provider_default_settings = self._provider.get_default_config()
         # Then merge the two, so for all settings we have, with priority
         #  * user defined specific values (if not empty)
         #  * provider computed or default value (if not empty)
@@ -150,15 +157,33 @@ class OIDCSettings:
                 op_definition["provider_discovery_uri"] = discovery
 
         # Special path manipulations
+        if "oidc_paths_prefix" in op_definition:
+            # we cannot be sure that this part will be the full path at the end
+            # because the routes based on this path can be used in prefix
+            # but we can document that when prefix are used the callback_uri_name
+            # is a better way to define callback path.
+            # here this will only work when no route prefix is used.
+
+            if "oidc_callback_path" not in op_definition:
+                op_definition["oidc_callback_path"] = reverse_lazy(
+                    f"{op_definition['oidc_paths_prefix']}-callback"
+                )
+
         if "oidc_callback_path" in op_definition:
-            op_definition["oidc_callback_path"] = op_definition["oidc_callback_path"]
+            # remove '/' prefix if any.
+            op_definition["oidc_callback_path"] = op_definition[
+                "oidc_callback_path"
+            ].lstrip("/")
+
+        # else: do not set defaults.
+        # The Provider object should have defined a default callback path part and default
+        # callback path.
+
         if "callback_uri_name" in op_definition:
             op_definition["oidc_callback_path"] = reverse_lazy(
                 op_definition["callback_uri_name"]
             )
             del op_definition["callback_uri_name"]
-        # else: do not set defaults.
-        # The Provider objet will define a defaut callback path if not set.
 
         # allow simpler names
         # * "logout_redirect" for "post_logout_redirect_uri"
@@ -238,6 +263,10 @@ class OIDCSettings:
         if res is None:
             return default
         return res
+
+    @property
+    def provider(self) -> Provider:
+        return self._provider
 
     def _get_attr(self, key: str) -> Optional[OidcSettingValue]:
         """Retrieve attr, if op value is None a check on globals is made.
