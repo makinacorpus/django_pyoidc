@@ -11,7 +11,7 @@ from typing_extensions import override
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.exceptions import ExpiredToken
-from django_pyoidc.settings import OIDCSettingsFactory
+from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory
 from django_pyoidc.utils import OIDCCacheBackendForDjango, check_audience
 
 logger = logging.getLogger(__name__)
@@ -22,11 +22,17 @@ class OidcAuthException(Exception):
 
 
 class OIDCBearerAuthentication(BaseAuthentication):
-    def __init__(self, *args: Any, **kwargs: Any):
-        super(OIDCBearerAuthentication, self).__init__(*args, **kwargs)
-        self.opsettings = OIDCSettingsFactory.get("drf")
-        self.general_cache_backend = OIDCCacheBackendForDjango(self.opsettings)
-        self.engine = OIDCEngine(self.opsettings)
+    @functools.cached_property
+    def opsettings(self) -> OIDCSettings:
+        return OIDCSettingsFactory.get("drf")
+
+    @functools.cached_property
+    def general_cache_backend(self) -> OIDCCacheBackendForDjango:
+        return OIDCCacheBackendForDjango(self.opsettings)
+
+    @functools.cached_property
+    def engine(self) -> OIDCEngine:
+        return OIDCEngine(self.opsettings)
 
     @functools.cached_property
     def client(self) -> OIDCClient:
