@@ -42,8 +42,11 @@ Providers classes allows the final user to configure their project without havin
 Each provider implements the configuration logic and should be used using the :ref:`provider-class-setting` setting.
 
 .. tip::
+    Read :ref:`the tutorial <tuto_settings>` to learn how to use provider class !
 
-    All the named arguments of __init__() can be set by configuring a setting **with the same**.
+.. tip::
+
+    All the named arguments of __init__() can be set by configuring a setting **with the same name**.
 
 Provider list
 ^^^^^^^^^^^^^

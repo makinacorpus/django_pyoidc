@@ -113,7 +113,7 @@ Configure a cache backend
 *************************
 
 **You must have a cache backend** for this library to work ! The OIDC protocol is very statefull and we use Django cache system to store data.
-If you want to understand why, you can read the :ref:`Cache Management` page.
+If you want to understand why, you can read the :ref:`Cache management <expl_cache>` page.
 
 For the sake of this tutorial, you can use this cache management snippet (it should be pasted in your ``settings.py``) :
 
@@ -128,6 +128,8 @@ For the sake of this tutorial, you can use this cache management snippet (it sho
 
 .. warning::
     Do not use those settings in production ! Go read the `django documentation <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_ for more details.
+
+.. _tuto_settings:
 
 Configure the library
 *********************
@@ -215,6 +217,8 @@ This will create 4 views in your URL configuration. They all have a name that de
     identity provider. The view names would then be ``<oidc_paths_prefix>_<view_name>``.
 
 You should now be able to use the view names from this library to redirect the user to a login/logout page.
+
+.. _drf_tuto:
 
 Configuring django_rest_framework
 =================================
