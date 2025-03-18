@@ -229,7 +229,8 @@ class OIDCLogoutView(OIDCView):
             except (
                 Exception
             ) as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
-                logger.error("OIDC Logout call error when loading OIDC state: ")
+                # FIXME : needs python >= 3.11
+                #  e.add_note("OIDC Logout call error when loading OIDC state: ")
                 logger.exception(e)
 
         # Hook user logout function
@@ -262,7 +263,7 @@ class OIDCLogoutView(OIDCView):
             logger.debug("SSO logout: endsession redirect url: %s", url)
             return redirect(url)
         else:
-            logger.error(
+            logger.warning(
                 f"Cannot build the SSO disconnection link (maybe the cache was flushed ?), still redirecting directly to {post_logout_url}"
             )
             return redirect(post_logout_url)
