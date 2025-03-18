@@ -55,7 +55,7 @@ Here is how it looks if we extend the configuration made in :ref:`Configure the 
         },
 
 
-See :ref:`Hook settings` for more information on the function path syntax.
+See :ref:`Hook settings <settings_hook>` for more information on the function path syntax.
 
 You should now see a message on login/logout ! 🎉
 
@@ -136,7 +136,7 @@ group named *admin*. If you are not familiar with the claims available in your t
 
 To have this function called instead of the default one, you need to modify your settings so that :ref:`hook_get_user` points to the function that we just wrote.
 
-The value of this setting should be : ``<my_app>.oidc:login_function`` (see :ref:`Hook settings` for more information on this syntax).
+The value of this setting should be : ``<my_app>.oidc:login_function`` (see :ref:`Hook settings <settings_hook>` for more information on this syntax).
 
 If you configured your settings manually (without using the providers system), you can add the key directly.
 
@@ -267,11 +267,9 @@ TODO: RedirectDemo now exists, where do I connect it?
 Use multiple identity providers
 ===============================
 
-**TODO**
-
 This library natively supports multiples identity providers.
 
-You already have to specify a provider name when you configure your settings (either automatically by using a provider, or :ref:`manually <Providers settings>`).
+You already have to specify a provider name when you configure your settings (either automatically by using a provider, or :ref:`manually <provider-class-setting>`).
 
 In a multi-provider setup, the settings look like this :
 

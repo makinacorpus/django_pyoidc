@@ -1,3 +1,5 @@
+.. _expl_new_oidc:
+
 Why make a new OIDC library ?
 =============================
 
@@ -16,7 +18,8 @@ Here are our criteria :
 `django-allauth <https://github.com/pennersr/django-allauth/>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Todo**
+This library OIDC implementation is based on the python package ``oic`` which we believe should not
+be used for OIDC usages.
 
 `django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -301,6 +304,8 @@ the claims. The default behavior of this library should be to check the claims i
 Note: if your Django acts as an OIDC SSO server for other applications, receiving a front channel logout call should generate a page
 containing an iframe with front channel logouts links for all the client applications of your Django. In this library we consider the
 Django website to be only an OIDC client (not server) and we did not implement this cascading front channel logout specification.
+
+.. _expl_cache:
 
 About caching
 =============

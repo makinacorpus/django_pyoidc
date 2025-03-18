@@ -3,9 +3,18 @@
 
 <p align="center">
 <a href="https://django-pyoidc.readthedocs.io">
-        <img src="https://readthedocs.org/projects/django-pyoidc/badge/?version=main" />
+        <img src="https://readthedocs.org/projects/django-pyoidc/badge/?version=stable&style=plastic"/>
 </a>
-</p>
+<a href="https://pypi.org/project/django-pyoidc/">
+  <img src="https://img.shields.io/pypi/v/django_pyoidc.svg"/>      
+</a>
+<a href="https://pypi.org/project/django-pyoidc/">
+  <img src="https://img.shields.io/pypi/pyversions/django_pyoidc"/>      
+</a>
+<a href="https://pypi.org/project/django-pyoidc/">
+  <img src="[https://img.shields.io/pypi/pyversions/django_pyoidc](https://img.shields.io/pypi/frameworkversions/django/django_pyoidc)"/>      
+</a>
+
 
 This library allow *Single Sign On* (SSO) integration into Django through the [Open ID Connect (OIDC)]() protocol.
 
@@ -19,13 +28,13 @@ If you are not satisfied with the default configuration, take a look at the cook
 
 ## Features
 
-- Easy configuration through premade [`Provider`](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers) classes.
+- Easy configuration through premade `Provider` classes (see the list [here](https://django-pyoidc.readthedocs.io/latest/reference.html#providers)
 - Authenticate users from multiple providers
 - Bearer authentication support for [django-rest-framework](https://www.django-rest-framework.org/) integration (**single provider**)
-- Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/en/latest/how-to.html#use-the-django-permission-system-with-oidc)
+- Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/latest/how-to.html#use-the-django-permission-system-with-oidc)
 - Highly customizable design that should suit most needs
 - Support back-channel logout
-- Support service accounts (accounts for machine-to-machine uses)
+- Support service accounts (accounts for machine-to-machine authentication)
 - Sane and secure defaults settings
 
 ## Roadmap
@@ -43,7 +52,7 @@ We were also heavily inspired by :
 * [`mozilla-django-oidc`](https://github.com/mozilla/mozilla-django-oidc) for it's login redirection URI management
 * [`django-auth-oidc`](https://gitlab.com/aiakos/django-auth-oidc) for it's hook system
 
-If you want to understand why we decided to implement our own library, this is documented [here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#other-oidc-libraries).
+If you want to understand why we decided to implement our own library, this is documented [here](https://django-pyoidc.readthedocs.io/latest/explanation.html).
 
 ## Documentation
 
@@ -76,13 +85,13 @@ MIDDLEWARE = [
 ]
 ```
 
-Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#cache-management)). Run in your project dir :
+Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)). Run in your project dir :
 
 ```
 ./manage.py migrate
 ```
 
-We also need a cache ([read why here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#cache-management)), so let's configure a dumb one for development purposes. Add in your `settings.py` :
+We also need a cache ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)), so let's configure a dumb one for development purposes. Add in your `settings.py` :
 
 ```python
 CACHES = {
@@ -93,7 +102,7 @@ CACHES = {
 }
 ```
 
-Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers). Providers class are a quick way to generate the library configuration and URLs. You can also configure the settings manually, but this is not recommended if you are not familiar with the OpendID Connect (OIDC) protocol.
+Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/latest/reference.html#providers). Providers class are a quick way to generate the library configuration and URLs. You can also configure the settings manually, but this is not recommended if you are not familiar with the OpendID Connect (OIDC) protocol.
 
 Add the following `DJANGO_PYOIDC` to your `settings.py` :
 
@@ -135,11 +144,11 @@ urlpatterns = [
 
 And you are ready to go !
 
-If you struggle with those instructions, take a look at [the quickstart tutorial](https://django-pyoidc.readthedocs.io/en/latest/tutorial.html#requirements).
+If you struggle with those instructions, take a look at [the quickstart tutorial](https://django-pyoidc.readthedocs.io/latest/tutorial.html).
 
 ## Usage/Examples
 
-We wrote an extensive collection of 'how-to' guides in the [documentation](https://django-pyoidc.readthedocs.io/en/latest/how-to.html).
+We wrote an extensive collection of 'how-to' guides in the [documentation](https://django-pyoidc.readthedocs.io/latest/index.html).
 
 ## Appendix
 

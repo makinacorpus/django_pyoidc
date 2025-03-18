@@ -185,7 +185,9 @@ cache_django_backend
 
 This setting configures the cache backend that is used to store OIDC sessions details. It should be
 the name of a cache defined in the ``CACHES` django settings.
-You can read more about *Cache Management* :ref:`here <Cache Management>`.
+You can read more about *Cache Management* :ref:`here <expl_cache>`.
+
+.. _settings_hook:
 
 Hook
 ====
