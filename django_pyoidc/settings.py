@@ -164,26 +164,19 @@ class OIDCSettings:
             # is a better way to define callback path.
             # here this will only work when no route prefix is used.
 
-            # remove '/' prefix if any."
-            if op_definition["oidc_paths_prefix"][:1] == "/":
-                op_definition["oidc_paths_prefix"] = op_definition["oidc_paths_prefix"][
-                    1:
-                ]
-
             if "oidc_callback_path" not in op_definition:
-                op_definition["oidc_callback_path"] = (
+                op_definition["oidc_callback_path"] = reverse_lazy(
                     f"{op_definition['oidc_paths_prefix']}-callback"
                 )
 
         if "oidc_callback_path" in op_definition:
             # remove '/' prefix if any.
-            if op_definition["oidc_callback_path"][:1] == "/":
-                op_definition["oidc_callback_path"] = op_definition[
-                    "oidc_callback_path"
-                ][1:]
+            op_definition["oidc_callback_path"] = op_definition[
+                "oidc_callback_path"
+            ].lstrip("/")
 
         # else: do not set defaults.
-        # The Provider object should have defined a defaut callback path part and default
+        # The Provider object should have defined a default callback path part and default
         # callback path.
 
         if "callback_uri_name" in op_definition:
@@ -271,6 +264,7 @@ class OIDCSettings:
             return default
         return res
 
+    @property
     def provider(self) -> Provider:
         return self._provider
 
