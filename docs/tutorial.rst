@@ -219,6 +219,11 @@ You should now be able to use the view names from this library to redirect the u
 Configuring django_rest_framework
 =================================
 
+When using OIDC to authenticate an API, things are a little bit different than on a **full stack** website :
+
+* we do not want to redirect users on login pages, or to manage logout
+* we are receiving OIDC Bearer tokens -- access tokens-- (generated from other clients of the SSO) and the task is mainly to check that this token is valid and extract the user from it.
+
 To configure *django_rest_framework*, you must create a special provider named ``drf``. The configuration
 is similar to the one made in :ref:`Configure the library`.
 
@@ -236,6 +241,11 @@ is similar to the one made in :ref:`Configure the library`.
             ),
             "oidc_cache_provider_metadata": True,
         },
+
+
+.. note::
+    Usually your application should request a different *client_id* for the apimode (like a **my-app-full** *client_id* for a confidential classical OIDC client and a **my-app-api** *client_id* for a bearer-only OIDC client in Keycloak). But if you have only one *client_id* it's OK to simply make a copy for the settings.
+
 
 Once you declared those settings, you can configure ``DEFAULT_AUTHENTICATION_CLASSES`` to use ``django_pyoidc.drf.authentication.OIDCBearerAuthentication`` to use this authentication class on all your views :
 
@@ -258,4 +268,8 @@ You can also set this class on a per-view basis using the ``authentication_class
     class ExampleViewSet(ModelViewSet) :
         authentication_classes = [OIDCBearerAuthentication]
 
-Please refer to `the drf documentation <https://www.django-rest-framework.org/api-guide/authentication/>`_ for more details.
+This class looks up the OIDC provider named ``drf`` in the ``DJANGO_PYOIDC`` setting. As such, you can only have one provider for all your API authentication, as you can not define
+two ``drf`` keys in the settings.
+
+.. tip::
+    Look up `the drf documentation <https://www.django-rest-framework.org/api-guide/authentication/>`_ for more details about authentication classes.

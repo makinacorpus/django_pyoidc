@@ -38,10 +38,18 @@ provider_discovery_uri
 This settings should be the URL of an OIDC autoconfiguration endpoint. We will use this
 setting to discover and store all the URLs needed to perform user authentication.
 
+
+.. note::
+    The ``.well-known/openid-configuration`` part of this url is not necessary, it will automatically be added.
+
 client_secret
 *************
 
 This setting configures the client secret used to authenticate your application with an identity provider.
+
+.. note::
+    If you only have a client_id and not client_secret it means your OIDC client (application) was defined as a public application, which is normally only done for javascript SLA applications. A regular web application should have a client_secret, and an API backend application too.
+
 
 client_id
 *********
@@ -53,8 +61,12 @@ use_introspection_on_access_tokens
 
 **Default** : ``True``
 
-This setting is only used for DRF authentication. When enabled, we will not try to parse the token and we will use the introspection endpoint of the
-identity provider to perform token validation.
+This setting is enabled by default on Django Rest Framework authentication (when you use drf for the key in DJANGO_PYOIDC, see :ref:`Configuring django_rest_framework` for more details). You can also activate it for more classical providers. But in DRF mode the ``access_token`` is the only information you receive from the user, and you need to extract claims from the token, that's why we use introspection to both validate the token and get more informations from it.
+
+When this setting is enabled, we will use the *introspection endpoint* of the
+identity provider to perform token validation and return a clear extraction of the ``access_token``.
+
+When disabled the access token claims are not extracted, you only have the ``access_token`` in its JWT encoded format. You can then decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default. If you need informations from the ``access_token`` activating this setting will add a round trip to the SSO server, but at the end you'll have all the ``access_tokens`` claims in clear text.
 
 oidc_paths_prefix
 *****************

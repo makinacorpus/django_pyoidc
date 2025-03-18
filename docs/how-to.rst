@@ -117,7 +117,7 @@ Let's start our implementation by reusing the default implementation provided by
           "email": "admin@example.com"
         }
 
-Since we are familiar with OIDC tokens, we known that we want to check the ``groups`` claim, and look for a
+Since we are familiar with OIDC tokens, we know that we want to check the ``groups`` claim, and look for a
 group named *admin*. If you are not familiar with the claims available in your tokens, print them !
 
 .. code-block:: python
@@ -172,7 +172,7 @@ Since we already defined our client ID in the settings, we fetch it from there !
 
     from django.contrib.auth import get_user_model
     from django_pyoidc.utils import extract_claim_from_tokens
-   from django.core.exceptions import PermissionDenied
+    from django.core.exceptions import PermissionDenied
     from django.conf import settings
 
     def get_user(userinfo_token, id_token):

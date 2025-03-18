@@ -14,13 +14,14 @@ It can be used to setup a Single Sign On using an identity provider (Keycloak, e
 **Warning** : this library has not been audited. However, we are based on [pyoidc](https://github.com/CZ-NIC/pyoidc/) which we believe is a sane OIDC implementation.
 
 We tried to make OpenID Connect (OIDC) configuration as easy and secure as possible. However 
-everything can be customized and we tried to take into account every use case in the library design.
-If you are not satisfied with the default configuration, take a look at the setting wiki page TODO.
+everything can be customized, and we tried to take into account every use case in the library design.
+If you are not satisfied with the default configuration, take a look at the cookbook or the setting reference.
 
 ## Features
 
 - Easy configuration through premade [`Provider`](https://django-pyoidc.readthedocs.io/en/latest/user.html#providers) classes.
 - Authenticate users from multiple providers
+- Bearer authentication support for [django-rest-framework](https://www.django-rest-framework.org/) integration (**single provider**)
 - Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/en/latest/how-to.html#use-the-django-permission-system-with-oidc)
 - Highly customizable design that should suit most needs
 - Support back-channel logout
@@ -73,17 +74,6 @@ Don't forget to add the session middleware ! Add in your `settings.py` :
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
 ]
-```
-
-**If you use `django-rest-framework`** you can configure `DEFAULT_AUTHENTICATION_CLASSES` to use `django_pyoidc.drf.authentication.OIDCBearerAuthentication` :
-
-```python
-# settings.py
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "django_pyoidc.drf.authentication.OIDCBearerAuthentication"
-    ]
-}
 ```
 
 Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/en/latest/explanation.html#cache-management)). Run in your project dir :
