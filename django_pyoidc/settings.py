@@ -165,8 +165,12 @@ class OIDCSettings:
             # is a better way to define callback path.
             # here this will only work when no route prefix is used.
 
+            op_definition["oidc_paths_prefix"] = op_definition[
+                "oidc_paths_prefix"
+            ].lstrip("/")
+
             if "oidc_callback_path" not in op_definition:
-                op_definition["oidc_callback_path"] = reverse_lazy(
+                op_definition["oidc_callback_path"] = (
                     f"{op_definition['oidc_paths_prefix']}-callback"
                 )
 
