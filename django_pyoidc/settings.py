@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, TypedDict, TypeVar, Union
 
 from django.conf import settings as django_settings
 from django.urls import reverse_lazy
+from django.utils.functional import Promise
 
 from django_pyoidc.exceptions import InvalidOIDCConfigurationException
 from django_pyoidc.providers.provider import Provider
@@ -170,10 +171,13 @@ class OIDCSettings:
                 )
 
         if "oidc_callback_path" in op_definition:
-            # remove '/' prefix if any.
-            op_definition["oidc_callback_path"] = op_definition[
-                "oidc_callback_path"
-            ].lstrip("/")
+
+            if not isinstance(op_definition["oidc_callback_path"], Promise):
+
+                # remove '/' prefix if any.
+                op_definition["oidc_callback_path"] = op_definition[
+                    "oidc_callback_path"
+                ].lstrip("/")
 
         # else: do not set defaults.
         # The Provider object should have defined a default callback path part and default

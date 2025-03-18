@@ -5,8 +5,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from rest_framework import authentication, exceptions
 
+from django_pyoidc.client import OIDCClient
 from django_pyoidc.utils import OIDCCacheBackendForDjango
-from django_pyoidc.views import OIDClient
 
 
 class BaseOIDCAuthentication(authentication.BaseAuthentication):
@@ -14,7 +14,7 @@ class BaseOIDCAuthentication(authentication.BaseAuthentication):
         # fixme : no multi-provider support here
         self.op_name = "default"
         self.general_cache_backend = OIDCCacheBackendForDjango(self.op_name)
-        self.client = OIDClient(self.op_name)
+        self.client = OIDCClient(self.op_name)
 
     def authenticate(self, request):
         token = self.get_access_token(request)
