@@ -189,8 +189,8 @@ You can read more about *Cache Management* :ref:`here <expl_cache>`.
 
 .. _settings_hook:
 
-Hook
-====
+Hooks
+=====
 
 Hook settings are path to a python function that should be called in specific context. We use a custom syntax to reference a function of a module.
 
@@ -211,7 +211,7 @@ hook_user_logout
 
 Calls the provided function on user logout. The function is called if the logout is successful, but before redirecting the user.
 
-This function takes two arguments :
+This function takes two named parameters :
 
 1. a request instance :class:`django:django.http.HttpRequest`
 2. the request args sent to the sso server (missing the id_token_hint element)
@@ -223,7 +223,7 @@ hook_user_login
 
 Calls the provided function on user login. The functions is called if the login is successful.
 
-This function takes two arguments :
+This function takes two parameters :
 
 1. a request instance :class:`django:django.http.HttpRequest`
 2. a user instance :class:`django.contrib.auth.models.User`
@@ -233,9 +233,13 @@ Since the user wasn't logged in, it is not yet attached to the request instance 
 hook_get_user
 *************
 
-Calls the provided function on user login. It takes two arguments :
+Calls the provided function on user login. It takes two parameters :
 
-* the user info token (a dictionary) from the identity provider
-* the id token
+* ``client`` : an instance of ``OIDClient`` that can be used to fetch the provider which authenticated the user
+* ``tokens`` : a dict with four keys :
+    * ``info_token_claims`` : the userinfo token (if available) as a dict
+    * ``access_token_jwt`` : the access token in it's raw form, undecoded (jwt)
+    * ``access_token_claims`` : the access token decoded, as a dict
+    * ``id_token_claims`` : the id token as a dict
 
 It is expected to return a :class:`django.contrib.auth.models.User` instance.
