@@ -20,7 +20,7 @@ This library allow *Single Sign On* (SSO) integration into Django through the [O
 
 It can be used to setup a Single Sign On using an identity provider (Keycloak, etc.) or to login using Google, Twitter, etc.
 
-**Warning** : this library has not been audited. However, we are based on [pyoidc](https://github.com/CZ-NIC/pyoidc/) which we believe is a sane OIDC implementation.
+**Warning**: this library has not been audited. However, we are based on [pyoidc](https://github.com/CZ-NIC/pyoidc/) which we believe is a sane OIDC implementation.
 
 We tried to make OpenID Connect (OIDC) configuration as easy and secure as possible. However 
 everything can be customized, and we tried to take into account every use case in the library design.
@@ -47,10 +47,10 @@ If you are not satisfied with the default configuration, take a look at the cook
 
 This library is built on the work of many others. First all, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementation. This library is mostly about glue between Django and *pyoidc*.
 
-We were also heavily inspired by :
+We were also heavily inspired by:
 
-* [`mozilla-django-oidc`](https://github.com/mozilla/mozilla-django-oidc) for it's login redirection URI management
-* [`django-auth-oidc`](https://gitlab.com/aiakos/django-auth-oidc) for it's hook system
+* [`mozilla-django-oidc`](https://github.com/mozilla/mozilla-django-oidc) for its login redirection URI management
+* [`django-auth-oidc`](https://gitlab.com/aiakos/django-auth-oidc) for its hook system
 
 If you want to understand why we decided to implement our own library, this is documented [here](https://django-pyoidc.readthedocs.io/latest/explanation.html).
 
@@ -60,13 +60,13 @@ The documentation is graciously hosted at [readthedocs](https://django-pyoidc.re
 
 ## Installation
 
-First, install the python package :
+First, install the python package:
 
 ```bash
 pip install django_pyoidc
 ```
 
-Then add the library app to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
+Then add the library app to your django applications, after `django.contrib.sessions` and `django.contrib.auth`:
 
 ```python
 INSTALLED_APPS = [
@@ -77,7 +77,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-Don't forget to add the session middleware ! Add in your `settings.py` :
+Don't forget to add the session middleware! Add in your `settings.py`:
 
 ```python
 MIDDLEWARE = [
@@ -85,13 +85,13 @@ MIDDLEWARE = [
 ]
 ```
 
-Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)). Run in your project dir :
+Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)). Run in your project dir:
 
 ```
 ./manage.py migrate
 ```
 
-We also need a cache ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)), so let's configure a dumb one for development purposes. Add in your `settings.py` :
+We also need a cache ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)), so let's configure a dumb one for development purposes. Add in your `settings.py`:
 
 ```python
 CACHES = {
@@ -104,7 +104,7 @@ CACHES = {
 
 Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/latest/reference.html#providers). Providers class are a quick way to generate the library configuration and URLs. You can also configure the settings manually, but this is not recommended if you are not familiar with the OpendID Connect (OIDC) protocol.
 
-Add the following `DJANGO_PYOIDC` to your `settings.py` :
+Add the following `DJANGO_PYOIDC` to your `settings.py`:
 
 ```python
 # settings
@@ -142,7 +142,7 @@ urlpatterns = [
 ]
 ```
 
-And you are ready to go !
+And you are ready to go!
 
 If you struggle with those instructions, take a look at [the quickstart tutorial](https://django-pyoidc.readthedocs.io/latest/tutorial.html).
 
