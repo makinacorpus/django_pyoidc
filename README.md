@@ -28,7 +28,7 @@ If you are not satisfied with the default configuration, take a look at the cook
 
 ## Features
 
-- Easy configuration through premade `Provider` classes (see the list [here](https://django-pyoidc.readthedocs.io/latest/reference.html#providers)
+- Easy configuration through premade `Provider` classes (see the list [here](https://django-pyoidc.readthedocs.io/latest/reference.html#providers))
 - Authenticate users from multiple providers
 - Bearer authentication support for [django-rest-framework](https://www.django-rest-framework.org/) integration (**single provider**)
 - Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/latest/how-to.html#use-the-django-permission-system-with-oidc)
