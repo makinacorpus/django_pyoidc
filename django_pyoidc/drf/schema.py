@@ -13,11 +13,16 @@ try:
         match_subclasses = True
         priority = -1
 
-        def get_security_definition(self, auto_schema):  # type: ignore[no-untyped-def] # we do not want to type third party libraries
+        @classmethod
+        def get_security_definition(cls, auto_schema):  # type: ignore[no-untyped-def] # we do not want to type third party libraries
             # from django_pyoidc.drf.authentication import OIDCBearerAuthentication
 
             opsettings = OIDCSettingsFactory.get("drf")
-            well_known_url = opsettings.get("provider_discovery_uri")
+            well_known_url: str = opsettings.get("provider_discovery_uri")  # type: ignore[assignment] # we can assume that this is an str
+            if not well_known_url.endswith(".well-known/openid-configuration"):
+                well_known_url = (
+                    well_known_url + "/.well-known/openid-configuration"
+                )  # well_known_url should not end with a "/" as it is sanitized
 
             header_name = opsettings.get("oidc_api_bearer_name", "Bearer")
             if header_name != "Bearer":
