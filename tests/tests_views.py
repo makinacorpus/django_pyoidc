@@ -2,10 +2,10 @@ from importlib import import_module
 from unittest import mock
 from unittest.mock import ANY, call
 
+import jwt
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.urls import reverse
-from jwt import JWT, jwk_from_dict
 from oic.oic import IdToken
 from oic.oic.message import OpenIDSchema
 
@@ -504,14 +504,8 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         """
         To generate an other jwk key : 'jose jwk gen -i '{"alg":"HS256"}' -o oct.jwk'
         """
-        cls.signing_key = jwk_from_dict(
-            {
-                "alg": "HS256",
-                "k": "aMQ4QgzeE_XS91lxhixouomrhy_Tymz_xGC1dmwG8Vw",
-                "key_ops": ["sign", "verify"],
-                "kty": "oct",
-            }
-        )
+        cls.key = "aMQ4QgzeE_XS91lxhixouomrhy_Tymz_xGC1dmwG8Vw"
+        cls.alg = "HS256"
 
     def test_invalid_backchannel_logout_wrong_method_request(self):
         """
@@ -548,7 +542,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         """
 
         payload = {}
-        body = JWT().encode(payload, key=self.signing_key)
+        body = jwt.encode(payload, key=self.key, algorithm=self.alg)
         request_body = "a" * 13 + body
         response = self.client.post(
             reverse("test_blogout"),
@@ -583,7 +577,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         )
 
         payload = {"sub": sub}
-        body = JWT().encode(payload, key=self.signing_key)
+        body = jwt.encode(payload, key=self.key, algorithm=self.alg)
         request_body = "a" * 13 + body
         response = self.client.post(
             reverse("test_blogout"),
@@ -628,7 +622,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_backchannel_logout.return_value = session_state
 
         payload = {"sid": session_state}
-        body = JWT().encode(payload, key=self.signing_key)
+        body = jwt.encode(payload, key=self.key, algorithm=self.alg)
         request_body = "a" * 13 + body
         response = self.client.post(
             reverse("test_blogout"),
@@ -674,7 +668,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_backchannel_logout.return_value = "invalid_sid"
 
         payload = {"sid": session_state}
-        body = JWT().encode(payload, key=self.signing_key)
+        body = jwt.encode(payload, key=self.key, algorithm=self.alg)
         request_body = "a" * 13 + body
         response = self.client.post(
             reverse("test_blogout"),
@@ -716,7 +710,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         )
 
         payload = {"sub": sub}
-        body = JWT().encode(payload, key=self.signing_key)
+        body = jwt.encode(payload, key=self.key, algorithm=self.alg)
         request_body = "a" * 13 + body
         response = self.client.post(
             reverse("test_blogout"),
