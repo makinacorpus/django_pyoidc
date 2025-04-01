@@ -8,7 +8,7 @@ annotated-types==0.7.0
     # via pydantic
 asgiref==3.8.1
     # via django
-attrs==24.3.0
+attrs==25.3.0
     # via
     #   jsonschema
     #   referencing
@@ -16,19 +16,17 @@ backports-zoneinfo==0.2.1
     # via
     #   django
     #   djangorestframework
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 cffi==1.17.1
     # via cryptography
 charset-normalizer==3.4.1
     # via requests
-cryptography==44.0.0
-    # via
-    #   jwt
-    #   oic
+cryptography==44.0.2
+    # via oic
 defusedxml==0.7.1
     # via oic
-django==4.2.18
+django==4.2.20
     # via
     #   django-pyoidc (pyproject.toml)
     #   djangorestframework
@@ -49,15 +47,13 @@ importlib-resources==6.4.5
     #   jsonschema-specifications
 inflection==0.5.1
     # via drf-spectacular
-jsonpickle==4.0.1
+jsonpickle==4.0.5
     # via django-pyoidc (pyproject.toml)
 jsonschema==4.23.0
     # via drf-spectacular
 jsonschema-specifications==2023.12.1
     # via jsonschema
-jwt==1.3.1
-    # via django-pyoidc (pyproject.toml)
-mako==1.3.8
+mako==1.3.9
     # via oic
 markupsafe==2.1.5
     # via mako
@@ -67,19 +63,21 @@ pkgutil-resolve-name==1.3.10
     # via jsonschema
 pycparser==2.22
     # via cffi
-pycryptodomex==3.21.0
+pycryptodomex==3.22.0
     # via
     #   django-pyoidc (pyproject.toml)
     #   oic
     #   pyjwkest
-pydantic==2.10.5
+pydantic==2.10.6
     # via pydantic-settings
 pydantic-core==2.27.2
     # via pydantic
-pydantic-settings==2.7.1
+pydantic-settings==2.8.1
     # via oic
 pyjwkest==1.4.2
     # via oic
+pyjwt==2.9.0
+    # via django-pyoidc (pyproject.toml)
 python-dotenv==1.0.1
     # via pydantic-settings
 pyyaml==6.0.2
@@ -100,7 +98,7 @@ six==1.17.0
     # via pyjwkest
 sqlparse==0.5.3
     # via django
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via
     #   annotated-types
     #   asgiref

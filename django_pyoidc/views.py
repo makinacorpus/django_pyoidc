@@ -2,6 +2,8 @@ import logging
 from importlib import import_module
 from typing import Any, Dict, Optional, TypeVar, Union
 
+import jwt
+
 # import oic
 from django.conf import settings
 from django.contrib import auth, messages
@@ -13,8 +15,6 @@ from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from jwt import JWT
-from jwt.exceptions import JWTDecodeError
 from oic.utils.http_util import BadRequest
 
 from django_pyoidc.client import OIDCClient
@@ -308,8 +308,9 @@ class OIDCBackChannelLogoutView(OIDCView):
         result = HttpResponse("")
         try:
             body = request.body.decode("utf-8")[13:]
-            decoded = JWT().decode(body, do_verify=False)  # type: ignore[no-untyped-call] # jwt.JWT is not typed yet
-
+            # Here we do not perform validation because we assume that is later performed by
+            # `logout_sessions_by_sub`/`logout_sessions_by_sid` when calling pyoidc.
+            decoded = jwt.decode(body, options={"verify_signature": False})
             sid = decoded.get("sid")
             sub = decoded.get("sub")
             if sub:
@@ -329,7 +330,7 @@ class OIDCBackChannelLogoutView(OIDCView):
                 result.status_code = 400
                 result.content = "Got invalid logout token : sub or sid is missing"
                 logger.debug("Got invalid logout token : sub or sid is missing")
-        except JWTDecodeError:
+        except jwt.DecodeError:
             result.status_code = 400
         except UnicodeDecodeError as e:
             raise SuspiciousOperation(e)

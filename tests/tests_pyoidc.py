@@ -2,7 +2,7 @@ import unittest
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from jwt import JWT
+import jwt
 from oic.oic.consumer import Consumer
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 from oic.utils.session_backend import DictSessionBackend
@@ -38,7 +38,7 @@ class Issue853TestCase(TestCase):
 
         with patch("oic.oic.consumer.BackChannelLogoutRequest") as mock:
             # Load jwt as python dict
-            decoded = {"logout_token": JWT().decode(self.body, do_verify=False)}
+            decoded = {"logout_token": jwt.decode(self.body, verify_signature=False)}
 
             # Simulate previously made login : our session id is 0000
             real_sid = "0000"
