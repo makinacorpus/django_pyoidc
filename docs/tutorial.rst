@@ -103,7 +103,7 @@ First, add the library app (``django-pyoidc``) to your django applications, afte
         "django.contrib.auth",
         "django.contrib.sessions",
         ...
-        "django-pyoidc"
+        "django_pyoidc"
     ]
 
 .. warning::
