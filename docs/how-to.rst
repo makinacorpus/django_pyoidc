@@ -125,7 +125,7 @@ group named *admin*. If you are not familiar with the claims available in your t
     from django.contrib.auth import get_user_model
     from django_pyoidc.utils import extract_claim_from_tokens
 
-    def get_user(userinfo_token, id_token):
+    def get_user(tokens):
         # Here, we reuse the implementation of our library
         user = get_user_by_email(tokens)
         groups = extract_claim_from_tokens('groups', tokens)
@@ -175,7 +175,7 @@ Since we already defined our client ID in the settings, we fetch it from there !
     from django.core.exceptions import PermissionDenied
     from django.conf import settings
 
-    def get_user(userinfo_token, id_token):
+    def get_user(tokens):
         audiences = extract_clam_from_tokens("aud", tokens)
 
         # Perform audience check
@@ -211,7 +211,7 @@ Here is how to do it :
     from django.contrib.auth import get_user_model
     from django_pyoidc.utils import extract_claim_from_tokens
 
-    def get_user(userinfo_token, id_token):
+    def get_user(tokens):
         # Here, we reuse the implementation of our library
         user = get_user_by_email(tokens)
         groups = extract_claim_from_tokens('groups', tokens)
