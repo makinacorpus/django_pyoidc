@@ -7,7 +7,7 @@ a single-sign-on system. For the purpose of this tutorial, we will use Keycloak 
 Requirements
 ~~~~~~~~~~~~
 
-To use this library, make sure that you meet the following requirements :
+To use this library, make sure that you meet the following requirements:
 
 - ``django>=4.2``
 - ``python>=3.8``
@@ -60,11 +60,11 @@ Click on save and your client should be visible in the client list.
 
 You can now configure your URLs. In the following example, the Django application is hosted at app.local:8082.
 
-We configure our client URLs as such :
+We configure our client URLs as such:
 
 * ``Root URL`` and ``Home URL`` redirects to the root of our application *http://app.local:8082*
 * With ``Valid redirect URIs`` we allow the user to be redirected to our application, or the one listening on ``localhost:9091`` and ``127.0.0.1:9091`` (for debug purposes)
-* With ``Valid post logout redirect URIs`` the user can be redirected to our application after logout : *http://app.local:8082/**
+* With ``Valid post logout redirect URIs`` the user can be redirected to our application after logout: *http://app.local:8082/**
 * ``Web origins`` is set to *+* which allows (through CORS) all origins from the redirect URIs
 
 TODO: using a 2nd app at localhost:9091 is confusing, remove that, use a localhost:something, better
@@ -80,7 +80,7 @@ Take note of your ``Client ID`` and visit the *Credentials Page* to find your ``
 Finally, click on ``Realm Settings`` in the left menu, and scroll down to the *Endpoints* section. Copy the
 ``OpenID Endpoint Configuration`` URL as you will need it later (this is the autodiscovery URL).
 
-Congratulation, your Keycloak configuration is complete ! 🎉
+Congratulation, your Keycloak configuration is complete! 🎉
 
 Other Identity provider
 ***********************
@@ -94,7 +94,7 @@ Install the application
 It is now time to configure your Django project.
 
 
-First, add the library app (``django_pyoidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
+First, add the library app (``django_pyoidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth`:
 
 .. code-block:: python
     :caption: settings.py
@@ -107,15 +107,15 @@ First, add the library app (``django_pyoidc``) to your django applications, afte
     ]
 
 .. warning::
-    Do not forget later to run the **migrations** ! This module requires some extra database storage tables.
+    Do not forget later to run the **migrations**! This module requires some extra database storage tables.
 
 Configure a cache backend
 *************************
 
-**You must have a cache backend** for this library to work ! The OIDC protocol is very stateful and we use Django cache system to store data.
+**You must have a cache backend** for this library to work! The OIDC protocol is very stateful and we use Django cache system to store data.
 If you want to understand why, you can read the :ref:`Cache management <expl_cache>` page.
 
-For the sake of this tutorial, you can use this cache management snippet (it should be pasted in your ``settings.py``) :
+For the sake of this tutorial, you can use this cache management snippet (it should be pasted in your ``settings.py``):
 
 .. code-block:: python
 
@@ -127,7 +127,7 @@ For the sake of this tutorial, you can use this cache management snippet (it sho
     }
 
 .. warning::
-    Do not use those settings in production ! Go read the `django documentation <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_ for more details.
+    Do not use those settings in production! Go read the `django documentation <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_ for more details.
 
 .. _tuto_settings:
 
@@ -138,16 +138,16 @@ First, make sure that the `Session middleware <https://docs.djangoproject.com/en
 
 We will use django_pyoidc provider system to generate the library configuration and views.
 
-When using provider, you must provide 4 settings :
+When using provider, you must provide 4 settings:
 
 - the provider class to use
-- the OIDC client ID : this is your identifier on the IP side (this is not a user account, this must be a *client* in the OIDC terminology)
-- the OIDC client secret : this is your secret on the IP side
-- the OIDC discovery URL : this url allows us to discover the various endpoint of the identity provider, easing the configuration
+- the OIDC client ID: this is your identifier on the IP side (this is not a user account, this must be a *client* in the OIDC terminology)
+- the OIDC client secret: this is your secret on the IP side
+- the OIDC discovery URL: this url allows us to discover the various endpoint of the identity provider, easing the configuration
 
 You must also define a provider name that will be used with other classes from this library. In the following
 example, we define a provider named *sso* which uses ``Keycloak18Provider`` and fetches it's credential from
-two environment variables :
+two environment variables:
 
 
 .. code-block:: python
@@ -187,7 +187,7 @@ generate views.
 
 To use it, you must instantiate it with ``op_name=<the name of your identity provider>``.
 
-Here is how to do it for our tutorial :
+Here is how to do it for our tutorial:
 
 .. code-block:: python
     :caption: urls.py
@@ -223,7 +223,7 @@ You should now be able to use the view names from this library to redirect the u
 Configuring django_rest_framework
 =================================
 
-When using OIDC to authenticate an API, things are a little bit different than on a **full stack** website :
+When using OIDC to authenticate an API, things are a little bit different than on a **full stack** website:
 
 * we do not want to redirect users on login pages, or to manage logout
 * we are receiving OIDC Bearer tokens -- access tokens-- (generated from other clients of the SSO) and the task is mainly to check that this token is valid and extract the user from it.
@@ -251,7 +251,7 @@ is similar to the one made in :ref:`Configure the library`.
     Usually your application should request a different *client_id* for the apimode (like a **my-app-full** *client_id* for a confidential classical OIDC client and a **my-app-api** *client_id* for a bearer-only OIDC client in Keycloak). But if you have only one *client_id* it's OK to simply make a copy for the settings.
 
 
-Once you declared those settings, you can configure ``DEFAULT_AUTHENTICATION_CLASSES`` to use ``django_pyoidc.drf.authentication.OIDCBearerAuthentication`` to use this authentication class on all your views :
+Once you declared those settings, you can configure ``DEFAULT_AUTHENTICATION_CLASSES`` to use ``django_pyoidc.drf.authentication.OIDCBearerAuthentication`` to use this authentication class on all your views:
 
 .. code-block:: python
     :caption: settings.py
@@ -262,14 +262,14 @@ Once you declared those settings, you can configure ``DEFAULT_AUTHENTICATION_CLA
         ]
     }
 
-You can also set this class on a per-view basis using the ``authentication_classes`` attribute :
+You can also set this class on a per-view basis using the ``authentication_classes`` attribute:
 
 .. code-block:: python
     :caption: views.py
 
     from django_pyoidc.drf.authentication import OIDCBearerAuthentication
 
-    class ExampleViewSet(ModelViewSet) :
+    class ExampleViewSet(ModelViewSet):
         authentication_classes = [OIDCBearerAuthentication]
 
 This class looks up the OIDC provider named ``drf`` in the ``DJANGO_PYOIDC`` setting. As such, you can only have one provider for all your API authentication, as you can not define

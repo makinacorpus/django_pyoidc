@@ -8,7 +8,7 @@ In this guide we will setup two hook function that add login/logout messages usi
 First, if you don't already have a Python module holding OIDC related code in your project, create a file
 named ``oidc.py`` next to your settings.
 
-Add in those two functions :
+Add in those two functions:
 
 .. code-block:: python
 
@@ -27,7 +27,7 @@ Add in those two functions :
 Next, we plug those functions in the library configuration. In your ``settings.py`` you should set the
 ``hook_user_login`` and ``hook_user_logout`` to point to those two functions.
 
-Here is how it looks if we extend the configuration made in :ref:`Configure the library` :
+Here is how it looks if we extend the configuration made in :ref:`Configure the library`:
 
 .. code-block:: python
     :caption: settings.py
@@ -50,14 +50,14 @@ Here is how it looks if we extend the configuration made in :ref:`Configure the 
             "oidc_cache_provider_metadata": True,
 
             # New configuration
-            'hook_user_login' : 'my_project.oidc.login_function',
-            'hook_user_logout' : 'my_project.oidc.logout_function'
+            'hook_user_login': 'my_project.oidc.login_function',
+            'hook_user_logout': 'my_project.oidc.logout_function'
         },
 
 
 See :ref:`Hook settings <settings_hook>` for more information on the function path syntax.
 
-You should now see a message on login/logout ! 🎉
+You should now see a message on login/logout! 🎉
 
 Make sure that you modified your template to display messages. See
 :func:`django:django.contrib.messages.get_messages` for more information.
@@ -77,7 +77,7 @@ configuration. In this guide we will look at the ``groups`` attribute in a useri
 First, if you don't already have a Python module holding OIDC related code in your project, create a file
 named ``oidc.py`` next to your settings.
 
-Add in a function that takes one argument: a list of tokens received during the authentication process. There are multiple tokens because OIDC defines multiple tokens, and some providers put the information in one token and some in another one :
+Add in a function that takes one argument: a list of tokens received during the authentication process. There are multiple tokens because OIDC defines multiple tokens, and some providers put the information in one token and some in another one:
 * the userinfo token
 * the access token
 
@@ -118,7 +118,7 @@ Let's start our implementation by reusing the default implementation provided by
         }
 
 Since we are familiar with OIDC tokens, we know that we want to check the ``groups`` claim, and look for a
-group named *admin*. If you are not familiar with the claims available in your tokens, print them !
+group named *admin*. If you are not familiar with the claims available in your tokens, print them!
 
 .. code-block:: python
 
@@ -136,17 +136,17 @@ group named *admin*. If you are not familiar with the claims available in your t
 
 To have this function called instead of the default one, you need to modify your settings so that :ref:`hook_get_user` points to the function that we just wrote.
 
-The value of this setting should be : ``<my_app>.oidc:login_function`` (see :ref:`Hook settings <settings_hook>` for more information on this syntax).
+The value of this setting should be: ``<my_app>.oidc:login_function`` (see :ref:`Hook settings <settings_hook>` for more information on this syntax).
 
 If you configured your settings manually (without using the providers system), you can add the key directly.
 
-Edit your configuration to add the following key to your provider settings :
+Edit your configuration to add the following key to your provider settings:
 
 .. code-block:: python
 
     DJANGO_PYOIDC = {
-        'sso' : {
-            'hook_get_user' : 'my_app.oidc:get_huser' # <- my_app is a placeholder, alter it for your root module
+        'sso': {
+            'hook_get_user': 'my_app.oidc:get_huser' # <- my_app is a placeholder, alter it for your root module
         }
     }
 
@@ -164,7 +164,7 @@ In this guide, we will start from what we did in :ref:`Customize how token data 
 
 By the specification, the audience in a token is a list of strings or a single string,
 so let's .....
-Since we already defined our client ID in the settings, we fetch it from there ! This example assumes that your provider is named `keycloak`.
+Since we already defined our client ID in the settings, we fetch it from there! This example assumes that your provider is named `keycloak`.
 
 
 .. code-block:: python
@@ -203,7 +203,7 @@ We will start from what we did in :ref:`Customize how token data is mapped to Us
 
 In the *userinfo token* we can expect to find a 'groups' key (if available) and use it to query Django Groups models.
 
-Here is how to do it :
+Here is how to do it:
 
 .. code-block:: python
 
@@ -242,7 +242,7 @@ By default the ``success_redirect`` url defined in your provider is used to redi
 If you want a more complex redirection (like maybe a dynamic redirection based on the current user navigation)
 you can build something TODO:
 
-Here is an example of a login button redirecting the user to the page named "profile" :
+Here is an example of a login button redirecting the user to the page named "profile":
 
 .. code-block:: python
 
@@ -255,7 +255,7 @@ Here is an example of a login button redirecting the user to the page named "pro
         http_method_names = ["get"]
 
         def get(self):
-            # From : https://realpython.com/django-redirects/#passing-parameters-with-redirects
+            # From: https://realpython.com/django-redirects/#passing-parameters-with-redirects
             base_url = reverse("my-oidc-provider-login")
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
@@ -271,23 +271,23 @@ This library natively supports multiple identity providers.
 
 You already have to specify a provider name when you configure your settings (either automatically by using a provider, or :ref:`manually <provider-class-setting>`).
 
-In a multi-provider setup, the settings look like this :
+In a multi-provider setup, the settings look like this:
 
 .. code-block:: python
 
     DJANGO_PYOIDC = {
-        'oidc_provider_name_1' : {
-            'client_id' : '' # <- provider 1 settings here
+        'oidc_provider_name_1': {
+            'client_id': '' # <- provider 1 settings here
         }
-        'oidc_provider_name_2' : {
-            'client_id' : '' # <- provider 2 settings here
+        'oidc_provider_name_2': {
+            'client_id': '' # <- provider 2 settings here
         }
      }
 
 Then you have to include all your provider url configuration in your ``urlpatterns``. Since view names includes the identity provider name,
 they should not collide.
 
-Here is an example of such a configuration :
+Here is an example of such a configuration:
 
 .. code-block:: python
     :caption: urls.py
@@ -301,7 +301,7 @@ Here is an example of such a configuration :
 
 You can then use those view names to redirect a user to one or the other provider.
 
-This will create 4 views for each provider in your URL configuration. They all have a name that derives from the ``op_name`` that you used to create your provider :
+This will create 4 views for each provider in your URL configuration. They all have a name that derives from the ``op_name`` that you used to create your provider:
 
 * ``<op_name>-login``
 * ``<op_name>-logout``

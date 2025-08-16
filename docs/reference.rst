@@ -6,7 +6,7 @@ Views
     When instantiating a view from this library (ie through django's 'as_view()') you **must** set the named argument ``op_name`` to point to a valid ``DJANGO_PYOIDC`` settings entry.
     If you use :ref:`Providers` then this behaviour is automatically implemented.
 
-    Here is an example :
+    Here is an example:
 
     .. code-block:: python
 
