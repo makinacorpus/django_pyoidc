@@ -87,9 +87,9 @@ Let's start our implementation by reusing the default implementation provided by
 
 .. code-block:: python
 
-    from django.contrib.auth import get_user_model
     from django_pyoidc import get_user_by_email
-    def get_user(tokens):
+
+    def get_user(client, tokens):
         # Here, we reuse the implementation of our library
         user = get_user_by_email(tokens)
         return user
@@ -122,10 +122,10 @@ group named *admin*. If you are not familiar with the claims available in your t
 
 .. code-block:: python
 
-    from django.contrib.auth import get_user_model
+    from django_pyoidc import get_user_by_email
     from django_pyoidc.utils import extract_claim_from_tokens
 
-    def get_user(tokens):
+    def get_user(client, tokens):
         # Here, we reuse the implementation of our library
         user = get_user_by_email(tokens)
         groups = extract_claim_from_tokens('groups', tokens)
@@ -170,12 +170,12 @@ Since we already defined our client ID in the settings, we fetch it from there !
 .. code-block:: python
 
 
-    from django.contrib.auth import get_user_model
+    from django_pyoidc import get_user_by_email
     from django_pyoidc.utils import extract_claim_from_tokens
     from django.core.exceptions import PermissionDenied
     from django.conf import settings
 
-    def get_user(tokens):
+    def get_user(client, tokens):
         audiences = extract_clam_from_tokens("aud", tokens)
 
         # Perform audience check
@@ -208,10 +208,10 @@ Here is how to do it :
 .. code-block:: python
 
 
-    from django.contrib.auth import get_user_model
+    from django_pyoidc import get_user_by_email
     from django_pyoidc.utils import extract_claim_from_tokens
 
-    def get_user(tokens):
+    def get_user(client, tokens):
         # Here, we reuse the implementation of our library
         user = get_user_by_email(tokens)
         groups = extract_claim_from_tokens('groups', tokens)
