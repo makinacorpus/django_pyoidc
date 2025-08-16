@@ -5,7 +5,7 @@ This library provides a hook system to call custom code. Hooks are configured on
 In this guide we will setup two hook function that add login/logout messages using `Django's message system
 <https://docs.djangoproject.com/en/stable/ref/contrib/messages/>`_.
 
-First, if you don't already have a Python module holding OIDC related code in your projet, create a file
+First, if you don't already have a Python module holding OIDC related code in your project, create a file
 named ``oidc.py`` next to your settings.
 
 Add in those two functions :
@@ -66,18 +66,18 @@ Make sure that you modified your template to display messages. See
 Customize how token data is mapped to User attributes
 =====================================================
 
-When a user succesfully logs-in, we provide an implementation that maps the received OIDC token to
+When a user successfully logs-in, we provide an implementation that maps the received OIDC token to
 ``User`` model instances. The default implementation extracts the email and the username from the token
 and uses it to create a User instance.
 
-However you can implement more complex behaviour by specifying a :ref:`hook_get_user` in your setting
+However you can implement more complex behavior by specifying a :ref:`hook_get_user` in your setting
 configuration. In this guide we will look at the ``groups`` attribute in a userinfo token and set the
 :attr:`is_staff <django.contrib.auth.models.User.is_staff>` attribute depending on the value.
 
-First, if you don't already have a Python module holding OIDC related code in your projet, create a file
+First, if you don't already have a Python module holding OIDC related code in your project, create a file
 named ``oidc.py`` next to your settings.
 
-Add in a function that takes one arguments : a list of tokens received during the authentication process. There are multiple tokens because OIDC defines multiple tokens, and some providers put the information in one token an some in an other one :
+Add in a function that takes one argument: a list of tokens received during the authentication process. There are multiple tokens because OIDC defines multiple tokens, and some providers put the information in one token and some in another one :
 * the userinfo token
 * the access token
 
@@ -260,14 +260,14 @@ Here is an example of a login button redirecting the user to the page named "pro
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
 
-However you will need to tweak the settings according to your use-case. You should take a look at  :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
+However you will need to tweak the settings according to your use-case. You should take a look at :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
 
 TODO: RedirectDemo now exists, where do I connect it?
 
 Use multiple identity providers
 ===============================
 
-This library natively supports multiples identity providers.
+This library natively supports multiple identity providers.
 
 You already have to specify a provider name when you configure your settings (either automatically by using a provider, or :ref:`manually <provider-class-setting>`).
 
@@ -309,4 +309,4 @@ This will create 4 views for each provider in your URL configuration. They all h
 * ``<op_name>-backchannel-logout``
 
 Since settings are local to a provider, you can also provide different :ref:`hook_get_user` for each to implement custom
-behaviours based on which identity provider a user is coming from.
+behaviors based on which identity provider a user is coming from.

@@ -33,7 +33,7 @@ Next, you should configure a client in your identity provider configuration inte
     Incorrect configuration of your Identity Provider can create security issues. Please make sure you understand the values you input
     and their impact on the security level of your system.
 
-We provide instructions for `Keycloak <https://www.keycloak.org/>`_ (version 18 and more), a free and open source Identity Provider maintened by Red Hat.
+We provide instructions for `Keycloak <https://www.keycloak.org/>`_ (version 18 and more), a free and open source Identity Provider maintained by Red Hat.
 
 Keycloak
 ********
@@ -77,8 +77,8 @@ Take note of your ``Client ID`` and visit the *Credentials Page* to find your ``
 .. image:: images/keycloak/keycloak_client_secret.png
     :alt: Screenshot of the Credentials page from a test client
 
-Finally, click on ``Realm Settings`` in the left menu, and scroll down to the *Endpoints* section. Copy the ``
-OpenID Endpoint Configuration`` URL as you will need it later (this is the autodiscovery URL).
+Finally, click on ``Realm Settings`` in the left menu, and scroll down to the *Endpoints* section. Copy the
+``OpenID Endpoint Configuration`` URL as you will need it later (this is the autodiscovery URL).
 
 Congratulation, your Keycloak configuration is complete ! 🎉
 
@@ -94,7 +94,7 @@ Install the application
 It is now time to configure your Django project.
 
 
-First, add the library app (``django-pyoidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
+First, add the library app (``django_pyoidc``) to your django applications, after `django.contrib.sessions` and `django.contrib.auth` :
 
 .. code-block:: python
     :caption: settings.py
@@ -112,7 +112,7 @@ First, add the library app (``django-pyoidc``) to your django applications, afte
 Configure a cache backend
 *************************
 
-**You must have a cache backend** for this library to work ! The OIDC protocol is very statefull and we use Django cache system to store data.
+**You must have a cache backend** for this library to work ! The OIDC protocol is very stateful and we use Django cache system to store data.
 If you want to understand why, you can read the :ref:`Cache management <expl_cache>` page.
 
 For the sake of this tutorial, you can use this cache management snippet (it should be pasted in your ``settings.py``) :
@@ -172,7 +172,7 @@ two environment variables :
         },
 
 
-When you need to configure a setting for your identity provider, it means that you have to update the  dictionnary in this setting. For example, if you were to configure ``oidc_paths_prefix`` for your Keycloak provider,  you would add ``oidc_paths_prefix : <your value>`` to the ``sso`` dictionnary.
+When you need to configure a setting for your identity provider, it means that you have to update the dictionary in this setting. For example, if you were to configure ``oidc_paths_prefix`` for your Keycloak provider,  you would add ``oidc_paths_prefix : <your value>`` to the ``sso`` dictionary.
 
 Please note that ``drf`` is a reserved provider name (see :ref:`Configuring django_rest_framework` for more details)
 
@@ -213,7 +213,7 @@ This will create 4 views in your URL configuration. They all have a name that de
 
 .. tip::
 
-    You can override the naming behaviour by configuring the setting ``oidc_paths_prefix`` of your
+    You can override the naming behavior by configuring the setting ``oidc_paths_prefix`` of your
     identity provider. The view names would then be ``<oidc_paths_prefix>_<view_name>``.
 
 You should now be able to use the view names from this library to redirect the user to a login/logout page.

@@ -3,7 +3,7 @@
 Why make a new OIDC library ?
 =============================
 
-We decided to role our own OIDC integration with Django, and that is not a small work. As such we first performed an analysis of the existing libraries, evaluating whether or not we should contribute to them or implement our own.
+We decided to roll our own OIDC integration with Django, and that is not a small work. As such we first performed an analysis of the existing libraries, evaluating whether or not we should contribute to them or implement our own.
 
 In this section you will find the results of this analysis. We collected our data during the first months of 2023.
 
@@ -111,7 +111,7 @@ a remote web service using OIDC, not using an human account but a service accoun
 The multi-tenant feature means handling several OIDC providers, it is not uncommon to allow several identity providers on your login page.
 A good OIDC client should facilitate the configuration mechanisms for handling several very different OIDC connectors. Using both a
 classical web application (generating HTML pages) and a REST API on the same Django application could also be managed with different OIDC credentials,
-and the OIDC client configuration should let you use différent credentials on theses applications sections with ease.
+and the OIDC client configuration should let you use different credentials on theses applications sections with ease.
 
 OIDC Logouts
 ------------
@@ -255,7 +255,7 @@ not have the ``sid`` session identifier it means that all sessions of the ``sub`
 To be able to destroy the user session based on this ``sid`` or ``sub`` we have to ensure that we can find back any local Django session
 by theses identifiers, which are not the Django session identifier.
 This is the main reason of having an ``OIDCSession`` model managed by this library, it can be used to find and destroy all sessions
-associated with a ``sub`` identifier or for the ``sid`` search in the session_state attribute of this model. Check also the exaplanations
+associated with a ``sub`` identifier or for the ``sid`` search in the session_state attribute of this model. Check also the explanations
 on **cache management** below.
 
 If you can use the Backchannel logout, i.e. it is supported by the SSO server and you can transmits the right url to use to get a working
@@ -310,7 +310,7 @@ Django website to be only an OIDC client (not server) and we did not implement t
 About caching
 =============
 
-This library depends on **Django cache system**. Why do an OIDC client depends on a cache ?
+This library depends on **Django cache system**. Why does an OIDC client depends on a cache ?
 
 The OIDC protocol has a lot of states (as several messages are exchanged and some elements are send back to validate that the response
 goes with your request, or that no one tried to *replay* the exchange) and also needs to store external elements (think of public cryptographic

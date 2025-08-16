@@ -28,7 +28,7 @@ provider_class
 **Default** : "django_pyoidc.providers.Provider"
 
 Use this setting to plug in a provider class that will be used to generate the settings of your identity provider.
-Some providers expect to receives custom arguments : you should defines them as settings.
+Some providers expect to receive custom arguments : you should define them as settings.
 
 For example, the ``Keycloak10Provider`` can use two arguments : ``keycloak_base_uri`` and ``keycloak_realm``. If you wish to use them, define them in ``DJANGO_PYOIDC`` as your identity provider setting.
 
@@ -48,7 +48,7 @@ client_secret
 This setting configures the client secret used to authenticate your application with an identity provider.
 
 .. note::
-    If you only have a client_id and not client_secret it means your OIDC client (application) was defined as a public application, which is normally only done for javascript SLA applications. A regular web application should have a client_secret, and an API backend application too.
+    If you only have a client_id and not client_secret it means your OIDC client (application) was defined as a public application, which is normally only done for JavaScript SLA applications. A regular web application should have a client_secret, and an API backend application too.
 
 
 client_id
@@ -61,12 +61,12 @@ use_introspection_on_access_tokens
 
 **Default** : ``True``
 
-This setting is enabled by default on Django Rest Framework authentication (when you use drf for the key in DJANGO_PYOIDC, see :ref:`Configuring django_rest_framework` for more details). You can also activate it for more classical providers. But in DRF mode the ``access_token`` is the only information you receive from the user, and you need to extract claims from the token, that's why we use introspection to both validate the token and get more informations from it.
+This setting is enabled by default on Django Rest Framework authentication (when you use drf for the key in DJANGO_PYOIDC, see :ref:`Configuring django_rest_framework` for more details). You can also activate it for more classical providers. But in DRF mode the ``access_token`` is the only information you receive from the user, and you need to extract claims from the token, that's why we use introspection to both validate the token and get more information from it.
 
 When this setting is enabled, we will use the *introspection endpoint* of the
 identity provider to perform token validation and return a clear extraction of the ``access_token``.
 
-When disabled the access token claims are not extracted, you only have the ``access_token`` in its JWT encoded format. You can then decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default. If you need informations from the ``access_token`` activating this setting will add a round trip to the SSO server, but at the end you'll have all the ``access_tokens`` claims in clear text.
+When disabled the access token claims are not extracted, you only have the ``access_token`` in its JWT encoded format. You can then decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default. If you need information from the ``access_token`` activating this setting will add a round trip to the SSO server, but at the end you'll have all the ``access_tokens`` claims in clear text.
 
 oidc_paths_prefix
 *****************
@@ -187,7 +187,7 @@ cache_django_backend
 ********************
 
 This setting configures the cache backend that is used to store OIDC sessions details. It should be
-the name of a cache defined in the ``CACHES` django settings.
+the name of a cache defined in the ``CACHES`` django setting.
 You can read more about *Cache Management* :ref:`here <expl_cache>`.
 
 .. _settings_hook:
@@ -195,7 +195,7 @@ You can read more about *Cache Management* :ref:`here <expl_cache>`.
 Hooks
 =====
 
-Hook settings are path to a python function that should be called in specific context. We use a custom syntax to reference a function of a module.
+Each hook setting is a path to a python function that should be called in a specific context. We use a custom syntax to reference a function of a module.
 
 The syntax is : ``<module path>:<function name>``.
 
@@ -207,7 +207,7 @@ So for example, if you were to have a module named ``oidc.py`` next to your proj
 
 
 .. note::
-    All those settings are optional
+    All of these settings are optional
 
 hook_user_logout
 ****************
@@ -224,7 +224,7 @@ If the user was logged in, you can get the user using ``request.user``.
 hook_user_login
 ****************
 
-Calls the provided function on user login. The functions is called if the login is successful.
+Calls the provided function on user login. The function is called if the login is successful.
 
 This function takes two parameters :
 
@@ -238,7 +238,7 @@ hook_get_user
 
 Calls the provided function on user login. It takes two parameters :
 
-* ``client`` : an instance of ``OIDClient`` that can be used to fetch the provider which authenticated the user
+* ``client`` : an instance of ``OIDCClient`` that can be used to fetch the provider which authenticated the user
 * ``tokens`` : a dict with four keys :
     * ``info_token_claims`` : the userinfo token (if available) as a dict
     * ``access_token_jwt`` : the access token in it's raw form, undecoded (jwt)
