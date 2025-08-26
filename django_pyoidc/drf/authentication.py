@@ -94,12 +94,12 @@ class OIDCBearerAuthentication(BaseAuthentication):
             if access_token_claims:
                 logger.debug("Request has valid access token.")
 
-                # FIXME: Add a setting to disable
-                client_id: str = self.opsettings.get("client_id")  # type: ignore[assignment] # we can assume that client_id is correctly configured
-                if not check_audience(client_id, access_token_claims):
-                    raise PermissionDenied(
-                        f"Invalid result for acces token audiences check for {client_id}."
-                    )
+                if self.opsettings.get("use_introspection_audience_check"):
+                    client_id: str = self.opsettings.get("client_id")  # type: ignore[assignment] # we can assume that client_id is correctly configured
+                    if not check_audience(client_id, access_token_claims):
+                        raise PermissionDenied(
+                            f"Invalid result for acces token audiences check for {client_id}."
+                        )
 
                 logger.debug("Let application load user via user hook.")
                 user = self.engine.call_get_user_function(
