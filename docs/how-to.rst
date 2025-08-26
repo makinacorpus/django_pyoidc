@@ -235,34 +235,36 @@ Then, you can grant group level permissions and it will be applied to your users
 Redirect the user after login
 =============================
 
-**TODO**
+
+Within a template :
 
 By default the ``success_redirect`` url defined in your provider is used to redirect the user after login.
 
-If you want a more complex redirection (like maybe a dynamic redirection based on the current user navigation)
-you can build something TODO:
+If you want a more complex redirection (like maybe a dynamic redirection based on the current user navigation) you can use the ``?next=<url>`` query-string parameter
+on login view (``<url>`` being url-escaped).
 
-Here is an example of a login button redirecting the user to the page named "profile":
+As example on generating such a link, if you use the URL helper, and given the app is wired to ``auth/`` prefix and using the `sso` provider key,
+here is how you can build an URL that will redirect user to ``/profile`` after login:
 
-.. code-block:: python
+.. code-block:: html
 
-    import urllib
+    <a href="{% url 'auth:sso-login' %}{% querystring next='/profile' %}">
+        Connection
+    </a>
 
-    from django.urls import reverse
-    from django.views import View
+Another example, to redirect to current page after login:
 
-    class RedirectDemo(View):
-        http_method_names = ["get"]
+.. code-block:: html
 
-        def get(self):
-            # From: https://realpython.com/django-redirects/#passing-parameters-with-redirects
-            base_url = reverse("my-oidc-provider-login")
-            query_string = urllib.parse.urlencode({"next": reverse("profile")})
-            return redirect(f"{base_url}?{query_string}")
+    <a href="{% url 'auth:sso-login' %}{% querystring next=request.get_full_path %}">
+        Connection
+    </a>
 
-However you will need to tweak the settings according to your use-case. You should take a look at :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
+You may need to tweak the settings according to your use-case. You should take a look at  :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
 
-TODO: RedirectDemo now exists, where do I connect it?
+Using HTTP redirects
+
+
 
 Use multiple identity providers
 ===============================
