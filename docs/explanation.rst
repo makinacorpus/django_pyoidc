@@ -18,8 +18,7 @@ Here are our criteria:
 `django-allauth <https://github.com/pennersr/django-allauth/>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This library OIDC implementation is based on the python package ``oic`` which we believe should not
-be used for OIDC usages.
+Todo, see https://github.com/makinacorpus/django_pyoidc/issues/33
 
 `django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
