@@ -1,17 +1,17 @@
 .. _expl_new_oidc:
 
-Why make a new OIDC library ?
+Why make a new OIDC library?
 =============================
 
-We decided to role our own OIDC integration with Django, and that is not a small work. As such we first performed an analysis of the existing libraries, evaluating whether or not we should contribute to them or implement our own.
+We decided to roll our own OIDC integration with Django, and that is not a small work. As such we first performed an analysis of the existing libraries, evaluating whether or not we should contribute to them or implement our own.
 
 In this section you will find the results of this analysis. We collected our data during the first months of 2023.
 
-Here are our criteria :
+Here are our criteria:
 
 * do you need a custom authentication backend to work ? Our use case includes multi-tenant setup through `django-siteprefs <https://pypi.org/project/django-siteprefs/>`_
-* is security sensitive code based on a well known, well maintained library ?
-* is it still maintained ?
+* is security sensitive code based on a well known, well maintained library?
+* is it still maintained?
 * does it supports *Bearer* authentication (for ``django-rest-framework``).
 
 
@@ -24,12 +24,12 @@ be used for OIDC usages.
 `django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Advantages** :
+**Advantages**:
 
 - Goes well with `django-siteprefs <https://pypi.org/project/django-siteprefs/>`_
 - Nice hook system that is very very flexible and works well
 
-**Drawbacks** :
+**Drawbacks**:
 
 - The OIDC implementation is based on a custom lib `python-openid-connect <https://gitlab.com/aiakos/python-openid-connect>`_ (which is itself based on ``jose``)
 - No *Bearer* authentication
@@ -40,7 +40,7 @@ be used for OIDC usages.
 
 This library is based on ``django-auth-oidc`` and adds some glue to allow more features.
 
-**Advantages** :
+**Advantages**:
 
 - Modular architecture which is very flexible
 - Does support *bearer* and *confidential* clients
@@ -60,7 +60,7 @@ This library is based on ``django-auth-oidc`` and adds some glue to allow more f
 **Drawbacks**
 
 - It seems that adding OIDC features will be complicated as they seem to want to keep their library *"as minimal/lightweight as possible"*
-- The project seems dead ?
+- The project seems dead?
 
 
 `django-oidc <https://github.com/py-pa/django-oidc>`_
@@ -111,7 +111,7 @@ a remote web service using OIDC, not using an human account but a service accoun
 The multi-tenant feature means handling several OIDC providers, it is not uncommon to allow several identity providers on your login page.
 A good OIDC client should facilitate the configuration mechanisms for handling several very different OIDC connectors. Using both a
 classical web application (generating HTML pages) and a REST API on the same Django application could also be managed with different OIDC credentials,
-and the OIDC client configuration should let you use différent credentials on theses applications sections with ease.
+and the OIDC client configuration should let you use different credentials on theses applications sections with ease.
 
 OIDC Logouts
 ------------
@@ -188,7 +188,7 @@ you have nothing to handle.
 Direct logout
 ~~~~~~~~~~~~~
 
-OIDC specification : https://openid.net/specs/openid-connect-rpinitiated-1_0.html
+OIDC specification: https://openid.net/specs/openid-connect-rpinitiated-1_0.html
 
 The direct logout is the first use case, the *simple* one. The active SSO user is currently on your Django managed website,
 he wants to disconnect.
@@ -224,7 +224,7 @@ You can extend this view by defining a **HOOK_USER_LOGOUT** which runs just befo
 Back-channel logout
 ~~~~~~~~~~~~~~~~~~~
 
-OIDC specification : https://openid.net/specs/openid-connect-backchannel-1_0.html
+OIDC specification: https://openid.net/specs/openid-connect-backchannel-1_0.html
 
 The **SSO Server client configuration** for your application will need to know the Back-Channel url on your Django application, this url
 is by default **``<absolute url of your website>/<url prefix for this module if any>/back_channel_logout/``**.
@@ -255,7 +255,7 @@ not have the ``sid`` session identifier it means that all sessions of the ``sub`
 To be able to destroy the user session based on this ``sid`` or ``sub`` we have to ensure that we can find back any local Django session
 by theses identifiers, which are not the Django session identifier.
 This is the main reason of having an ``OIDCSession`` model managed by this library, it can be used to find and destroy all sessions
-associated with a ``sub`` identifier or for the ``sid`` search in the session_state attribute of this model. Check also the exaplanations
+associated with a ``sub`` identifier or for the ``sid`` search in the session_state attribute of this model. Check also the explanations
 on **cache management** below.
 
 If you can use the Backchannel logout, i.e. it is supported by the SSO server and you can transmits the right url to use to get a working
@@ -266,9 +266,9 @@ chained logouts. A Back-Channel Logout will never be blocked by a browser securi
 Front-channel logout
 ~~~~~~~~~~~~~~~~~~~~
 
-OIDC specification : https://openid.net/specs/openid-connect-frontchannel-1_0.html
+OIDC specification: https://openid.net/specs/openid-connect-frontchannel-1_0.html
 
-**Not Implemented : this documentation for front channel logout refers to a future feature.** As Keycloak server does not implement front channel
+**Not Implemented: this documentation for front channel logout refers to a future feature.** As Keycloak server does not implement front channel
 logout we did not implement it yet. This implementation will occurs as soon as we find a reliable way to test it.
 
 As stated above the front channel logout is less reliable than the Back Channel logout, but you may only have this option
@@ -310,7 +310,7 @@ Django website to be only an OIDC client (not server) and we did not implement t
 About caching
 =============
 
-This library depends on **Django cache system**. Why do an OIDC client depends on a cache ?
+This library depends on **Django cache system**. Why does an OIDC client depends on a cache?
 
 The OIDC protocol has a lot of states (as several messages are exchanged and some elements are send back to validate that the response
 goes with your request, or that no one tried to *replay* the exchange) and also needs to store external elements (think of public cryptographic
