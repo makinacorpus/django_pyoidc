@@ -235,14 +235,42 @@ Then, you can grant group level permissions and it will be applied to your users
 Redirect the user after login
 =============================
 
-**TODO**
-
 By default the ``success_redirect`` url defined in your provider is used to redirect the user after login.
+If you want a more complex redirection (like maybe a dynamic redirection based on the current user navigation) you can use the ``?next=<url>`` query-string parameter on login view (``<url>`` being url-escaped).
 
-If you want a more complex redirection (like maybe a dynamic redirection based on the current user navigation)
-you can build something TODO:
+You can generate this URL using django templates, or using a view which returns an HTTP redirects.
 
-Here is an example of a login button redirecting the user to the page named "profile":
+.. tip::
+
+    You may need to tweak two settings according to your use-case. You should take a look at
+    :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
+
+Using a template
+""""""""""""""""
+
+As example on generating such a link, if you use the URL helper, and given the app is wired to
+``auth/`` prefix and using the `sso` provider key, here is how you can build an URL that will
+redirect user to ``/profile`` after login:
+
+.. code-block:: html
+
+    <a href="{% url 'auth:sso-login' %}{% querystring next='/profile' %}">
+        Login
+    </a>
+
+Another example, to redirect to current page after login:
+
+.. code-block:: html
+
+    <a href="{% url 'auth:sso-login' %}{% querystring next=request.get_full_path %}">
+        Login
+    </a>
+
+
+Using HTTP redirects
+""""""""""""""""""""
+
+Here is an example of a View redirecting the user to the page named "profile":
 
 .. code-block:: python
 
@@ -260,9 +288,6 @@ Here is an example of a login button redirecting the user to the page named "pro
             query_string = urllib.parse.urlencode({"next": reverse("profile")})
             return redirect(f"{base_url}?{query_string}")
 
-However you will need to tweak the settings according to your use-case. You should take a look at :ref:`login_redirection_requires_https` and :ref:`login_uris_redirect_allowed_hosts`.
-
-TODO: RedirectDemo now exists, where do I connect it?
 
 Use multiple identity providers
 ===============================
