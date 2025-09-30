@@ -126,6 +126,22 @@ client_authn_method
 Methods that the OIDC client can use to authenticate itself. It's a dictionary with method names as
 keys and method classes as values.
 
+
+use_introspection_audience_check
+********************************
+
+**Default**: ``True``
+
+This setting allows you to disable the audience check.
+
+This settings is related to the drf implementation. By default, this library performs audience
+checks against the token received.
+We look for an ``aud`` key in the received token, and check that it's value is the same as our
+client ID.
+
+**We believe that the only use case for this settings is if your identity provider does not put the
+audience in the generated tokens.**
+
 Login/Logout redirections
 =========================
 
