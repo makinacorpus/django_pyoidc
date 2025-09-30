@@ -21,6 +21,7 @@ TypedOidcSettings = TypedDict(
         "oidc_cache_provider_metadata": bool,
         "oidc_cache_provider_metadata_ttl": int,
         "use_introspection_on_access_tokens": bool,
+        "use_introspection_audience_check": bool,
     },
 )
 
@@ -34,6 +35,7 @@ class OIDCSettings:
         "oidc_cache_provider_metadata": False,
         "oidc_cache_provider_metadata_ttl": 120,
         "use_introspection_on_access_tokens": True,
+        "use_introspection_audience_check": True,
     }
 
     def __repr__(self) -> str:
@@ -83,6 +85,8 @@ class OIDCSettings:
                 the introspection route. This delegates validation of the token to the SSO server. If you do not use hook_validate_access_token
                 or use_introspection_on_access_tokens you will just have the raw jwt for the access token, that you can use to send HTTP queries
                 on behalf of the user.
+               use_introspection_audience_check (bool): when use_introspection_on_access_tokens in True, check the client id in audience return
+                by the introspection response.
         """
 
         self.op_name = op_name
