@@ -1,4 +1,4 @@
-name: Lint source code
+name: Lint and test source code
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
   pull_request:
 
 jobs:
+
 
   black:
     runs-on: ubuntu-latest
@@ -22,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,3 +84,51 @@ jobs:
 
     - name: Run isort
       run : isort --profile black .
+
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    # From https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers#configuring-the-runner-job-for-jobs-directly-on-the-runner-machine
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12", "3.13" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for versioningit to find the repo version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: python -m pip install .[drf]
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip
+          -r requirements/requirements-dev.in
+          -r requirements/requirements-test.in
+
+      - name: Run unit tests
+        run: python3 run_tests.py
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          POSTGRES_HOST: localhost
+          # The default PostgreSQL port
+          POSTGRES_PORT: 5432
