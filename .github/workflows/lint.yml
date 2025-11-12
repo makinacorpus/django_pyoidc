@@ -117,13 +117,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: python -m pip install --upgrade pip .[drf]
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          version: "0.9.8"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip
-          -r requirements/requirements-dev.in
-          -r requirements/requirements-test.in
+        run: uv pip install .[drf] -r requirements/requirements-dev.in -r requirements/requirements-test.in
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Run unit tests
         run: python3 run_tests.py
