@@ -27,7 +27,7 @@ settings.configure(
 django.setup()
 
 copyright = "Free Software"
-project = "Makina Django OIDC"
+project = "django_pyoidc"
 author = "Paul FLORENCE, Régis LEROY (regilero)"
 
 # -- General configuration ---------------------------------------------------
