@@ -16,9 +16,9 @@
 </a>
 </p>
 
-This library allow *Single Sign On* (SSO) integration into Django through the [Open ID Connect (OIDC)]() protocol.
+This library allows *Single Sign On* (SSO) integration into Django through the [Open ID Connect (OIDC)]() protocol.
 
-It can be used to setup a Single Sign On using an identity provider (Keycloak, etc.) or to login using Google, Twitter, etc.
+It can be used to set up a Single Sign On using an identity provider (Keycloak, etc.) or to login using Google, Twitter, etc.
 
 **Warning**: this library has not been audited. However, we are based on [pyoidc](https://github.com/CZ-NIC/pyoidc/) which we believe is a sane OIDC implementation.
 
@@ -46,7 +46,7 @@ If you are not satisfied with the default configuration, take a look at the cook
 
 ## Acknowledgement
 
-This library is built on the work of many others. First all, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementation. This library is mostly about glue between Django and *pyoidc*.
+This library is built on the work of many others. First of all, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementation. This library is mostly about glue between Django and *pyoidc*.
 
 We were also heavily inspired by:
 
@@ -78,7 +78,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-Don't forget to add the session middleware! Add in your `settings.py`:
+Remember to add the session middleware! Add in your `settings.py`:
 
 ```python
 MIDDLEWARE = [
@@ -86,7 +86,7 @@ MIDDLEWARE = [
 ]
 ```
 
-Now is time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)). Run in your project dir:
+Now is the time to run a migrate operation, as we create a database table ([read why here](https://django-pyoidc.readthedocs.io/latest/explanation.html#about-caching)). Run in your project dir:
 
 ```
 ./manage.py migrate
@@ -103,7 +103,7 @@ CACHES = {
 }
 ```
 
-Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/latest/reference.html#providers). Providers class are a quick way to generate the library configuration and URLs. You can also configure the settings manually, but this is not recommended if you are not familiar with the OpendID Connect (OIDC) protocol.
+Now you can pick an identity provider from the [available providers](https://django-pyoidc.readthedocs.io/latest/reference.html#providers). Provider classes are a quick way to generate the library configuration and URLs. You can also configure the settings manually, but this is not recommended if you are not familiar with the OpendID Connect (OIDC) protocol.
 
 Add the following `DJANGO_PYOIDC` to your `settings.py`:
 
