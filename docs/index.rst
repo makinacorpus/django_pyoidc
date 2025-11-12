@@ -1,5 +1,5 @@
 
-Welcome to Makina Django OIDC's documentation!
+Welcome to django_pyOIDC's documentation!
 ==============================================
 
 
