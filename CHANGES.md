@@ -1,3 +1,7 @@
+1.0.7
+-----
+- remove pypi django 3.2/4.0/4.1 classifier
+
 1.0.6
 -----
 - fix project name in sphinx metadata
