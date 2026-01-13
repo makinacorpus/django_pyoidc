@@ -22,6 +22,7 @@ TypedOidcSettings = TypedDict(
         "oidc_cache_provider_metadata_ttl": int,
         "use_introspection_on_access_tokens": bool,
         "use_introspection_audience_check": bool,
+        "scopes": List[str],
     },
 )
 
@@ -36,6 +37,7 @@ class OIDCSettings:
         "oidc_cache_provider_metadata_ttl": 120,
         "use_introspection_on_access_tokens": True,
         "use_introspection_audience_check": True,
+        "scopes": ["openid"],
     }
 
     def __repr__(self) -> str:

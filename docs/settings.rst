@@ -68,6 +68,14 @@ identity provider to perform token validation and return a clear extraction of t
 
 When disabled the access token claims are not extracted, you only have the ``access_token`` in its JWT encoded format. You can then decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default. If you need information from the ``access_token`` activating this setting will add a round trip to the SSO server, but at the end you'll have all the ``access_tokens`` claims in clear text.
 
+
+scopes
+******
+
+**Default** : ['openid']
+
+The list of scopes requested by the OIDC Client when sending an authentication request.
+
 oidc_paths_prefix
 *****************
 

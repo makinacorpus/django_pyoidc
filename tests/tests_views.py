@@ -1,6 +1,6 @@
 from importlib import import_module
 from unittest import mock
-from unittest.mock import ANY, call
+from unittest.mock import ANY, MagicMock, call
 
 import jwt
 from django.conf import settings
@@ -157,6 +157,23 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertIsNotNone(sid)
         client = OIDCClient(op_name="sso1", session_id=sid)
         self.assertEqual(client.consumer.client_id, "1")
+
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    @mock.patch("django_pyoidc.client.Consumer.begin", return_value=(1, "/"))
+    def test_scope_is_set(self, mocked_begin: MagicMock, *args):
+        response = self.client.get(
+            reverse("test_login"),
+            data={
+                "next": "https://"
+                + settings.DJANGO_PYOIDC["sso1"]["login_uris_redirect_allowed_hosts"][0]
+                + "/myview/details"
+            },
+            SERVER_NAME="test.django-pyoidc.notatld",
+        )
+        self.assertEqual(response.status_code, 302)
+        mocked_begin.assert_called_once_with(
+            scope=["openid"], response_type=ANY, use_nonce=ANY, path=ANY
+        )
 
 
 class LogoutViewTestCase(OIDCTestCase):
