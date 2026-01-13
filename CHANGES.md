@@ -1,3 +1,7 @@
+1.0.8
+-----
+- add 'scopes' settings, see issue #31
+
 1.0.7
 -----
 - remove pypi django 3.2/4.0/4.1 classifier
