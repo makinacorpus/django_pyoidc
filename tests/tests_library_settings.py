@@ -31,6 +31,7 @@ class SettingsTestCase(OIDCTestCase):
                 "post_logout_redirect_uri": "/ghj-789",
                 "hook_user_login": "tests.e2e.test_app.callback:login_callback",
                 "hook_user_logout": "tests.e2e.test_app.callback:logout_callback",
+                "scope": ["test1", "openid", "test2"],
             },
         },
     )
@@ -67,6 +68,7 @@ class SettingsTestCase(OIDCTestCase):
             settings.get("hook_user_logout"),
             "tests.e2e.test_app.callback:logout_callback",
         )
+        self.assertEqual(settings.get("scope"), ["test1", "openid", "test2"])
 
     @override_settings(
         DJANGO_PYOIDC={
@@ -102,6 +104,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("hook_user_logout"), None)
         self.assertEqual(settings.get("hook_validate_access_token"), None)
         self.assertEqual(settings.get("use_introspection_on_access_tokens"), False)
+        self.assertEqual(settings.get("scope"), ["openid"])
 
     @override_settings(
         DJANGO_PYOIDC={
