@@ -104,7 +104,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("hook_user_logout"), None)
         self.assertEqual(settings.get("hook_validate_access_token"), None)
         self.assertEqual(settings.get("use_introspection_on_access_tokens"), False)
-        self.assertEqual(settings.get("scope"), ["openid"])
+        self.assertEqual(settings.get("scopes"), ["openid"])
 
     @override_settings(
         DJANGO_PYOIDC={

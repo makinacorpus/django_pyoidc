@@ -158,7 +158,7 @@ class OIDCLoginView(OIDCView):
         request.session["oidc_login_next"] = next_redirect_uri
 
         sid, location = client.consumer.begin(  # type: ignore[no-untyped-call] # oic package is untyped
-            scope=self.get_setting("scope"),
+            scope=self.get_setting("scopes"),
             response_type="code",
             use_nonce=True,
             path=self.request.build_absolute_uri("/"),
