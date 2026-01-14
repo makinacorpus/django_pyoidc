@@ -1,10 +1,17 @@
+import logging
+import typing
 from typing import Any, Dict
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 
 from django_pyoidc.exceptions import ClaimNotFoundError
-from django_pyoidc.utils import extract_claim_from_tokens
+
+if typing.TYPE_CHECKING:
+    from django_pyoidc.models import OIDCSession
+from django_pyoidc.utils import SessionStore, extract_claim_from_tokens
+
+logger = logging.getLogger(__name__)
 
 
 def get_user_by_email(tokens: Dict[str, Any]) -> Any:
@@ -74,3 +81,14 @@ def get_user_by_email(tokens: Dict[str, Any]) -> Any:
     if hasattr(user, "backend"):
         user.backend = "django.contrib.auth.backends.ModelBackend"
     return user
+
+
+def backchannel_logout_session(session: "OIDCSession") -> None:
+    """
+    Default implementation for logging out a session.
+    """
+
+    s = SessionStore()
+    s.delete(session.cache_session_key)
+    session.delete()
+    logger.info(f"Backchannel logout request received and validated for {session}")
