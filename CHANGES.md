@@ -1,3 +1,8 @@
+NEXT
+----
+- drf : improve missing introspection endpoint error handling
+- have all `django_pyoidc` exceptions inherit from `DjangoOIDCException`
+
 1.0.8
 -----
 - add 'scopes' settings, see issue #31

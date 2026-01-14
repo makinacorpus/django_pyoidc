@@ -4,7 +4,11 @@ from typing import Any, Dict, MutableMapping, Optional, Union
 
 from django_pyoidc import get_user_by_email
 from django_pyoidc.client import OIDCClient
-from django_pyoidc.exceptions import ExpiredToken, TokenError
+from django_pyoidc.exceptions import (
+    ExpiredToken,
+    InvalidOIDCConfigurationException,
+    TokenError,
+)
 from django_pyoidc.settings import OIDCSettings
 from django_pyoidc.utils import OIDCCacheBackendForDjango, import_object
 
@@ -70,11 +74,15 @@ class OIDCEngine:
             client_auth_method = client.consumer.registration_response.get(
                 "introspection_endpoint_auth_method", "client_secret_basic"
             )  # type: ignore[no-untyped-call] # oic is untyped
-            introspection = client.client_extension.do_token_introspection(
-                request_args=request_args,
-                authn_method=client_auth_method,
-                endpoint=client.consumer.introspection_endpoint,  # type: ignore
-            )
+            try:
+                introspection = client.client_extension.do_token_introspection(
+                    request_args=request_args,
+                    authn_method=client_auth_method,
+                    endpoint=client.consumer.introspection_endpoint,  # type: ignore
+                )
+            except AttributeError as e:
+                msg = f"No introspection_endpoint found for provider '{self.opsettings.provider.op_name}'."
+                raise InvalidOIDCConfigurationException(msg) from e
             access_token_claims = introspection.to_dict()
             if "active" in access_token_claims and not access_token_claims["active"]:
                 # there will not be other claims, like expiry, this is simply an expired token
