@@ -66,7 +66,11 @@ This setting is enabled by default on Django Rest Framework authentication (when
 When this setting is enabled, we will use the *introspection endpoint* of the
 identity provider to perform token validation and return a clear extraction of the ``access_token``.
 
-When disabled the access token claims are not extracted, you only have the ``access_token`` in its JWT encoded format. You can then decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default. If you need information from the ``access_token`` activating this setting will add a round trip to the SSO server, but at the end you'll have all the ``access_tokens`` claims in clear text.
+When disabled, no access token verification is performed. You should define ``hook_validate_access_token`` to process the token as no token will be valid.
+
+ If you need information from the ``access_token`` activating this setting will add a round trip to the SSO server, but at the end you'll have all the ``access_tokens`` claims in clear text.
+
+You should also read the documentation about :ref:`hook_validate_access_token <hook_validate_access_token>`
 
 
 scopes
@@ -168,12 +172,6 @@ post_logout_redirect_uri
 
 This setting configures where a user is redirected after successful SSO logout, defaults to Django base url.
 
-oidc_callback_path
-******************
-
-**Default**: <op_name
-
-This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
 
 login_redirection_requires_https
 ********************************
@@ -270,3 +268,13 @@ Calls the provided function on user login. It takes two parameters:
     * ``id_token_claims``: the id token as a dict
 
 It is expected to return a :class:`django.contrib.auth.models.User` instance.
+
+hook_validate_access_token
+**************************
+
+This function is called :
+
+* by the drf integration when authenticating a user
+* by ``OIDCCallbackView`` to provide more claims to ``hook_get_user``
+
+When implementing this hook, you only have access to the ``access_token`` in its JWT encoded format. You can decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default.

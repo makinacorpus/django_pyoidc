@@ -2,6 +2,7 @@ NEXT
 ----
 - drf : improve missing introspection endpoint error handling
 - have all `django_pyoidc` exceptions inherit from `DjangoOIDCException`
+- improve documentation for drf integration : `use_introspection_on_access_tokens` and `hook_validate_access_token`
 
 1.0.8
 -----
