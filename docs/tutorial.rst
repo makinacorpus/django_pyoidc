@@ -277,3 +277,7 @@ two ``drf`` keys in the settings.
 
 .. tip::
     Look up `the drf documentation <https://www.django-rest-framework.org/api-guide/authentication/>`_ for more details about authentication classes.
+
+
+.. tip::
+    Taking a look at the documentation of :ref:`use_introspection_on_access_tokens` might be a good idea if you run into some issues
