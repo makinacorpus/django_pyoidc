@@ -168,12 +168,6 @@ post_logout_redirect_uri
 
 This setting configures where a user is redirected after successful SSO logout, defaults to Django base url.
 
-oidc_callback_path
-******************
-
-**Default**: <op_name
-
-This setting is used to reference the callback view that should be provided as the ``redirect_uri`` parameter of the *Authorization Code Flow*.
 
 login_redirection_requires_https
 ********************************
