@@ -278,3 +278,10 @@ This function is called :
 * by ``OIDCCallbackView`` to provide more claims to ``hook_get_user``
 
 When implementing this hook, you only have access to the ``access_token`` in its JWT encoded format. You can decide to try an extraction on your own with a jwt library, or keep it as a JWT. If your SSO provider provides enough claims in the userinfo token you do not need to extract content from the ``access_token``. That's why we do not extract the ``access_token`` claims by default.
+
+hook_session_logout
+*******************
+
+This function is called by ``OIDCBackChannelLogoutView`` after validation of the logout request. It receives an instance of ``OIDCSession``.
+
+The default implementation is available in ``django_pyoidc.backchannel_logout_session``.

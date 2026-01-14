@@ -11,6 +11,7 @@ from oic.oic.message import OpenIDSchema
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.models import OIDCSession
+from django_pyoidc.views import OIDCBackChannelLogoutView
 from tests.utils import OIDCTestCase
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
@@ -572,7 +573,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
             "Got invalid logout token : sub or sid is missing",
         )
 
-    @mock.patch("django_pyoidc.views.SessionStore.delete")
+    @mock.patch("django_pyoidc.SessionStore.delete")
     @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_valid_backchannel_sub(
@@ -606,7 +607,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_backchannel_logout.assert_called_once()
         mocked_session_delete.assert_called_once_with(cache_session_key)
 
-    @mock.patch("django_pyoidc.views.SessionStore.delete")
+    @mock.patch("django_pyoidc.SessionStore.delete")
     @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch("django_pyoidc.client.Consumer.restore")
@@ -652,7 +653,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_session_delete.assert_called_once_with(cache_session_key)
         mocked_restore.assert_called_once_with(session_state)
 
-    @mock.patch("django_pyoidc.views.SessionStore.delete")
+    @mock.patch("django_pyoidc.SessionStore.delete")
     @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch("django_pyoidc.client.Consumer.restore")
@@ -698,7 +699,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         mocked_session_delete.assert_not_called()
         mocked_restore.assert_called_once_with(session_state)
 
-    @mock.patch("django_pyoidc.views.SessionStore.delete")
+    @mock.patch("django_pyoidc.SessionStore.delete")
     @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_valid_backchannel_sub_multiple_sessions(
@@ -741,4 +742,18 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         )
         mocked_session_delete.assert_has_calls(
             [call(cache_session_key_1), call(cache_session_key_2)]
+        )
+
+    @mock.patch(
+        "django_pyoidc.views.OIDCSettingsFactory.get",
+        return_value={"hook_session_logout": "test"},
+    )
+    def test_backchannel_logout_hook_get_logout(self, mocked_settings_get):
+        view = OIDCBackChannelLogoutView(op_name="sso1")
+        with mock.patch(
+            "django_pyoidc.views.OIDCView.call_function"
+        ) as mocked_call_function:
+            view._logout_session("test")
+        mocked_call_function.assert_called_once_with(
+            "hook_session_logout", session="test"
         )

@@ -1,11 +1,9 @@
 import logging
-from importlib import import_module
 from typing import Any, Dict, Optional, TypeVar, Union
 
 import jwt
 
 # import oic
-from django.conf import settings
 from django.contrib import auth, messages
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
@@ -17,14 +15,13 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from oic.utils.http_util import BadRequest
 
+from django_pyoidc import backchannel_logout_session
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
 from django_pyoidc.exceptions import InvalidSIDException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory, OidcSettingValue
 from django_pyoidc.utils import import_object
-
-SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
 
@@ -297,10 +294,10 @@ class OIDCBackChannelLogoutView(OIDCView):
             self._logout_session(session)
 
     def _logout_session(self, session: OIDCSession) -> None:
-        s = SessionStore()
-        s.delete(session.cache_session_key)
-        session.delete()
-        logger.info(f"Backchannel logout request received and validated for {session}")
+        if self.opsettings.get("hook_session_logout") is not None:
+            self.call_function("hook_session_logout", session=session)
+        else:
+            backchannel_logout_session(session=session)
 
     def post(self, request: HttpRequest) -> HttpResponse:
         if request.content_type != "application/x-www-form-urlencoded":

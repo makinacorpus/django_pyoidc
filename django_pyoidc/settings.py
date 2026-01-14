@@ -81,6 +81,7 @@ class OIDCSettings:
                hook_user_login (str): path to a function hook to be run after successful login.
                hook_user_logout (str):  path to a function hook to be run during logout(before local session removal and redirection to SSO
                 remote logout).
+                hook_session_logout (str): path to a function hook to be run during backchannel logout.
                hook_validate_access_token (str):  path to a function hook to extract access tokens claims from the raw jwt.
                 this is not used if 'use_introspection_on_access_tokens' is True
                use_introspection_on_access_tokens (bool): extract access tokens claims by sending the access token to the sso server on

@@ -3,12 +3,15 @@ import logging
 from importlib import import_module
 from typing import Any, Dict, Mapping, MutableMapping, Optional, Union
 
+from django.conf import settings
 from django.core.cache import BaseCache, caches
 
 from django_pyoidc.exceptions import ClaimNotFoundError
 from django_pyoidc.settings import OIDCSettings
 
 logger = logging.getLogger(__name__)
+
+SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
 def import_object(
