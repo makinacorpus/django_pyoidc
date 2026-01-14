@@ -1,18 +1,22 @@
-class InvalidSIDException(Exception):
+class DjangoOIDCException(Exception):
     pass
 
 
-class TokenError(Exception):
+class InvalidSIDException(DjangoOIDCException):
     pass
 
 
-class ExpiredToken(Exception):
+class TokenError(DjangoOIDCException):
     pass
 
 
-class ClaimNotFoundError(Exception):
+class ExpiredToken(DjangoOIDCException):
     pass
 
 
-class InvalidOIDCConfigurationException(Exception):
+class ClaimNotFoundError(DjangoOIDCException):
+    pass
+
+
+class InvalidOIDCConfigurationException(DjangoOIDCException):
     pass
