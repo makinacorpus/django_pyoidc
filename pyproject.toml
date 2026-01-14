@@ -16,6 +16,7 @@ classifiers=["Topic :: Utilities",
         "Framework :: Django :: 5.0",
         "Framework :: Django :: 5.1",
         "Framework :: Django :: 5.2",
+        "Framework :: Django :: 6.0",
         "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
@@ -24,6 +25,7 @@ classifiers=["Topic :: Utilities",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Security"
 ]
 description="Authenticate your users using OpenID Connect (OIDC)"
