@@ -114,9 +114,16 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        django-version: ["django==5.2", "django==6.0"]
+        experimental: [false]
+        include:
+          - python-version: "3.14"
+            django-version: "git+https://github.com/django/django.git@main#egg=Django"
+            experimental: true
     steps:
       - uses: actions/checkout@v5
         with:
@@ -132,7 +139,7 @@ jobs:
           version: "0.9.8"
 
       - name: Install dependencies
-        run: uv pip install .[drf] -r requirements/requirements-dev.in -r requirements/requirements-test.in
+        run: uv pip install .[drf] -r requirements/requirements-dev.in -r requirements/requirements-test.in ${{ matrix.django }}
         env:
           UV_SYSTEM_PYTHON: 1
 

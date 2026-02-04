@@ -1,3 +1,7 @@
+1.0.11
+------
+- run unit test against django master branch (https://www.djangoproject.com/weblog/2025/apr/17/run-your-tests-against-django-main/)
+
 1.0.10
 ------
 - fix readme installation instructions #65 (thank you rmattes !)
