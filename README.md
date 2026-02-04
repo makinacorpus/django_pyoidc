@@ -74,7 +74,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     ...
-    "django-pyoidc"
+    "django_pyoidc"
 ]
 ```
 

@@ -1,3 +1,7 @@
+1.0.10
+------
+- fix readme installation instructions #65 (thank you rmattes !)
+
 1.0.9
 -----
 - drf : improve missing introspection endpoint error handling
