@@ -2,15 +2,7 @@
 
 
 <p align="center">
-<a href="https://django-pyoidc.readthedocs.io">
-        <img src="https://readthedocs.org/projects/django-pyoidc/badge/?version=stable&style=plastic"/>
-</a>
-<a href="https://pypi.org/project/django-pyoidc/">
-  <img src="https://img.shields.io/pypi/v/django_pyoidc.svg"/>      
-</a>
-<a href="https://pypi.org/project/django-pyoidc/">
-  <img src="https://img.shields.io/pypi/pyversions/django_pyoidc"/>      
-</a>
+<a href="https://django-pyoidc.readthedocs.io"><img src="https://readthedocs.org/projects/django-pyoidc/badge/?version=stable&style=plastic"/></a><a href="https://pypi.org/project/django-pyoidc/"><img src="https://img.shields.io/pypi/v/django_pyoidc.svg"/></a><a href="https://pypi.org/project/django-pyoidc/"><img src="https://img.shields.io/pypi/pyversions/django_pyoidc"/></a>
 </p>
 
 This library allows *Single Sign On* (SSO) integration into Django through the [Open ID Connect (OIDC)]() protocol.
