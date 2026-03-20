@@ -3,12 +3,17 @@ import logging
 import os
 import subprocess
 import time
+from pathlib import Path
 from typing import Generator
 from unittest.mock import MagicMock, patch
 
 from django.core.servers.basehttp import ThreadedWSGIServer, WSGIRequestHandler
 from django.test import override_settings
 from django.test.testcases import LiveServerTestCase, LiveServerThread
+from selenium.webdriver import FirefoxProfile
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.webdriver import WebDriver
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +23,33 @@ class NotReadyException(Exception):
 
 
 class OIDCE2ETestCase(LiveServerTestCase):
-
     docker_id = None
     workdir = None
     docker_workdir = None
+
+    @classmethod
+    def setUpClass(cls):
+        print(" *** Live Server Test Case --Selenium init-- ***")
+        super().setUpClass()
+
+        options = Options()
+        options.add_argument("--private")
+        # options.add_argument("--headless")
+        profile = FirefoxProfile()
+        profile.set_preference("browser.privatebrowsing.autostart", True)
+        options.profile = profile
+        snap_binary = Path("/snap/bin/geckodriver")
+        if snap_binary.is_file():
+            service = Service(executable_path="/snap/bin/geckodriver")
+            cls.selenium = WebDriver(options=options, service=service)
+        else:
+            cls.selenium = WebDriver(options=options)
+        # cls.selenium.implicitly_wait(10)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.selenium.quit()
+        super().tearDownClass()
 
     class VerboseLiveServerThread(LiveServerThread):
         def _create_server(self, connections_override=None):
@@ -101,9 +129,9 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             if e.returncode == 125:
                 print(" +----------|  |--------------------------+ ")
                 print(" +---------_|  |_-------------------------+ ")
-                print(" +---------\    /-------------------------+ ")  # noqa
-                print(" +----------\  /--------------------------+ ")  # noqa
-                print(" +-----------\/---------------------------+ ")  # noqa
+                print(" +---------\\    /-------------------------+ ")  # noqa
+                print(" +----------\\  /--------------------------+ ")  # noqa
+                print(" +-----------\\/---------------------------+ ")  # noqa
                 print(
                     "   + Try removing any previous LemonLdap image running using this command:"
                 )
@@ -493,9 +521,9 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             if e.returncode == 125:
                 print(" +----------|  |--------------------------+ ")
                 print(" +---------_|  |_-------------------------+ ")
-                print(" +---------\    /-------------------------+ ")  # noqa
-                print(" +----------\  /--------------------------+ ")  # noqa
-                print(" +-----------\/---------------------------+ ")  # noqa
+                print(" +---------\\    /-------------------------+ ")  # noqa
+                print(" +----------\\  /--------------------------+ ")  # noqa
+                print(" +-----------\\/---------------------------+ ")  # noqa
                 print(
                     "   + Try removing any previous Keycloak and front images running using these commands:"
                 )
@@ -520,6 +548,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
     def loadKeycloakFixtures(cls):
         print(f"Running Django on {cls.live_server_url}")
 
+        print(" + Keycloak Fixtures init.")
         print(" + connect as Keycloak admin")
         retry = 0
         ok = False
