@@ -5,8 +5,6 @@ from urllib.parse import parse_qs, urlparse
 import requests
 from django.urls import reverse
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 
 # from selenium.webdriver.support.wait import WebDriverWait
@@ -19,18 +17,6 @@ http_client.HTTPConnection.debuglevel = 1
 
 
 class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        options = Options()
-        # options.headless = True
-        cls.selenium = WebDriver(options=options)
-        # cls.selenium.implicitly_wait(10)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.selenium.quit()
-        super().tearDownClass()
 
     def test_00_login_page_redirects_to_lemonldap_sso(self, *args):
         """

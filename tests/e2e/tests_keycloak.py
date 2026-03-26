@@ -5,10 +5,7 @@ from urllib.parse import parse_qs, urlparse
 
 import requests
 from django.urls import reverse
-from selenium.webdriver import FirefoxProfile
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -22,22 +19,6 @@ http_client.HTTPConnection.debuglevel = 1
 
 
 class KeycloakTestCase(OIDCE2EKeycloakTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        options = Options()
-        options.add_argument("--private")
-        # options.headless = True
-        profile = FirefoxProfile()
-        profile.set_preference("browser.privatebrowsing.autostart", True)
-        options.profile = profile
-        cls.selenium = WebDriver(options=options)
-        # cls.selenium.implicitly_wait(10)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.selenium.quit()
-        super().tearDownClass()
 
     def test_001_m2m_client_credential_success(self, *args):
         """
@@ -81,7 +62,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         Check that we can request the API using a 'service account' and be rejected.
 
         The client used here does not have access to the same scope as the client
-        used in the API. THe group and roles are OK, but not the scope. So Keycloak
+        used in the API. The group and roles are OK, but not the scope. So Keycloak
         will not add the right audience in the token and we should be rejected.
         """
 

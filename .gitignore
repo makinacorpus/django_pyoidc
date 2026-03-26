@@ -7,3 +7,4 @@ docs/_build
 geckodriver.log
 .python-version
 dist/
+*.log
