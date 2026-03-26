@@ -14,6 +14,10 @@ class ExpiredToken(DjangoOIDCException):
     pass
 
 
+class FailedIntrospection(DjangoOIDCException):
+    pass
+
+
 class ClaimNotFoundError(DjangoOIDCException):
     pass
 

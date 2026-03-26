@@ -6,6 +6,7 @@ from django_pyoidc import get_user_by_email
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.exceptions import (
     ExpiredToken,
+    FailedIntrospection,
     InvalidOIDCConfigurationException,
     TokenError,
 )
@@ -84,6 +85,10 @@ class OIDCEngine:
                 msg = f"No introspection_endpoint found for provider '{self.opsettings.provider.op_name}'."
                 raise InvalidOIDCConfigurationException(msg) from e
             access_token_claims = introspection.to_dict()
+            if "errors" in access_token_claims:
+                msg = f"Failed to introspect access token : {access_token_claims}"
+                logger.error(msg)
+                raise FailedIntrospection(msg)
             if "active" in access_token_claims and not access_token_claims["active"]:
                 # there will not be other claims, like expiry, this is simply an expired token
                 logger.info("access token introspection failed, expired token.")
