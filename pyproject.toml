@@ -29,7 +29,7 @@ classifiers=["Topic :: Utilities",
         "Topic :: Security"
 ]
 description="Authenticate your users using OpenID Connect (OIDC)"
-requires-python=">=3.8"
+requires-python=">=3.9"
 keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect", "authentication"]
 readme="README.md"
 license="GPL-3.0-only"

@@ -1,3 +1,8 @@
+NEXT
+----
+- drop support for python 3.8
+
+
 1.0.12
 ------
 - improve error message when we fail to introspect a token (#73)
