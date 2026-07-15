@@ -160,10 +160,7 @@ class LoginViewTestCase(OIDCTestCase):
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch("django_pyoidc.client.Consumer.begin", return_value=(1, "/"))
-    @override_settings(
-        MIDDLEWARE=settings.MIDDLEWARE
-        + ["django.contrib.auth.middleware.LoginRequiredMiddleware"]
-    )
+    @override_settings(MIDDLEWARE=[*settings.MIDDLEWARE, "django.contrib.auth.middleware.LoginRequiredMiddleware"])
     def test_scope_is_set(self, mocked_begin: MagicMock, *args):
         response = self.client.get(
             reverse("test_login"),
@@ -177,9 +174,7 @@ class LoginViewTestCase(OIDCTestCase):
         self.assertEqual(response.status_code, 302)
         mocked_begin.assert_called_once_with(scope=["openid"], response_type=ANY, use_nonce=ANY, path=ANY)
 
-    @override_settings(
-        MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"]
-    )
+    @override_settings(MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"])
     def test_login_required_middleware(self):
         """
         Ensures that the login view does not need authentication when using
@@ -501,9 +496,7 @@ class CallbackViewTestCase(OIDCTestCase):
         self.assertEqual(OIDCSession.objects.all().count(), 0)
         mocked_user_access_token_hook.assert_called_once()
 
-    @override_settings(
-        MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"]
-    )
+    @override_settings(MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"])
     def test_callback_required_middleware(self):
         """
         Ensures that the callback view does not need authentication when using
@@ -737,9 +730,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
             view._logout_session("test")
         mocked_call_function.assert_called_once_with("hook_session_logout", session="test")
 
-    @override_settings(
-        MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"]
-    )
+    @override_settings(MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"])
     def test_login_required_middleware(self):
         """
         Ensures that the backchannel logout view does not need authentication when using
