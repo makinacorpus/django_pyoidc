@@ -1,4 +1,11 @@
 
+Useful functions
+----------------
+
+The module django_pyoidc.utils has some useful functions :
+
+.. autofunction:: django_pyoidc.utils.extract_claim_from_tokens
+
 Views
 -----
 

@@ -25,11 +25,17 @@ def import_object(path: str, def_name: str) -> Any:  # FIXME : this function is 
 
 
 def extract_claim_from_tokens(claim: str, tokens: Dict[str, Any], raise_exception: bool = True) -> Any:
-    """Given a dictionnary of tokens claims, extract the given claim.
+    """
+    Given a dictionary of token claims, extract the given claim.
 
-    This function will seek in "info_token_claims", then "id_token_claims"
-    and finally "access_token_claims".
-    If the claim is not found a ClaimNotFoundError exception is raised.
+    This function searches the ``tokens`` dictionary for the requested data in priority order:
+
+     1. *info_token_claims*
+     2. *id_token_claims*
+     3. *access_token_claims*
+
+    If the claim is not found a ``ClaimNotFoundError`` exception is raised unless the parameter
+    ``raise_exception`` has been set to false.
     """
     if "info_token_claims" in tokens and claim in tokens["info_token_claims"]:
         value = tokens["info_token_claims"][claim]
@@ -49,7 +55,7 @@ def extract_claim_from_tokens(claim: str, tokens: Dict[str, Any], raise_exceptio
 def check_audience(client_id: str, access_token_claims: Dict[str, Any]) -> bool:
     """Verify that the current client_id is present in 'aud' claim.
 
-    Audences are stored in 'aud' claim.
+    Audiences are stored in 'aud' claim.
     Audiences of an access token is a list of client_id where this token is allowed.
     When receiving an access token in 'API' bearer mode checking that your client_id
     is in the audience is a must.
