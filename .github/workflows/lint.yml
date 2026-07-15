@@ -114,6 +114,15 @@ jobs:
           - python-version: "3.14"
             django-version: "git+https://github.com/django/django.git@main#egg=Django"
             experimental: true
+        exclude:
+          - python-version: "3.10"
+            django-version: "django==6.0"
+          - python-version: "3.11"
+            django-version: "django==6.0"
+          - python-version: "3.10"
+            django-version: "django==6.1b1"
+          - python-version: "3.11"
+            django-version: "django==6.1b1"
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
@@ -130,7 +139,7 @@ jobs:
           version: "0.9.8"
 
       - name: Install dependencies
-        run: uv pip install .[drf] -r requirements/requirements-dev.in -r requirements/requirements-test.in ${{ matrix.django }}
+        run: uv pip install .[drf] -r requirements/requirements-dev.in -r requirements/requirements-test.in ${{ matrix.django-version }}
         env:
           UV_SYSTEM_PYTHON: 1
 
