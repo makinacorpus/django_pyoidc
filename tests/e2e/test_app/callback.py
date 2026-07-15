@@ -40,9 +40,7 @@ def _debug_tokens(tokens={}):
 
     if "access_token_claims" in tokens:
         print("access_token_claims")
-        print(
-            type(tokens["access_token_claims"])
-        )  # oic.extension.message.TokenIntrospectionResponse
+        print(type(tokens["access_token_claims"]))  # oic.extension.message.TokenIntrospectionResponse
         print(tokens["access_token_claims"])
 
     if "id_token_claims" in tokens:
@@ -54,13 +52,9 @@ def _debug_tokens(tokens={}):
 def get_user_with_resource_access_check(client: OIDCClient, tokens={}):
 
     _debug_tokens(tokens)
-    access_token_claims = (
-        tokens["access_token_claims"] if "access_token_claims" in tokens else None
-    )
+    access_token_claims = tokens["access_token_claims"] if "access_token_claims" in tokens else None
     id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
-    info_token_claims = (
-        tokens["info_token_claims"] if "info_token_claims" in tokens else None
-    )
+    info_token_claims = tokens["info_token_claims"] if "info_token_claims" in tokens else None
 
     resource_access = (
         access_token_claims["resource_access"]
@@ -72,9 +66,7 @@ def get_user_with_resource_access_check(client: OIDCClient, tokens={}):
     client_id = client.get_setting("client_id")
     # warning for user with no access Keycloak would not generate the resource_access claim
     # so we need to check absence of the claim also
-    if (resource_access and client_id not in resource_access) or (
-        resource_access is None
-    ):
+    if (resource_access and client_id not in resource_access) or (resource_access is None):
         logger.error("Failed resource access check in access_token")
         raise PermissionDenied("You do not have access to this application.")
     # then you could extend roles analysis if needed (for example this could need a local groups/roles mapping)
@@ -97,9 +89,7 @@ def get_user_with_resource_access_check(client: OIDCClient, tokens={}):
         email=info_token_claims["email"],
         username=username,
     )
-    user.is_superuser = (
-        "groups" in info_token_claims and "admins" in info_token_claims["groups"]
-    )
+    user.is_superuser = "groups" in info_token_claims and "admins" in info_token_claims["groups"]
     user.backend = "django.contrib.auth.backends.ModelBackend"
     user.save()
 
@@ -113,24 +103,16 @@ def extract_username_from_tokens(tokens: dict):
         try:
             username = extract_claim_from_tokens("email", tokens)
         except ClaimNotFoundError:
-            raise ClaimNotFoundError(
-                "We found nothing to extract a username in current OIDC tokens."
-            )
+            raise ClaimNotFoundError("We found nothing to extract a username in current OIDC tokens.")
     return username
 
 
 def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
     """Checking audiences on the access token. Works with access_token_claims extracted only."""
     _debug_tokens(tokens)
-    access_token_claims = (
-        tokens["access_token_claims"]
-        if "access_token_claims" in tokens and tokens["access_token_claims"]
-        else None
-    )
+    access_token_claims = tokens["access_token_claims"] if tokens.get("access_token_claims") else None
     # id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
-    info_token_claims = (
-        tokens["info_token_claims"] if "info_token_claims" in tokens else None
-    )
+    info_token_claims = tokens["info_token_claims"] if "info_token_claims" in tokens else None
 
     # Perform a minimal audience check
     # Note: here not checking if client_id is in 'aud' because that's broken in Keycloak
@@ -157,9 +139,7 @@ def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
         email=info_token_claims["email"],
         username=username,
     )
-    user.is_superuser = (
-        "groups" in info_token_claims and "admins" in info_token_claims["groups"]
-    )
+    user.is_superuser = "groups" in info_token_claims and "admins" in info_token_claims["groups"]
     user.backend = "django.contrib.auth.backends.ModelBackend"
     user.save()
 
@@ -169,13 +149,9 @@ def get_user_with_minimal_audiences_check(client: OIDCClient, tokens={}):
 def get_user_with_audiences_check(client: OIDCClient, tokens={}):
 
     _debug_tokens(tokens)
-    access_token_claims = (
-        tokens["access_token_claims"] if "access_token_claims" in tokens else None
-    )
+    access_token_claims = tokens["access_token_claims"] if "access_token_claims" in tokens else None
     # id_token_claims = tokens["id_token_claims"] if "id_token_claims" in tokens else None
-    info_token_claims = (
-        tokens["info_token_claims"] if "info_token_claims" in tokens else None
-    )
+    info_token_claims = tokens["info_token_claims"] if "info_token_claims" in tokens else None
 
     # Note: Keycloak broke the audience checks for access_tokens, an access token generated by "X" request
     # will not contain "X" in the 'aud' key, only extra audiences.
@@ -208,9 +184,7 @@ def get_user_with_audiences_check(client: OIDCClient, tokens={}):
         email=info_token_claims["email"],
         username=username,
     )
-    user.is_superuser = (
-        "groups" in info_token_claims and "admins" in info_token_claims["groups"]
-    )
+    user.is_superuser = "groups" in info_token_claims and "admins" in info_token_claims["groups"]
     user.backend = "django.contrib.auth.backends.ModelBackend"
     user.save()
 

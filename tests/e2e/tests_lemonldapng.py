@@ -17,7 +17,6 @@ http_client.HTTPConnection.debuglevel = 1
 
 
 class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
-
     def test_00_login_page_redirects_to_lemonldap_sso(self, *args):
         """
         Test that accessing login callback redirects to the SSO server.
@@ -33,9 +32,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         print(f"Running Django on {self.live_server_url}")
 
         login_url = reverse("lemon1_namespace:lemon1-login")
-        response = client.get(
-            f"{self.live_server_url}{login_url}", allow_redirects=False
-        )
+        response = client.get(f"{self.live_server_url}{login_url}", allow_redirects=False)
         # we should get something like http://localhost:8070/oauth2/authorize
         #   ?client_id=app1
         #   &nonce=YZA...24
@@ -60,9 +57,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         self.assertTrue(qs["state"][0])
         self.assertTrue(qs["nonce"][0])
 
-    def _selenium_sso_login(
-        self, login_start_url, login_end_url, user, password, active_sso_session=False
-    ):
+    def _selenium_sso_login(self, login_start_url, login_end_url, user, password, active_sso_session=False):
         if not active_sso_session:
             self.selenium.get(login_start_url)
             self.wait.until(EC.url_changes(login_start_url))
@@ -78,9 +73,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
             username_input.send_keys(user)
             password_input = self.selenium.find_element(By.NAME, "password")
             password_input.send_keys(password)
-            self.selenium.find_element(
-                By.XPATH, '//form[@id="lform"]//button[contains(@class, "btn-success")]'
-            ).click()
+            self.selenium.find_element(By.XPATH, '//form[@id="lform"]//button[contains(@class, "btn-success")]').click()
         else:
             # current SSO session is still active,
             # so we should redirected directly to success page
@@ -134,9 +127,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         end_url = f"{self.live_server_url}{post_logout_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
 
-        self._selenium_sso_login(
-            start_url, middle_url, "rtyler", "rtyler", active_sso_session=True
-        )
+        self._selenium_sso_login(start_url, middle_url, "rtyler", "rtyler", active_sso_session=True)
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check we have the logout link
@@ -169,9 +160,7 @@ class LemonLDAPTestCase(OIDCE2ELemonLdapNgTestCase):
         end_url = f"{self.live_server_url}{post_logout_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
         # previous test destroyed the SSO session, we need to reconnect
-        self._selenium_sso_login(
-            start_url, middle_url, "rtyler", "rtyler", active_sso_session=False
-        )
+        self._selenium_sso_login(start_url, middle_url, "rtyler", "rtyler", active_sso_session=False)
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # print(bodyText)

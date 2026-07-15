@@ -36,9 +36,7 @@ class SettingsTestCase(OIDCTestCase):
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_settings_extracted_from_django_pyoidc_settings(
-        self, mocked_provider_config, *args
-    ):
+    def test_client_settings_extracted_from_django_pyoidc_settings(self, mocked_provider_config, *args):
         """
         Test that definitions of DJANGO_PYOIDC in settings can be retrieved in client settings.
         """
@@ -46,16 +44,12 @@ class SettingsTestCase(OIDCTestCase):
         settings = sso_client.get_settings()
         self.assertEqual(settings.get("client_id"), "foo")
         self.assertEqual(settings.get("client_secret"), "secret_app_foo")
-        self.assertEqual(
-            settings.get("provider_discovery_uri"), "http://sso_tutut/realms/realm_foo"
-        )
+        self.assertEqual(settings.get("provider_discovery_uri"), "http://sso_tutut/realms/realm_foo")
         self.assertEqual(settings.get("cache_django_backend"), "default")
         self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
         self.assertEqual(settings.get("oidc_cache_provider_metadata_ttl"), 75)
         self.assertEqual(settings.get("oidc_callback_path"), "foo-abc-callback")
-        self.assertEqual(
-            settings.get("login_uris_redirect_allowed_hosts"), ["foo", "bar"]
-        )
+        self.assertEqual(settings.get("login_uris_redirect_allowed_hosts"), ["foo", "bar"])
         self.assertEqual(settings.get("login_redirection_requires_https"), True)
         self.assertEqual(settings.get("post_login_uri_success"), "/abc-123")
         self.assertEqual(settings.get("post_login_uri_failure"), "/def-456")
@@ -118,9 +112,7 @@ class SettingsTestCase(OIDCTestCase):
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_settings_callback_uri_name_to_oidc_callback_path(
-        self, mocked_provider_config, *args
-    ):
+    def test_client_settings_callback_uri_name_to_oidc_callback_path(self, mocked_provider_config, *args):
         """
         Test that we can give a named route in callback_uri_name instead of giving oidc_callback_path.
         """
@@ -141,9 +133,7 @@ class SettingsTestCase(OIDCTestCase):
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_settings_callback_uri_name_to_oidc_callback_path_upper(
-        self, mocked_provider_config, *args
-    ):
+    def test_client_settings_callback_uri_name_to_oidc_callback_path_upper(self, mocked_provider_config, *args):
         """
         Test that we can give a named route in callback_uri_name instead of giving oidc_callback_path.
         """
@@ -270,10 +260,7 @@ class SettingsTestCase(OIDCTestCase):
         """
         with self.assertRaises(InvalidOIDCConfigurationException) as context:
             OIDCClient(op_name="lib_547")
-        self.assertTrue(
-            "Provider definition does not contain any 'client_id' entry."
-            in context.exception.__repr__()
-        )
+        self.assertTrue("Provider definition does not contain any 'client_id' entry." in context.exception.__repr__())
 
     @override_settings(
         DJANGO_PYOIDC={
@@ -320,17 +307,13 @@ class SettingsTestCase(OIDCTestCase):
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_settings_missing_provider_discovery_uri(
-        self, mocked_provider_config, *args
-    ):
+    def test_client_settings_missing_provider_discovery_uri(self, mocked_provider_config, *args):
         """
         Test that missing provider_discovery_uri (or alternatives) will fail.
         """
         with self.assertRaises(InvalidOIDCConfigurationException) as context:
             OIDCClient(op_name="lib_548")
-        self.assertTrue(
-            "No provider discovery uri provided." in context.exception.__repr__()
-        )
+        self.assertTrue("No provider discovery uri provided." in context.exception.__repr__())
         with self.assertRaises(TypeError) as context:
             OIDCClient(op_name="lib_549")
         self.assertTrue(
@@ -357,10 +340,7 @@ class SettingsTestCase(OIDCTestCase):
         )
         with self.assertRaises(RuntimeError) as context:
             OIDCClient(op_name="lib_553")
-        self.assertTrue(
-            "Cannot extract the keycloak realm from the provided url."
-            in context.exception.__repr__()
-        )
+        self.assertTrue("Cannot extract the keycloak realm from the provided url." in context.exception.__repr__())
 
     @override_settings(
         DJANGO_PYOIDC={
@@ -397,19 +377,13 @@ class SettingsTestCase(OIDCTestCase):
         """
         sso_client = OIDCClient(op_name="lib_612")
         settings = sso_client.get_settings()
-        self.assertEqual(
-            settings.get("provider_discovery_uri"), "http://abc/def/realms/ghj"
-        )
+        self.assertEqual(settings.get("provider_discovery_uri"), "http://abc/def/realms/ghj")
         sso_client = OIDCClient(op_name="lib_613")
         settings = sso_client.get_settings()
-        self.assertEqual(
-            settings.get("provider_discovery_uri"), "http://lmn/opq/realms/rst"
-        )
+        self.assertEqual(settings.get("provider_discovery_uri"), "http://lmn/opq/realms/rst")
         sso_client = OIDCClient(op_name="lib_614")
         settings = sso_client.get_settings()
-        self.assertEqual(
-            settings.get("provider_discovery_uri"), "http://uvw/xyz/realms/abc"
-        )
+        self.assertEqual(settings.get("provider_discovery_uri"), "http://uvw/xyz/realms/abc")
 
     @override_settings(
         DJANGO_PYOIDC={
@@ -431,9 +405,7 @@ class SettingsTestCase(OIDCTestCase):
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_settings_extracted_from_django_pyoidc_settings_upper(
-        self, mocked_provider_config, *args
-    ):
+    def test_client_settings_extracted_from_django_pyoidc_settings_upper(self, mocked_provider_config, *args):
         """
         Test that definitions of DJANGO_PYOIDC in settings can be retrieved in client settings.
 
@@ -451,9 +423,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("oidc_cache_provider_metadata"), False)
         self.assertEqual(settings.get("oidc_paths_prefix"), "lib_885")
         self.assertEqual(settings.get("oidc_callback_path"), "callback-foo-def")
-        self.assertEqual(
-            settings.get("login_uris_redirect_allowed_hosts"), ["foo2", "bar2"]
-        )
+        self.assertEqual(settings.get("login_uris_redirect_allowed_hosts"), ["foo2", "bar2"])
         self.assertEqual(settings.get("login_redirection_requires_https"), True)
         self.assertEqual(settings.get("post_login_uri_success"), "/abc-123-2")
         self.assertEqual(settings.get("post_login_uri_failure"), "/def-456-2")
@@ -484,9 +454,7 @@ class SettingsTestCase(OIDCTestCase):
         },
     )
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_settings_well_known_part_removed_from_provider_path(
-        self, mocked_provider_config, *args
-    ):
+    def test_client_settings_well_known_part_removed_from_provider_path(self, mocked_provider_config, *args):
         """
         Test giving .well-known/openid-configuration/ paths for provider config paths is supported.
         """
@@ -524,9 +492,7 @@ class SettingsTestCase(OIDCTestCase):
         self.assertEqual(settings.get("use_introspection_on_access_tokens"), False)
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_client_use_introspection_on_access_tokens_defaults_to_true_if_name_drf(
-        self, *args
-    ):
+    def test_client_use_introspection_on_access_tokens_defaults_to_true_if_name_drf(self, *args):
         """
         Test that some globale settings are defined.
         """

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_user_by_email(tokens: Dict[str, Any]) -> Any:
-    User = get_user_model()
+    User = get_user_model()  # noqa: N806
 
     username = None
     preferred_username = None
@@ -45,9 +45,8 @@ def get_user_by_email(tokens: Dict[str, Any]) -> Any:
             if email:
                 django_username = email
             else:
-                raise SuspiciousOperation(
-                    "Cannot extract username or email from available OIDC tokens."
-                )
+                msg = "Cannot extract username or email from available OIDC tokens."
+                raise SuspiciousOperation(msg)
         else:
             django_username = username
     else:
@@ -74,7 +73,7 @@ def get_user_by_email(tokens: Dict[str, Any]) -> Any:
         # Build a fake email for the service accounts
         email = f"{client_id}@localhost.lan"
 
-    user, created = User.objects.get_or_create(
+    user, _ = User.objects.get_or_create(
         email=email,
         username=django_username,
     )
@@ -91,4 +90,4 @@ def backchannel_logout_session(session: "OIDCSession") -> None:
     s = SessionStore()
     s.delete(session.cache_session_key)
     session.delete()
-    logger.info(f"Backchannel logout request received and validated for {session}")
+    logger.info("Backchannel logout request received and validated")

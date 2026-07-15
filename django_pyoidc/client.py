@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, TypeVar, Union
+from typing import Optional, TypeVar, Union, cast
 
 # import oic
 from oic.extension.client import Client as ClientExtension
@@ -37,9 +37,7 @@ class OIDCClient:
 
         client_config = {
             "client_id": client_id,
-            "client_authn_method": self.opsettings.get(
-                "client_authn_method", CLIENT_AUTHN_METHOD
-            ),
+            "client_authn_method": self.opsettings.get("client_authn_method", CLIENT_AUTHN_METHOD),
         }
         self.consumer = Consumer(
             session_db=self.session_cache_backend,
@@ -50,7 +48,7 @@ class OIDCClient:
         # used in token introspection
         self.client_extension = ClientExtension(**client_config)  # type: ignore[no-untyped-call] # oic.extension.client.Client is not typed yet
 
-        provider_discovery_uri: str = self.opsettings.get("provider_discovery_uri", None)  # type: ignore[assignment] # we can assume that the configuration is ok
+        provider_discovery_uri: str | None = cast(str | None, self.opsettings.get("provider_discovery_uri", None))
         self.client_extension.client_secret = client_secret
 
         if session_id is not None:
@@ -59,20 +57,16 @@ class OIDCClient:
             except KeyError:
                 # This is an error as for example during the first communication round trips between
                 # the op and the client we'll have to find state elements in the oidc session
-                raise InvalidSIDException(
-                    f"OIDC consumer failed to restore oidc session {session_id}."
-                )
+                msg = f"OIDC consumer failed to restore oidc session {session_id}."
+                raise InvalidSIDException(msg)
             return
 
         if provider_discovery_uri is None:
-            raise InvalidOIDCConfigurationException(
-                "No provider discovery uri provided."
-            )
+            msg = "No provider discovery uri provided."
+            raise InvalidOIDCConfigurationException(msg)
         else:
             if self.opsettings.get("oidc_cache_provider_metadata", False):
-                cache_key = self.general_cache_backend.generate_hashed_cache_key(
-                    provider_discovery_uri
-                )
+                cache_key = self.general_cache_backend.generate_hashed_cache_key(provider_discovery_uri)
                 try:
                     config = self.general_cache_backend[cache_key]
                     # this will for example register endpoints on the consumer object
@@ -95,7 +89,5 @@ class OIDCClient:
     def get_settings(self) -> OIDCSettings:
         return self.opsettings
 
-    def get_setting(
-        self, name: str, default: Optional[T] = None
-    ) -> Optional[Union[OidcSettingValue, T]]:
+    def get_setting(self, name: str, default: Optional[T] = None) -> Optional[Union[OidcSettingValue, T]]:
         return self.opsettings.get(name, default)

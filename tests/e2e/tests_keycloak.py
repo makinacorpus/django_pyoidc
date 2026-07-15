@@ -19,7 +19,6 @@ http_client.HTTPConnection.debuglevel = 1
 
 
 class KeycloakTestCase(OIDCE2EKeycloakTestCase):
-
     def test_001_m2m_client_credential_success(self, *args):
         """
         Check that we can request the API using a 'service account'.
@@ -30,9 +29,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         application in a B2B call.
         """
 
-        sso_url = (
-            "http://localhost:8080/auth/realms/realm1/protocol/openid-connect/token"
-        )
+        sso_url = "http://localhost:8080/auth/realms/realm1/protocol/openid-connect/token"
         params = {
             "client_id": "app_m2m1",
             "client_secret": "secret_app-m2m1",
@@ -66,9 +63,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         will not add the right audience in the token and we should be rejected.
         """
 
-        sso_url = (
-            "http://localhost:8080/auth/realms/realm1/protocol/openid-connect/token"
-        )
+        sso_url = "http://localhost:8080/auth/realms/realm1/protocol/openid-connect/token"
         params = {
             "client_id": "app2_m2m2",
             "client_secret": "secret_app2-m2m2",
@@ -122,9 +117,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         print(f"Running Django on {self.live_server_url}")
 
         login_url = reverse("e2e_test_login_1")
-        response = client.get(
-            f"{self.live_server_url}{login_url}", allow_redirects=False
-        )
+        response = client.get(f"{self.live_server_url}{login_url}", allow_redirects=False)
         # we should get something like http://localhost:8080/auth/realms/realm1/protocol/openid-connect/auth
         #   ?client_id=app1
         #   &nonce=YZA...24
@@ -138,9 +131,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         qs = parse_qs(parsed.query)
         self.assertEqual(parsed.scheme, "http")
         self.assertEqual(parsed.netloc, "localhost:8080")
-        self.assertEqual(
-            parsed.path, "/auth/realms/realm1/protocol/openid-connect/auth"
-        )
+        self.assertEqual(parsed.path, "/auth/realms/realm1/protocol/openid-connect/auth")
         self.assertEqual(qs["client_id"][0], "app1")
         self.assertEqual(qs["redirect_uri"][0], f"{self.live_server_url}/callback-1/")
         self.assertEqual(qs["response_type"][0], "code")
@@ -151,9 +142,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
     def _selenium_front_sso_login(self, user, password):
         front_url = "http://localhost:9999"
         self.selenium.get(front_url)
-        WebDriverWait(self.selenium, 30).until(
-            EC.element_to_be_clickable((By.ID, "loginBtn"))
-        ).click()
+        WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "loginBtn"))).click()
         # self.selenium.find_element(By.ID, "loginBtn").click()
         self.wait.until(EC.url_changes(front_url))
         username_input = self.selenium.find_element(By.NAME, "username")
@@ -165,9 +154,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
 
     def _selenium_front_logout(self):
         front_url = "http://localhost:9999"
-        WebDriverWait(self.selenium, 30).until(
-            EC.element_to_be_clickable((By.ID, "logoutBtn"))
-        ).click()
+        WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "logoutBtn"))).click()
         self.wait.until(EC.url_matches(front_url))
         bodyText = self.selenium.find_element(By.ID, "message").text
         # check we are NOT logged in
@@ -194,9 +181,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
             #   EC.url_to_be('') // exact
 
             # Uncomment if you want time to detect why it's not working
-            WebDriverWait(self.selenium, 30).until(
-                EC.presence_of_element_located((By.NAME, "username"))
-            )
+            WebDriverWait(self.selenium, 30).until(EC.presence_of_element_located((By.NAME, "username")))
 
             username_input = self.selenium.find_element(
                 By.NAME,
@@ -250,9 +235,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         middle_url = f"{self.live_server_url}{success_url}"
         end_url = f"{self.live_server_url}{post_logout_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
-        self._selenium_sso_login(
-            start_url, middle_url, "user1", "passwd1", active_sso_session=False
-        )
+        self._selenium_sso_login(start_url, middle_url, "user1", "passwd1", active_sso_session=False)
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check we are logged in
@@ -283,9 +266,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("OIDC-LOGIN-LINK" in bodyText)
         self.assertFalse("OIDC-LOGOUT-LINK" in bodyText)
 
-    def _test_102_selenium_sso_login_relogin_and_logout_with_mixed_clients_id(
-        self, *args
-    ):
+    def _test_102_selenium_sso_login_relogin_and_logout_with_mixed_clients_id(self, *args):
         """
         Test using sso1 and sso2 with different client_id on same sso server.
         """
@@ -298,9 +279,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.wait = WebDriverWait(self.selenium, timeout)
 
         # LOGIN 1 on sso2
-        self._selenium_sso_login(
-            start_url, middle_url, "user1", "passwd1", active_sso_session=False
-        )
+        self._selenium_sso_login(start_url, middle_url, "user1", "passwd1", active_sso_session=False)
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check we are logged in
@@ -325,9 +304,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         start_url1 = f"{self.live_server_url}{login_url1}"
         middle_url1 = f"{self.live_server_url}{success_url1}"
         end_url1 = f"{self.live_server_url}{post_logout_url1}"
-        self._selenium_sso_login(
-            start_url1, middle_url1, "", "", active_sso_session=True
-        )
+        self._selenium_sso_login(start_url1, middle_url1, "", "", active_sso_session=True)
 
         # check we are logged in
         self.assertTrue("You are logged in as user1@example.com" in bodyText)
@@ -369,9 +346,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.wait = WebDriverWait(self.selenium, timeout)
 
         # LOGIN 1
-        self._selenium_sso_login(
-            start_url, middle_url, "user1", "passwd1", active_sso_session=False
-        )
+        self._selenium_sso_login(start_url, middle_url, "user1", "passwd1", active_sso_session=False)
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # check we are logged in
@@ -420,9 +395,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         end_url = f"{self.live_server_url}{post_logout_url}"
         self.wait = WebDriverWait(self.selenium, timeout)
         # previous test destroyed the SSO session, we need to reconnect
-        self._selenium_sso_login(
-            start_url, middle_url, "user1", "passwd1", active_sso_session=False
-        )
+        self._selenium_sso_login(start_url, middle_url, "user1", "passwd1", active_sso_session=False)
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
         # print(bodyText)
@@ -518,9 +491,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         )
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-        self.assertTrue(
-            "message: user_limit_app1@example.com is logged in." in bodyText
-        )
+        self.assertTrue("message: user_limit_app1@example.com is logged in." in bodyText)
 
         self._selenium_logout(end_url)
 
@@ -598,9 +569,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         )
 
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
-        self.assertTrue(
-            "message: user_limit_app1@example.com is logged in." in bodyText
-        )
+        self.assertTrue("message: user_limit_app1@example.com is logged in." in bodyText)
 
         self._selenium_logout(end_url)
 
@@ -621,9 +590,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
 
         # Check the session message is shown
-        self.assertTrue(
-            "message: user_limit_app2@example.com is logged in." in bodyText
-        )
+        self.assertTrue("message: user_limit_app2@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
 
         # And then test the user with only one app access
@@ -654,20 +621,14 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self._selenium_front_sso_login("user1", "passwd1")
         # let the page reloads after login fill the user session stuff
         time.sleep(3)
-        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
-            "innerHTML"
-        )
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute("innerHTML")
         self.assertTrue("User: user1" in bodyText)
 
-        WebDriverWait(self.selenium, 30).until(
-            EC.element_to_be_clickable((By.ID, "securedBtn"))
-        ).click()
+        WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "securedBtn"))).click()
 
         # let the ajax stuff behave
         time.sleep(3)
-        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
-            "innerHTML"
-        )
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute("innerHTML")
         logger.error(bodyText)
         self.assertTrue("user1@example.com" in bodyText)
 
@@ -675,12 +636,8 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self._selenium_front_logout()
 
         # After logout, launch unauthorized ajax call
-        WebDriverWait(self.selenium, 30).until(
-            EC.element_to_be_clickable((By.ID, "securedBtn"))
-        ).click()
+        WebDriverWait(self.selenium, 30).until(EC.element_to_be_clickable((By.ID, "securedBtn"))).click()
         # let the ajax stuff behave
         time.sleep(3)
-        bodyText = self.selenium.find_element(By.ID, "message").get_attribute(
-            "innerHTML"
-        )
+        bodyText = self.selenium.find_element(By.ID, "message").get_attribute("innerHTML")
         self.assertTrue("Request Forbidden" in bodyText)

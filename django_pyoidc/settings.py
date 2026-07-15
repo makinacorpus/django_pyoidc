@@ -30,7 +30,6 @@ OidcSettingValue = Union[bool, int, str, List[str]]
 
 
 class OIDCSettings:
-
     GLOBAL_SETTINGS: TypedOidcSettings = {
         "cache_django_backend": "default",
         "oidc_cache_provider_metadata": False,
@@ -94,17 +93,13 @@ class OIDCSettings:
 
         self.op_name = op_name
         if not hasattr(django_settings, "DJANGO_PYOIDC"):
-            raise InvalidOIDCConfigurationException(
-                "DJANGO_PYOIDC settings are undefined."
-            )
+            msg = "DJANGO_PYOIDC settings are undefined."
+            raise InvalidOIDCConfigurationException(msg)
         if self.op_name not in django_settings.DJANGO_PYOIDC:
-            raise InvalidOIDCConfigurationException(
-                f"{self.op_name} provider name must be configured in DJANGO_PYOIDC settings."
-            )
+            msg = f"{self.op_name} provider name must be configured in DJANGO_PYOIDC settings."
+            raise InvalidOIDCConfigurationException(msg)
 
-        op_definition = {
-            k.lower(): v for k, v in django_settings.DJANGO_PYOIDC[self.op_name].items()
-        }
+        op_definition = {k.lower(): v for k, v in django_settings.DJANGO_PYOIDC[self.op_name].items()}
 
         # fix potential bad settings declaration (or aliases)
         op_definition = self._fix_settings(op_definition)
@@ -117,9 +112,7 @@ class OIDCSettings:
             provider_class = "django_pyoidc.providers.Provider"
 
         provider_module_path, provider_class = provider_class.rsplit(".", 1)
-        provider_real_class = getattr(
-            import_module(provider_module_path), provider_class
-        )
+        provider_real_class = getattr(import_module(provider_module_path), provider_class)
 
         # This call can fail if required attributes are not set
         self._provider = provider_real_class(op_name=self.op_name, **op_definition)
@@ -146,10 +139,7 @@ class OIDCSettings:
         """Workarounds over specific settings and aliases."""
 
         # pyoidc wants the discovery uri WITHOUT the well-known part '.well-known/openid-configuration'
-        if (
-            "provider_discovery_uri" in op_definition
-            and op_definition["provider_discovery_uri"]
-        ):
+        if op_definition.get("provider_discovery_uri"):
             discovery = op_definition["provider_discovery_uri"]
             extra_string = ".well-known/openid-configuration"
             if discovery.endswith(extra_string):
@@ -172,32 +162,22 @@ class OIDCSettings:
             # is a better way to define callback path.
             # here this will only work when no route prefix is used.
 
-            op_definition["oidc_paths_prefix"] = op_definition[
-                "oidc_paths_prefix"
-            ].lstrip("/")
+            op_definition["oidc_paths_prefix"] = op_definition["oidc_paths_prefix"].lstrip("/")
 
             if "oidc_callback_path" not in op_definition:
-                op_definition["oidc_callback_path"] = (
-                    f"{op_definition['oidc_paths_prefix']}-callback"
-                )
+                op_definition["oidc_callback_path"] = f"{op_definition['oidc_paths_prefix']}-callback"
 
         if "oidc_callback_path" in op_definition:
-
             if not isinstance(op_definition["oidc_callback_path"], Promise):
-
                 # remove '/' prefix if any.
-                op_definition["oidc_callback_path"] = op_definition[
-                    "oidc_callback_path"
-                ].lstrip("/")
+                op_definition["oidc_callback_path"] = op_definition["oidc_callback_path"].lstrip("/")
 
         # else: do not set defaults.
         # The Provider object should have defined a default callback path part and default
         # callback path.
 
         if "callback_uri_name" in op_definition:
-            op_definition["oidc_callback_path"] = reverse_lazy(
-                op_definition["callback_uri_name"]
-            )
+            op_definition["oidc_callback_path"] = reverse_lazy(op_definition["callback_uri_name"])
             del op_definition["callback_uri_name"]
 
         # allow simpler names
@@ -207,36 +187,28 @@ class OIDCSettings:
         # * "redirect_requires_https" for "login_redirection_requires_https"
         if "post_logout_redirect_uri" not in op_definition:
             if "logout_redirect" in op_definition:
-                op_definition["post_logout_redirect_uri"] = op_definition[
-                    "logout_redirect"
-                ]
+                op_definition["post_logout_redirect_uri"] = op_definition["logout_redirect"]
                 del op_definition["logout_redirect"]
             else:
                 op_definition["post_logout_redirect_uri"] = "/"
 
         if "post_login_uri_failure" not in op_definition:
             if "failure_redirect" in op_definition:
-                op_definition["post_login_uri_failure"] = op_definition[
-                    "failure_redirect"
-                ]
+                op_definition["post_login_uri_failure"] = op_definition["failure_redirect"]
                 del op_definition["failure_redirect"]
             else:
                 op_definition["post_login_uri_failure"] = "/"
 
         if "post_login_uri_success" not in op_definition:
             if "success_redirect" in op_definition:
-                op_definition["post_login_uri_success"] = op_definition[
-                    "success_redirect"
-                ]
+                op_definition["post_login_uri_success"] = op_definition["success_redirect"]
                 del op_definition["success_redirect"]
             else:
                 op_definition["post_login_uri_success"] = "/"
 
         if "login_redirection_requires_https" not in op_definition:
             if "redirect_requires_https" in op_definition:
-                op_definition["login_redirection_requires_https"] = op_definition[
-                    "redirect_requires_https"
-                ]
+                op_definition["login_redirection_requires_https"] = op_definition["redirect_requires_https"]
                 del op_definition["redirect_requires_https"]
             else:
                 op_definition["login_redirection_requires_https"] = True
@@ -249,22 +221,22 @@ class OIDCSettings:
             and "use_introspection_on_access_tokens" in self.OP_SETTINGS
             and self.OP_SETTINGS["use_introspection_on_access_tokens"]
         ):
-            raise InvalidOIDCConfigurationException(
-                "You cannot define hook_validate_access_token if you use use_introspection_on_access_tokens."
-            )
+            msg = "You cannot define hook_validate_access_token if you use use_introspection_on_access_tokens."
+            raise InvalidOIDCConfigurationException(msg)
 
         # client_id is required
         if "client_id" not in self.OP_SETTINGS or self.OP_SETTINGS["client_id"] is None:
-            raise InvalidOIDCConfigurationException(
-                f"Provider definition does not contain any 'client_id' entry. Check your DJANGO_PYOIDC['{self.op_name}'] settings."
+            msg = (
+                f"Provider definition does not contain any 'client_id' entry. Check your "
+                f"DJANGO_PYOIDC['{self.op_name}'] settings."
             )
+
+            raise InvalidOIDCConfigurationException(msg)
         # we do not enforce client_secret (in case someone wrongly use a public client)
-        if (
-            "client_secret" not in self.OP_SETTINGS
-            or self.OP_SETTINGS["client_secret"] is None
-        ):
+        if "client_secret" not in self.OP_SETTINGS or self.OP_SETTINGS["client_secret"] is None:
             logger.warning(
-                f"OIDC settings for {self.op_name} has no client_secret. You are maybe using a public OIDC client, you should not."
+                "OIDC settings for %s has no client_secret. You are maybe using a public OIDC client, you should not.",
+                self.op_name,
             )
 
     def set(self, key: str, value: Optional[OidcSettingValue] = None) -> None:

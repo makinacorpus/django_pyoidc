@@ -1,4 +1,4 @@
-class DjangoOIDCException(Exception):
+class DjangoOIDCException(Exception):  # noqa: N818
     pass
 
 

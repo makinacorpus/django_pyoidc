@@ -42,13 +42,9 @@ class Issue853TestCase(TestCase):
 
             # Simulate previously made login : our session id is 0000
             real_sid = "0000"
-            self.session_backend.update(
-                real_sid, "smid", decoded["logout_token"]["sid"]
-            )
+            self.session_backend.update(real_sid, "smid", decoded["logout_token"]["sid"])
             self.session_backend.update(real_sid, "sub", decoded["logout_token"]["sub"])
-            self.session_backend.update(
-                real_sid, "issuer", decoded["logout_token"]["iss"]
-            )
+            self.session_backend.update(real_sid, "issuer", decoded["logout_token"]["iss"])
 
             # Mock 'BackChannelLogoutRequest' as we don't want to check signature and stuff
             mocked_logout_request = MagicMock()
