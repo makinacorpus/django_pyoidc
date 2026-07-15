@@ -81,7 +81,9 @@ Add in a function that takes one argument: a list of tokens received during the 
 * the userinfo token
 * the access token
 
-We provide the function ``django_pyoidc.utils.extract_claim_from_tokens`` to extract a *claim* (a key) from the list of tokens.
+.. tip::
+
+    We provide the very useful function :func:`extract_claim_from_tokens <django_pyoidc.utils.extract_claim_from_tokens>` (<= clickable link) to extract a *claim* (a key) from the list of tokens.
 
 Let's start our implementation by reusing the default implementation provided by this library:
 
