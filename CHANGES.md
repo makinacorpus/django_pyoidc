@@ -2,7 +2,7 @@ NEXT
 ----
 - drop support for python 3.8
 - drop support for python 3.9
-
+- fix LoginRequiredMiddleware was unusable with django pyoidc (#78)
 
 1.0.12
 ------

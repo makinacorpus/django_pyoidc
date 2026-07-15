@@ -5,6 +5,7 @@ import jwt
 
 # import oic
 from django.contrib import auth, messages
+from django.contrib.auth.decorators import login_not_required
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http import HttpRequest, HttpResponse
@@ -95,6 +96,10 @@ class OIDCView(View, OIDCMixin):
         return None
 
 
+@method_decorator(
+    login_not_required,
+    name="dispatch",
+)
 class OIDCLoginView(OIDCView):
     """
     When receiving a GET request, this views redirects the user to the SSO identified by `op_name`.
@@ -248,6 +253,10 @@ class OIDCLogoutView(OIDCView):
             return redirect(post_logout_url)
 
 
+@method_decorator(
+    login_not_required,
+    name="dispatch",
+)
 @method_decorator(csrf_exempt, name="dispatch")
 class OIDCBackChannelLogoutView(OIDCView):
     """
@@ -314,6 +323,10 @@ class OIDCBackChannelLogoutView(OIDCView):
         return result
 
 
+@method_decorator(
+    login_not_required,
+    name="dispatch",
+)
 class OIDCCallbackView(OIDCView):
     """
     This view only accepts GET request. This is where the identity provider redirects the user in the *Authorization Code Flow*.
