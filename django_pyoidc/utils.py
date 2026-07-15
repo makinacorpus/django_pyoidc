@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
-def import_object(
-    path: str, def_name: str
-) -> Any:  # FIXME : this function is hard to type correctly
+def import_object(path: str, def_name: str) -> Any:  # FIXME : this function is hard to type correctly
     try:
         mod, cls = path.split(":", 1)
     except ValueError:
@@ -26,9 +24,7 @@ def import_object(
     return getattr(import_module(mod), cls)
 
 
-def extract_claim_from_tokens(
-    claim: str, tokens: Dict[str, Any], raise_exception: bool = True
-) -> Any:
+def extract_claim_from_tokens(claim: str, tokens: Dict[str, Any], raise_exception: bool = True) -> Any:
     """Given a dictionnary of tokens claims, extract the given claim.
 
     This function will seek in "info_token_claims", then "id_token_claims"
@@ -43,7 +39,8 @@ def extract_claim_from_tokens(
         value = tokens["access_token_claims"][claim]
     else:
         if raise_exception:
-            raise ClaimNotFoundError(f"{claim} not found in available OIDC tokens.")
+            msg = f"{claim} not found in available OIDC tokens."
+            raise ClaimNotFoundError(msg)
         else:
             return None
     return value
@@ -69,9 +66,7 @@ def check_audience(client_id: str, access_token_claims: Dict[str, Any]) -> bool:
         # 'aud' (that's the case in recent keycloak) but it should then be in azp (requester of the token).
         if "azp" in access_token_claims and client_id == access_token_claims["azp"]:
             return True
-        logger.error(
-            f"{client_id} not found in access_token_claims['aud']: {access_token_claims['aud']}"
-        )
+        logger.error("%s not found in access_token_claims['aud']: %s", client_id, access_token_claims["aud"])
         return False
     return True
 

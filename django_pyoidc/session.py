@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 
 # From https://github.com/alehuo/pyoidc-redis-session-backend/blob/master/pyoidc_redis_session_backend/__init__.py
 class RSAKeyHandler(BaseHandler):  # type: ignore
-    def flatten(
-        self, obj: RsaKey, data: MutableMapping[str, Any]
-    ) -> MutableMapping[str, Any]:
+    def flatten(self, obj: RsaKey, data: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
         data["rsa_key"] = base64.b64encode(obj.export_key()).decode("utf-8")
         return data
 
@@ -47,7 +45,7 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
         data = self.storage.get(self.get_key(key))
         if data is None:
             raise KeyError  # Makes __getItem__ handle like Python dict
-        return jsonpickle.decode(data)
+        return jsonpickle.decode(data)  # noqa: S301 At first, I can not find a way to exploit this.
 
     def __delitem__(self, key: str) -> None:
         self.storage.delete(self.get_key(key))
@@ -57,22 +55,17 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
 
     def get_by_uid(self, uid: str) -> List[str]:
         # FIXME : maybe .filter(cache_session_key=uid) ?
-        result = OIDCSession.objects.filter(cache_session_key=uid).values_list(
-            "cache_session_key", flat=True
-        )
-        logger.debug(f"Fetched the following sid : {result} for {uid=}")
+        result = OIDCSession.objects.filter(cache_session_key=uid).values_list("cache_session_key", flat=True)
+        logger.debug("Fetched the following sid : %result for %s", result, uid)
 
         return list(result)
 
     def get_by_sub(self, sub: str) -> List[str]:
-        result = OIDCSession.objects.filter(sub=sub).values_list(
-            "cache_session_key", flat=True
-        )
-        logger.debug(f"Fetched fhe following sid : {result} for {sub=}")
+        result = OIDCSession.objects.filter(sub=sub).values_list("cache_session_key", flat=True)
+        logger.debug("Fetched fhe following sid : %s for %s", result, sub)
         return list(result)
 
     def get(self, attr: str, val: str) -> List[str]:
-        logger.debug(f"Fetch SID for sessions where [{attr}] = {val}")
-        raise NotImplementedError(
-            "Current session implementation does not support this method"
-        )
+        logger.debug("Fetch SID for sessions where [%s] = %s", attr, val)
+        msg = "Current session implementation does not support this method"
+        raise NotImplementedError(msg)

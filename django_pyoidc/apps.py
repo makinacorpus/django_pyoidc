@@ -6,4 +6,4 @@ class DjangoPyoidcConfig(AppConfig):
 
     def ready(self) -> None:
         # Register schema with drf_spectacular
-        from .drf import schema  # noqa: F401
+        from .drf import schema

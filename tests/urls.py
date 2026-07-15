@@ -37,26 +37,18 @@ urlpatterns = [
     ),
     path(
         "",
-        include(
-            (helper10.get_urlpatterns(), "django_pyoidc"), namespace="op10_namespace"
-        ),
+        include((helper10.get_urlpatterns(), "django_pyoidc"), namespace="op10_namespace"),
     ),
     path(
         "prefix11/",
-        include(
-            (helper11.get_urlpatterns(), "django_pyoidc"), namespace="op11_namespace"
-        ),
+        include((helper11.get_urlpatterns(), "django_pyoidc"), namespace="op11_namespace"),
     ),
     path(
         "prefix12/",
-        include(
-            (helper12.get_urlpatterns(), "django_pyoidc"), namespace="op12_namespace"
-        ),
+        include((helper12.get_urlpatterns(), "django_pyoidc"), namespace="op12_namespace"),
     ),
     path(
         "prefix13/",
-        include(
-            (helper13.get_urlpatterns(), "django_pyoidc"), namespace="op13_namespace"
-        ),
+        include((helper13.get_urlpatterns(), "django_pyoidc"), namespace="op13_namespace"),
     ),
 ]

@@ -17,7 +17,7 @@ from django_pyoidc.utils import OIDCCacheBackendForDjango, check_audience
 logger = logging.getLogger(__name__)
 
 
-class OidcAuthException(Exception):
+class OidcAuthException(Exception):  # noqa: N818
     pass
 
 
@@ -73,21 +73,17 @@ class OIDCBearerAuthentication(BaseAuthentication):
             # it could also call a user defined validator if 'use_introspection_on_access_tokens'
             # is False. or it could return None if the two previous are not defined.
             try:
-                access_token_claims = self.engine.introspect_access_token(
-                    access_token_jwt, client=self.client
-                )
-            except ExpiredToken:
+                access_token_claims = self.engine.introspect_access_token(access_token_jwt, client=self.client)
+            except ExpiredToken as e:
                 msg = "Inactive access token."
-                raise exceptions.AuthenticationFailed(msg)
+                raise exceptions.AuthenticationFailed(msg) from e
 
             if not access_token_claims:
-                exceptions.AuthenticationFailed(
-                    "Access token claims failed to be extracted."
-                )
+                exceptions.AuthenticationFailed("Access token claims failed to be extracted.")
             logger.debug(access_token_claims)
             if not access_token_claims.get("active"):
                 msg = "Inactive access token."
-                raise exceptions.AuthenticationFailed(msg)
+                raise exceptions.AuthenticationFailed(msg)  # noqa: TRY301 this should probably be refactored
 
             # FIXME: add an option to request userinfo here, but that may be quite slow
 
@@ -97,9 +93,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
                 if self.opsettings.get("use_introspection_audience_check"):
                     client_id: str = self.opsettings.get("client_id")  # type: ignore[assignment] # we can assume that client_id is correctly configured
                     if not check_audience(client_id, access_token_claims):
-                        raise PermissionDenied(
-                            f"Invalid result for acces token audiences check for {client_id}."
-                        )
+                        msg = f"Invalid result for acces token audiences check for {client_id}."
+                        raise PermissionDenied(msg)  # noqa: TRY301 this should probably be refactored
 
                 logger.debug("Let application load user via user hook.")
                 user = self.engine.call_get_user_function(
@@ -115,9 +110,8 @@ class OIDCBearerAuthentication(BaseAuthentication):
                 return None
 
         except PermissionDenied as exp:
-            raise exp
-        except Exception as exp:
-            logger.exception(exp)
+            raise
+        except Exception:
             return None
 
         return user, access_token_claims

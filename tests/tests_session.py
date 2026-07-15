@@ -18,19 +18,15 @@ class SessionTestCase(OIDCTestCase):
         sso1 = OIDCClient(op_name="sso1")
         sso2 = OIDCClient(op_name="sso2")
 
-        mocked_provider_config.assert_has_calls(
-            [call("http://sso1/realms/realm1"), call("http://sso2/uri")]
-        )
-        assert 2 == mocked_provider_config.call_count
+        mocked_provider_config.assert_has_calls([call("http://sso1/realms/realm1"), call("http://sso2/uri")])
+        self.assertEqual(2, mocked_provider_config.call_count)
 
         sso1.consumer._backup(sid="1234")
         sso2.consumer._backup(sid="1234")
 
         # no more calls
-        mocked_provider_config.assert_has_calls(
-            [call("http://sso1/realms/realm1"), call("http://sso2/uri")]
-        )
-        assert 2 == mocked_provider_config.call_count
+        mocked_provider_config.assert_has_calls([call("http://sso1/realms/realm1"), call("http://sso2/uri")])
+        self.assertEqual(2, mocked_provider_config.call_count)
 
         client1 = OIDCClient(op_name="sso1", session_id="1234")
         self.assertEqual(client1.consumer.client_id, "1")
@@ -38,10 +34,8 @@ class SessionTestCase(OIDCTestCase):
         client2 = OIDCClient(op_name="sso2", session_id="1234")
 
         # no more calls
-        mocked_provider_config.assert_has_calls(
-            [call("http://sso1/realms/realm1"), call("http://sso2/uri")]
-        )
-        assert 2 == mocked_provider_config.call_count
+        mocked_provider_config.assert_has_calls([call("http://sso1/realms/realm1"), call("http://sso2/uri")])
+        self.assertEqual(2, mocked_provider_config.call_count)
 
         self.assertEqual(client2.consumer.client_id, "2")
 
@@ -64,13 +58,11 @@ class SessionTestCase(OIDCTestCase):
 
         sso1 = OIDCClient(op_name="sso3")
         mocked_provider_config.assert_has_calls([call("http://sso3/uri")])
-        assert 1 == mocked_provider_config.call_count
+        self.assertEqual(mocked_provider_config.call_count, 1)
 
         sso2 = OIDCClient(op_name="sso4")
-        mocked_provider_config.assert_has_calls(
-            [call("http://sso3/uri"), call("http://sso4/uri")]
-        )
-        assert 2 == mocked_provider_config.call_count
+        mocked_provider_config.assert_has_calls([call("http://sso3/uri"), call("http://sso4/uri")])
+        self.assertEqual(mocked_provider_config.call_count, 2)
 
         sso1.consumer._backup(sid="1234")
         sso2.consumer._backup(sid="1234")
@@ -81,7 +73,5 @@ class SessionTestCase(OIDCTestCase):
         client2 = OIDCClient(op_name="sso4", session_id="1234")
         self.assertEqual(client2.consumer.client_id, "4")
 
-        mocked_provider_config.assert_has_calls(
-            [call("http://sso3/uri"), call("http://sso4/uri")]
-        )
-        assert 2 == mocked_provider_config.call_count
+        mocked_provider_config.assert_has_calls([call("http://sso3/uri"), call("http://sso4/uri")])
+        self.assertEqual(mocked_provider_config.call_count, 2)

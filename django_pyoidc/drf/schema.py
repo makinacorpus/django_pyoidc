@@ -37,6 +37,4 @@ try:
             }
 
 except ImportError:
-    logger.debug(
-        "The package 'drf-spectacular' is not installed, skipping schema generation."
-    )
+    logger.debug("The package 'drf-spectacular' is not installed, skipping schema generation.")

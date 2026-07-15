@@ -1,8 +1,6 @@
 pip-tools
 pre-commit
-isort
-flake8
-black
+ruff
 mypy==1.11.2
 djangorestframework-stubs[compatible-mypy]
 django-stubs[compatible-mypy]

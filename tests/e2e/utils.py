@@ -116,31 +116,23 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
                 " -e TEST2_HOSTNAME=localhost.localdomain:8073"
                 " oidc-test-lemonldap-image"
             )
-            res = subprocess.run(
-                command, shell=True, text=True, check=True, capture_output=True
-            )
+            res = subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
             cls.docker_id = res.stdout.partition("\n")[0]
             print(cls.docker_id)
         except subprocess.CalledProcessError as e:
-            print(
-                f"Error while launching LemonLdap docker container. errcode: {e.returncode}."
-            )
+            print(f"Error while launching LemonLdap docker container. errcode: {e.returncode}.")
             print(e.stderr)
             if e.returncode == 125:
                 print(" +----------|  |--------------------------+ ")
                 print(" +---------_|  |_-------------------------+ ")
-                print(" +---------\\    /-------------------------+ ")  # noqa
-                print(" +----------\\  /--------------------------+ ")  # noqa
-                print(" +-----------\\/---------------------------+ ")  # noqa
-                print(
-                    "   + Try removing any previous LemonLdap image running using this command:"
-                )
+                print(" +---------\\    /-------------------------+ ")
+                print(" +----------\\  /--------------------------+ ")
+                print(" +-----------\\/---------------------------+ ")
+                print("   + Try removing any previous LemonLdap image running using this command:")
                 print(
                     '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-lemonldap-image --format="{{.ID}}")'
                 )
-                print(
-                    "   + Check also you have no service running on localhost port 8070, 8071, 8072 and 8073."
-                )
+                print("   + Check also you have no service running on localhost port 8070, 8071, 8072 and 8073.")
                 print(" +---------------------------------------+ ")
                 print(" +---------------------------------------+ ")
                 print(" +---------------------------------------+ ")
@@ -160,9 +152,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
         ok = False
         while retry < 15 and not ok:
             try:
-                cls.docker_lemonldap_command(
-                    "/usr/share/lemonldap-ng/bin/lemonldap-ng-cli info"
-                )
+                cls.docker_lemonldap_command("/usr/share/lemonldap-ng/bin/lemonldap-ng-cli info")
                 ok = True
             except NotReadyException:
                 print("   ->  waiting for lemonldap startup...")
@@ -239,9 +229,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             callback_url=f"{cls.live_server_url}/prefix_lemon2/lemon2-callback",
             post_login_url=f"{cls.live_server_url}/test-ll-logout-done-2",
         )
-        cls.registerClient(
-            "app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True
-        )
+        cls.registerClient("app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True)
         # Default demo users:
         # rtyler :: rtyler
         # msmith :: msmith
@@ -259,11 +247,7 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
 
         os.chdir(cls.docker_workdir)
         try:
-            cmd = (
-                "docker stop $("
-                'docker ps -a -q --filter ancestor=oidc-test-lemonldap-image --format="{{.ID}}"'
-                ")"
-            )
+            cmd = 'docker stop $(docker ps -a -q --filter ancestor=oidc-test-lemonldap-image --format="{{.ID}}")'
             subprocess.run(cmd, shell=True, text=True, check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error stopping lemonldap container: {e.returncode}.")
@@ -296,18 +280,14 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
             if last_error == "" and len(errors) > 1:
                 last_error = errors[-2:-1][0]
             # print(f"Last Error: >{last_error}<")
-            print(
-                f"Error while launching command on the keycloak container. errcode: {e.returncode}."
-            )
+            print(f"Error while launching command on the keycloak container. errcode: {e.returncode}.")
             print(e.stderr)
         finally:
             os.chdir(cls.workdir)
         return output
 
     @classmethod
-    def registerClient(
-        cls, name, secret, url, callback_url="", post_login_url="", bearerOnly=False
-    ):
+    def registerClient(cls, name, secret, url, callback_url="", post_login_url="", bearerOnly=False):
         redirectUris = "''" if bearerOnly else f"'{callback_url}'"
         logoutRedirectUris = "''" if bearerOnly else f"'{post_login_url}'"
 
@@ -483,9 +463,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
                 " -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin"
                 " oidc-test-keycloak-image"
             )
-            res = subprocess.run(
-                command, shell=True, text=True, check=True, capture_output=True
-            )
+            res = subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
             cls.docker_id = res.stdout.partition("\n")[0]
             print(cls.docker_id)
 
@@ -510,29 +488,19 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
                 f" -e KEYCLOAK_URL=http://localhost:8080/auth -e BACKEND_URL={cls.live_server_url}"
                 " oidc-test-front-image"
             )
-            subprocess.run(
-                command, shell=True, text=True, check=True, capture_output=True
-            )
+            subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
-            print(
-                f"Error while launching keycloak docker container. errcode: {e.returncode}."
-            )
+            print(f"Error while launching keycloak docker container. errcode: {e.returncode}.")
             print(e.stderr)
             if e.returncode == 125:
                 print(" +----------|  |--------------------------+ ")
                 print(" +---------_|  |_-------------------------+ ")
-                print(" +---------\\    /-------------------------+ ")  # noqa
-                print(" +----------\\  /--------------------------+ ")  # noqa
-                print(" +-----------\\/---------------------------+ ")  # noqa
-                print(
-                    "   + Try removing any previous Keycloak and front images running using these commands:"
-                )
-                print(
-                    '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-keycloak-image --format="{{.ID}}")'
-                )
-                print(
-                    '   docker stop $(docker ps -a -q --filter ancestor=oidc-test-front-image --format="{{.ID}}")'
-                )
+                print(" +---------\\    /-------------------------+ ")
+                print(" +----------\\  /--------------------------+ ")
+                print(" +-----------\\/---------------------------+ ")
+                print("   + Try removing any previous Keycloak and front images running using these commands:")
+                print('   docker stop $(docker ps -a -q --filter ancestor=oidc-test-keycloak-image --format="{{.ID}}")')
+                print('   docker stop $(docker ps -a -q --filter ancestor=oidc-test-front-image --format="{{.ID}}")')
                 print("   + Check also you have no service running on localhost:8080.")
                 print(" +---------------------------------------+ ")
                 print(" +---------------------------------------+ ")
@@ -569,9 +537,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             raise RuntimeError("Cannot reach Keycloak admin in time.")
 
         print(" + Create test realm")
-        cls.docker_keycloak_command(
-            "bin/kcadm.sh create realms -s realm=realm1 -s enabled=true"
-        )
+        cls.docker_keycloak_command("bin/kcadm.sh create realms -s realm=realm1 -s enabled=true")
 
         print(" + Remove offline authorization default role affectation.")
         cls.docker_keycloak_command(
@@ -622,9 +588,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             bearerOnly=False,
             channelLogoutUrl=f"{cls.live_server_url}/back_channel_logout-2/",
         )
-        app2_api_id = cls.registerClient(
-            "app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True
-        )
+        app2_api_id = cls.registerClient("app2-api", "secret_app2-api", cls.live_server_url, bearerOnly=True)
 
         print(" + Create client applications access roles.")
         app1_role = cls.registerClientRole(app1_id, "AccessApp1")
@@ -741,9 +705,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         print("Extracting keycloak logs before stopping...")
         os.chdir(cls.docker_workdir)
         try:
-            subprocess.run(
-                f"docker logs {cls.docker_id}", shell=True, text=True, check=True
-            )
+            subprocess.run(f"docker logs {cls.docker_id}", shell=True, text=True, check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error while retrieving keycloak docker logs: {e.returncode}.")
             print(e.stderr)
@@ -754,11 +716,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
         os.chdir(cls.docker_workdir)
         try:
-            cmd = (
-                "docker stop $("
-                'docker ps -a -q --filter ancestor=oidc-test-keycloak-image --format="{{.ID}}"'
-                ")"
-            )
+            cmd = 'docker stop $(docker ps -a -q --filter ancestor=oidc-test-keycloak-image --format="{{.ID}}")'
             subprocess.run(cmd, shell=True, text=True, check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error stopping keycloak container: {e.returncode}.")
@@ -767,11 +725,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             os.chdir(cls.docker_front_workdir)
             print("Removing front docker image...")
             try:
-                cmd = (
-                    "docker stop $("
-                    'docker ps -a -q --filter ancestor=oidc-test-front-image --format="{{.ID}}"'
-                    ")"
-                )
+                cmd = 'docker stop $(docker ps -a -q --filter ancestor=oidc-test-front-image --format="{{.ID}}")'
                 subprocess.run(cmd, shell=True, text=True, check=True)
             except subprocess.CalledProcessError as e:
                 print(f"Error stopping front container: {e.returncode}.")
@@ -810,9 +764,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             ]:
                 raise NotReadyException()
             else:
-                print(
-                    f"Error while launching command on the keycloak container. errcode: {e.returncode}."
-                )
+                print(f"Error while launching command on the keycloak container. errcode: {e.returncode}.")
                 print(e.stderr)
         finally:
             os.chdir(cls.workdir)
@@ -820,15 +772,12 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
     @classmethod
     def add_user_to_group(cls, user_id, group):
-        cls.docker_keycloak_command(
-            f"bin/kcadm.sh update users/{user_id}/groups/{group} -r realm1"
-        )
+        cls.docker_keycloak_command(f"bin/kcadm.sh update users/{user_id}/groups/{group} -r realm1")
 
     @classmethod
     def searchUser(cls, user_name):
         output = cls.docker_keycloak_command(
-            "bin/kcadm.sh get users -r realm1"
-            f" -q username={user_name} --fields 'id,username'"
+            f"bin/kcadm.sh get users -r realm1 -q username={user_name} --fields 'id,username'"
         )
         id = None
         cpt = 0
@@ -869,7 +818,6 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             backchannelLogoutUrl = ""
             frontchannelLogoutUrl = ""
         else:
-
             bServiceAccountEnabled = "false"
             redirectUris = "[ ]" if bearerOnly else f'[ "{url}/*" ]'
             extraAttributes = ""
@@ -886,9 +834,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
             frontch_line = '"frontchannelLogout" : false,'
             frontchannelLogoutUrl = ""
             backchannelLogoutUrl = channelLogoutUrl
-            secret_line = (
-                f'"clientAuthenticatorType" : "client-secret", "secret" : "{secret}",'
-            )
+            secret_line = f'"clientAuthenticatorType" : "client-secret", "secret" : "{secret}",'
         output = cls.docker_keycloak_command(
             f"""bin/kcadm.sh create clients -r realm1 -f - << EOF
 {{
@@ -943,9 +889,7 @@ EOF"""
     @classmethod
     def addClientScopeForClient(cls, client_id, clientscope_id):
         cls.docker_keycloak_command(
-            "bin/kcadm.sh update"
-            f" clients/{client_id}/default-client-scopes/{clientscope_id}"
-            " -r realm1"
+            f"bin/kcadm.sh update clients/{client_id}/default-client-scopes/{clientscope_id} -r realm1"
         )
 
     @classmethod
@@ -992,9 +936,7 @@ EOF"""
 
     @classmethod
     def registerGroup(cls, name, role_mappings=[]):
-        output = cls.docker_keycloak_command(
-            "bin/kcadm.sh create groups -r realm1" f" -s name={name}"
-        )
+        output = cls.docker_keycloak_command(f"bin/kcadm.sh create groups -r realm1 -s name={name}")
         # output was in the form
         # "Created new group with id '0f5d0645-a7a7-4e88-adf8-b9e568025f5c'""
         # we need to extract the id from this message
@@ -1005,11 +947,7 @@ EOF"""
             for role_mapping in role_mappings:
                 for client_name, role_name in role_mapping.items():
                     cls.docker_keycloak_command(
-                        "bin/kcadm.sh add-roles"
-                        " -r realm1"
-                        f" --gid {id}"
-                        f" --cclientid {client_name}"
-                        f" --rolename {role_name}"
+                        f"bin/kcadm.sh add-roles -r realm1 --gid {id} --cclientid {client_name} --rolename {role_name}"
                     )
         return id
 
@@ -1030,15 +968,10 @@ EOF"""
             user_id = output.stderr.split(" ")[5].strip("'\r\n")
         if user_id:
             cls.docker_keycloak_command(
-                "bin/kcadm.sh set-password"
-                " -r realm1"
-                f" --username {user}"
-                f" --new-password={password}"
+                f"bin/kcadm.sh set-password -r realm1 --username {user} --new-password={password}"
             )
             for group in groups:
-                cls.docker_keycloak_command(
-                    f"bin/kcadm.sh update users/{user_id}/groups/{group}" " -r realm1"
-                )
+                cls.docker_keycloak_command(f"bin/kcadm.sh update users/{user_id}/groups/{group} -r realm1")
 
 
 @contextlib.contextmanager

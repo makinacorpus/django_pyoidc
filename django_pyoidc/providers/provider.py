@@ -44,9 +44,7 @@ class Provider:
             self.provider_discovery_uri = None
 
         if "oidc_logout_redirect_parameter_name" in kwargs:
-            self.oidc_logout_redirect_parameter_name = kwargs[
-                "oidc_logout_redirect_parameter_name"
-            ]
+            self.oidc_logout_redirect_parameter_name = kwargs["oidc_logout_redirect_parameter_name"]
         else:
             self.oidc_logout_redirect_parameter_name = "post_logout_redirect"
 

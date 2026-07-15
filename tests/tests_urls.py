@@ -110,9 +110,7 @@ class UrlsTestCase(OIDCTestCase):
         self.assertIn(f"redirect_uri=http%3A%2F%2F{host}%2Foidc11-callback", arguments)
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_helper_callback_path_with_oidc_paths_prefix_and_oidc_callback_path_and_url_prefix(
-        self, *args
-    ):
+    def test_helper_callback_path_with_oidc_paths_prefix_and_oidc_callback_path_and_url_prefix(self, *args):
         """ """
         host = settings.DJANGO_PYOIDC["sso12"]["login_uris_redirect_allowed_hosts"][0]
         response = self.client.get(
@@ -133,9 +131,7 @@ class UrlsTestCase(OIDCTestCase):
         )
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_helper_allback_path_with_oidc_paths_prefix_and_callback_uri_name_and_route_prefix(
-        self, *args
-    ):
+    def test_helper_allback_path_with_oidc_paths_prefix_and_callback_uri_name_and_route_prefix(self, *args):
         """ """
         host = settings.DJANGO_PYOIDC["sso13"]["login_uris_redirect_allowed_hosts"][0]
         response = self.client.get(

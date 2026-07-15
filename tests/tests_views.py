@@ -31,9 +31,7 @@ class LoginViewTestCase(OIDCTestCase):
             reverse("test_login"),
             SERVER_NAME="test.django-pyoidc.notatld",
         )
-        self.assertRedirects(
-            response, "https://sso.notatld", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "https://sso.notatld", fetch_redirect_response=False)
         self.assertEqual(
             self.client.session["oidc_login_next"],
             settings.DJANGO_PYOIDC["sso1"]["post_login_uri_success"],
@@ -57,9 +55,7 @@ class LoginViewTestCase(OIDCTestCase):
             },
             SERVER_NAME="test.django-pyoidc.notatld",
         )
-        self.assertRedirects(
-            response, "https://sso.notatld", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "https://sso.notatld", fetch_redirect_response=False)
         self.assertEqual(
             self.client.session["oidc_login_next"],
             "https://test.django-pyoidc.notatld/myview/details",
@@ -83,9 +79,7 @@ class LoginViewTestCase(OIDCTestCase):
             },
             SERVER_NAME="test.django-pyoidc.notatld",
         )
-        self.assertRedirects(
-            response, "https://sso.notatld", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "https://sso.notatld", fetch_redirect_response=False)
         self.assertEqual(
             self.client.session["oidc_login_next"],
             settings.DJANGO_PYOIDC["sso1"]["post_login_uri_success"],
@@ -172,26 +166,20 @@ class LoginViewTestCase(OIDCTestCase):
             SERVER_NAME="test.django-pyoidc.notatld",
         )
         self.assertEqual(response.status_code, 302)
-        mocked_begin.assert_called_once_with(
-            scope=["openid"], response_type=ANY, use_nonce=ANY, path=ANY
-        )
+        mocked_begin.assert_called_once_with(scope=["openid"], response_type=ANY, use_nonce=ANY, path=ANY)
 
 
 class LogoutViewTestCase(OIDCTestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = get_user_model().objects.create(
-            username="test_user", email="test_user"
-        )
+        cls.user = get_user_model().objects.create(username="test_user", email="test_user")
 
     def test_logout_user_not_authenticated(self):
         """
         Test that trying to logout while not being connected redirects
         """
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(
-            response, "http://testserver/logoutdone", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "http://testserver/logoutdone", fetch_redirect_response=False)
 
     def test_django_user_is_at_least_logged_out(self):
         """
@@ -199,21 +187,15 @@ class LogoutViewTestCase(OIDCTestCase):
         """
         self.client.force_login(self.user)
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(
-            response, "http://testserver/logoutdone", fetch_redirect_response=False
-        )
-        self.assertFalse(
-            SESSION_KEY in self.client.session
-        )  # from https://stackoverflow.com/a/6013115
+        self.assertRedirects(response, "http://testserver/logoutdone", fetch_redirect_response=False)
+        self.assertFalse(SESSION_KEY in self.client.session)  # from https://stackoverflow.com/a/6013115
 
     @mock.patch("django_pyoidc.client.Consumer.restore")
     @mock.patch(
         "django_pyoidc.client.Consumer.request_info",
         return_value=("http://example.com", "", "", ""),
     )
-    def test_logout_generates_oidc_request_to_sso(
-        self, mocked_request_info, mocked_restore
-    ):
+    def test_logout_generates_oidc_request_to_sso(self, mocked_request_info, mocked_restore):
         """
         Test that logging out while being connected and having a valid OIDC session triggers an OIDC request to the SSO
         noticing it of the logout.
@@ -227,12 +209,8 @@ class LogoutViewTestCase(OIDCTestCase):
         session.save()
 
         response = self.client.get(reverse("test_logout"))
-        self.assertRedirects(
-            response, "http://example.com", fetch_redirect_response=False
-        )
-        self.assertFalse(
-            SESSION_KEY in self.client.session
-        )  # from https://stackoverflow.com/a/6013115
+        self.assertRedirects(response, "http://example.com", fetch_redirect_response=False)
+        self.assertFalse(SESSION_KEY in self.client.session)  # from https://stackoverflow.com/a/6013115
         mocked_request_info.assert_called_once()
         mocked_restore.assert_called_once_with(sid)
 
@@ -240,9 +218,7 @@ class LogoutViewTestCase(OIDCTestCase):
 class CallbackViewTestCase(OIDCTestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = get_user_model().objects.create(
-            username="test_user", email="test_user"
-        )
+        cls.user = get_user_model().objects.create(username="test_user", email="test_user")
 
     def test_callback_but_no_sid_on_our_side(self):
         """
@@ -279,9 +255,7 @@ class CallbackViewTestCase(OIDCTestCase):
         return_value=({"state": "test_id_12345"}, None, None),
     )
     @mock.patch("django_pyoidc.engine.get_user_by_email", return_value=None)
-    @mock.patch(
-        "django_pyoidc.client.Consumer.get_user_info", return_value=OpenIDSchema()
-    )
+    @mock.patch("django_pyoidc.client.Consumer.get_user_info", return_value=OpenIDSchema())
     @mock.patch(
         "django_pyoidc.client.Consumer.complete",
         return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
@@ -379,9 +353,7 @@ class CallbackViewTestCase(OIDCTestCase):
             }
         )
 
-        self.assertRedirects(
-            response, "/default/success", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "/default/success", fetch_redirect_response=False)
         with self.subTest("Session is created correctly :"):
             self.assertEqual(OIDCSession.objects.all().count(), 1)
 
@@ -438,9 +410,7 @@ class CallbackViewTestCase(OIDCTestCase):
 
         with self.subTest("pyoidc calls are performed"):
             mocked_restore.assert_called_once_with(state)
-            mocked_complete.assert_called_once_with(
-                state=state, session_state=session_state
-            )
+            mocked_complete.assert_called_once_with(state=state, session_state=session_state)
             mocked_parse_authz.assert_called_once()
             mocked_get_user_info.assert_called_once_with(state=state)
 
@@ -452,9 +422,7 @@ class CallbackViewTestCase(OIDCTestCase):
             }
         )
 
-        self.assertRedirects(
-            response, "/default/success", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "/default/success", fetch_redirect_response=False)
 
         with self.subTest("Session is created correctly :"):
             self.assertEqual(OIDCSession.objects.all().count(), 1)
@@ -473,9 +441,7 @@ class CallbackViewTestCase(OIDCTestCase):
         return_value=({"state": "test_id_12345"}, None, None),
     )
     @mock.patch("django_pyoidc.engine.get_user_by_email", return_value=None)
-    @mock.patch(
-        "django_pyoidc.client.Consumer.get_user_info", return_value=OpenIDSchema()
-    )
+    @mock.patch("django_pyoidc.client.Consumer.get_user_info", return_value=OpenIDSchema())
     @mock.patch(
         "django_pyoidc.client.Consumer.complete",
         return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
@@ -538,9 +504,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         Test that providing an empty body results in an HTTP 400
         :return:
         """
-        response = self.client.post(
-            reverse("test_blogout"), content_type="application/x-www-form-urlencoded"
-        )
+        response = self.client.post(reverse("test_blogout"), content_type="application/x-www-form-urlencoded")
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_encoding(self):
@@ -576,9 +540,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
     @mock.patch("django_pyoidc.SessionStore.delete")
     @mock.patch("django_pyoidc.client.Consumer.backchannel_logout")
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_valid_backchannel_sub(
-        self, mocked_provider_config, mocked_backchannel_logout, mocked_session_delete
-    ):
+    def test_valid_backchannel_sub(self, mocked_provider_config, mocked_backchannel_logout, mocked_session_delete):
         """
         Test that providing a valid SUB does kill the sessions
         """
@@ -590,9 +552,7 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         s.create()
         cache_session_key = s.session_key
 
-        OIDCSession.objects.create(
-            sub=sub, cache_session_key=cache_session_key, state=state
-        )
+        OIDCSession.objects.create(sub=sub, cache_session_key=cache_session_key, state=state)
 
         payload = {"sub": sub}
         body = jwt.encode(payload, key=self.key, algorithm=self.alg)
@@ -720,12 +680,8 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         s.create()
         cache_session_key_2 = s.session_key
 
-        OIDCSession.objects.create(
-            sub=sub, cache_session_key=cache_session_key_1, state="1"
-        )
-        OIDCSession.objects.create(
-            sub=sub, cache_session_key=cache_session_key_2, state="2"
-        )
+        OIDCSession.objects.create(sub=sub, cache_session_key=cache_session_key_1, state="1")
+        OIDCSession.objects.create(sub=sub, cache_session_key=cache_session_key_2, state="2")
 
         payload = {"sub": sub}
         body = jwt.encode(payload, key=self.key, algorithm=self.alg)
@@ -737,12 +693,8 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(OIDCSession.objects.all().count(), 0)
-        mocked_backchannel_logout.assert_has_calls(
-            [call(request_args=ANY), call(request_args=ANY)]
-        )
-        mocked_session_delete.assert_has_calls(
-            [call(cache_session_key_1), call(cache_session_key_2)]
-        )
+        mocked_backchannel_logout.assert_has_calls([call(request_args=ANY), call(request_args=ANY)])
+        mocked_session_delete.assert_has_calls([call(cache_session_key_1), call(cache_session_key_2)])
 
     @mock.patch(
         "django_pyoidc.views.OIDCSettingsFactory.get",
@@ -750,10 +702,6 @@ class BackchannelLogoutTestCase(OIDCTestCase):
     )
     def test_backchannel_logout_hook_get_logout(self, mocked_settings_get):
         view = OIDCBackChannelLogoutView(op_name="sso1")
-        with mock.patch(
-            "django_pyoidc.views.OIDCView.call_function"
-        ) as mocked_call_function:
+        with mock.patch("django_pyoidc.views.OIDCView.call_function") as mocked_call_function:
             view._logout_session("test")
-        mocked_call_function.assert_called_once_with(
-            "hook_session_logout", session="test"
-        )
+        mocked_call_function.assert_called_once_with("hook_session_logout", session="test")

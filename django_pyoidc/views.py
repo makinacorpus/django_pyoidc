@@ -18,7 +18,7 @@ from oic.utils.http_util import BadRequest
 from django_pyoidc import backchannel_logout_session
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
-from django_pyoidc.exceptions import InvalidSIDException
+from django_pyoidc.exceptions import DjangoOIDCException, InvalidSIDException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory, OidcSettingValue
 from django_pyoidc.utils import import_object
@@ -39,20 +39,19 @@ class OIDCView(View, OIDCMixin):
             setattr(self, key, value)
             if key == "op_name":
                 self.opsettings = OIDCSettingsFactory.get(self.op_name)
-                self.allowed_hosts = self.get_setting(
-                    "login_uris_redirect_allowed_hosts"
-                )
+                self.allowed_hosts = self.get_setting("login_uris_redirect_allowed_hosts")
 
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         super().setup(request, *args, **kwargs)
-        if self.op_name is None:
-            raise Exception(
-                "Please set 'op_name' when initializing with 'as_view()'\nFor example : OIDCView.as_view(op_name='example')"
-            )  # FIXME
+        if self.op_name is None or self.op_name == "":
+            msg = (
+                "Please set 'op_name' when initializing with 'as_view()'\nFor example : "
+                "OIDCView.as_view(op_name='example')"
+            )
 
-    def get_setting(
-        self, name: str, default: Optional[T] = None
-    ) -> Optional[Union[T, OidcSettingValue]]:
+            raise DjangoOIDCException(msg)
+
+    def get_setting(self, name: str, default: Optional[T] = None) -> Optional[Union[T, OidcSettingValue]]:
         return self.opsettings.get(name, default)
 
     def call_function(self, setting_func_name: str, *args: Any, **kwargs: Any) -> Any:
@@ -61,15 +60,11 @@ class OIDCView(View, OIDCMixin):
             func = import_object(function_path, "")
             return func(*args, **kwargs)
 
-    def call_user_login_callback_function(
-        self, request: HttpRequest, user: AbstractUser
-    ) -> Any:
+    def call_user_login_callback_function(self, request: HttpRequest, user: AbstractUser) -> Any:
         logger.debug("OIDC, Calling user hook on login")
         self.call_function("hook_user_login", request, user)
 
-    def call_logout_function(
-        self, user_request: HttpRequest, logout_request_args: Dict[str, Any]
-    ) -> Any:
+    def call_logout_function(self, user_request: HttpRequest, logout_request_args: Dict[str, Any]) -> Any:
         """Function called right before local session removal and before final redirection to the SSO server.
 
         Parameters:
@@ -82,9 +77,7 @@ class OIDCView(View, OIDCMixin):
         """
         return self.call_function("hook_user_logout", user_request, logout_request_args)
 
-    def get_next_url(
-        self, request: HttpRequest, redirect_field_name: str
-    ) -> Optional[str]:
+    def get_next_url(self, request: HttpRequest, redirect_field_name: str) -> Optional[str]:
         """
         Adapted from https://github.com/mozilla/mozilla-django-oidc/blob/71e4af8283a10aa51234de705d34cd298e927f97/mozilla_django_oidc/views.py#L132
         """
@@ -146,11 +139,7 @@ class OIDCLoginView(OIDCView):
         next_redirect_uri = self.get_next_url(request, "next")
 
         if not next_redirect_uri:
-            next_redirect_uri = str(
-                self.get_setting(
-                    "post_login_uri_success", request.build_absolute_uri("/")
-                )
-            )
+            next_redirect_uri = str(self.get_setting("post_login_uri_success", request.build_absolute_uri("/")))
 
         request.session["oidc_login_next"] = next_redirect_uri
 
@@ -180,11 +169,7 @@ class OIDCLogoutView(OIDCView):
 
     def post_logout_url(self, request: HttpRequest) -> str:
         """Return the post logout url defined in settings."""
-        return str(
-            self.get_setting(
-                "post_logout_redirect_uri", request.build_absolute_uri("/")
-            )
-        )
+        return str(self.get_setting("post_logout_redirect_uri", request.build_absolute_uri("/")))
 
     def get(self, request: HttpRequest) -> HttpResponse:
         return self.post(request)
@@ -223,12 +208,10 @@ class OIDCLogoutView(OIDCView):
         if sid:
             try:
                 client = OIDCClient(self.op_name, session_id=sid)
-            except (
-                Exception
-            ) as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
+            except Exception as e:  # FIXME : Finer exception handling (KeyError,ParseError,CommunicationError)
                 # FIXME : needs python >= 3.11
                 #  e.add_note("OIDC Logout call error when loading OIDC state: ")
-                logger.exception(e)
+                logger.exception("OIDC Logout call error when loading OIDC state.")
 
         # Hook user logout function
         extra_args = self.call_logout_function(request, request_args)
@@ -245,10 +228,8 @@ class OIDCLogoutView(OIDCView):
 
         # Build SSO disconnect link
         if client:
-            logout_request = client.consumer.message_factory.get_request_type(
-                "endsession_endpoint"
-            )
-            url, body, http_args, _ = client.consumer.request_info(
+            logout_request = client.consumer.message_factory.get_request_type("endsession_endpoint")
+            url, _, _, _ = client.consumer.request_info(
                 logout_request,
                 method="GET",
                 request_args=None,
@@ -261,7 +242,8 @@ class OIDCLogoutView(OIDCView):
             return redirect(url)
         else:
             logger.warning(
-                f"Cannot build the SSO disconnection link (maybe the cache was flushed ?), still redirecting directly to {post_logout_url}"
+                "Cannot build the SSO disconnection link (maybe the cache was flushed ?), still redirecting directly to %s",
+                post_logout_url,
             )
             return redirect(post_logout_url)
 
@@ -278,11 +260,10 @@ class OIDCBackChannelLogoutView(OIDCView):
     http_method_names = ["post"]
 
     def logout_sessions_by_sid(self, client: OIDCClient, sid: str, body: str) -> None:
-        validated_sid = client.consumer.backchannel_logout(
-            request_args={"logout_token": body}
-        )
+        validated_sid = client.consumer.backchannel_logout(request_args={"logout_token": body})
         if validated_sid != sid:
-            raise InvalidSIDException(f"Got {validated_sid}, expected {sid}")
+            msg = f"Got {validated_sid}, expected {sid}"
+            raise InvalidSIDException(msg)
         sessions = OIDCSession.objects.filter(session_state=validated_sid)
         for session in sessions:
             self._logout_session(session)
@@ -319,9 +300,7 @@ class OIDCBackChannelLogoutView(OIDCView):
                 try:
                     self.logout_sessions_by_sid(client, sid, body)
                 except InvalidSIDException as e:
-                    logger.debug(
-                        f"Got invalid sid from request : expected {sid}. Error : \n{e}"
-                    )
+                    logger.debug("Got invalid sid from request : expected %s. Error : \n%s", sid, e)
                     result.status_code = 400
             else:
                 result.status_code = 400
@@ -358,31 +337,19 @@ class OIDCCallbackView(OIDCView):
         )
 
     def login_failure(self, request: HttpRequest) -> HttpResponse:
-        return redirect(
-            str(
-                self.get_setting(
-                    "post_login_uri_failure", request.build_absolute_uri("/")
-                )
-            )
-        )
+        return redirect(str(self.get_setting("post_login_uri_failure", request.build_absolute_uri("/"))))
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
             if "oidc_sid" in request.session:
-                self.client = OIDCClient(
-                    self.op_name, session_id=request.session["oidc_sid"]
-                )
+                self.client = OIDCClient(self.op_name, session_id=request.session["oidc_sid"])
 
-                parsing_result = self.client.consumer.parse_authz(
-                    query=request.GET.urlencode()
-                )
+                parsing_result = self.client.consumer.parse_authz(query=request.GET.urlencode())
                 if isinstance(parsing_result, BadRequest):
-                    logger.error(
-                        "OIDC login process failure; cannot parse OIDC response"
-                    )
+                    logger.error("OIDC login process failure; cannot parse OIDC response")
                     return self.login_failure(request)
 
-                aresp, atr, idt = parsing_result
+                aresp, _, _ = parsing_result
 
                 if aresp is None:
                     logger.error("OIDC login process failure; empty OIDC response")
@@ -394,40 +361,26 @@ class OIDCCallbackView(OIDCView):
 
                     # pyoidc will make the next steps in OIDC login protocol
                     try:
-                        tokens = self.client.consumer.complete(
-                            state=state, session_state=session_state
-                        )
+                        tokens = self.client.consumer.complete(state=state, session_state=session_state)
                     except Exception as e:
-                        logger.exception(e)
-                        logger.error(
-                            "OIDC login process failure; cannot end login protocol."
-                        )
+                        logger.exception("OIDC login process failure; cannot end login protocol.")
                         return self.login_failure(request)
 
                     # Collect data from userinfo endpoint
                     try:
                         userinfo = self.client.consumer.get_user_info(state=state)  # type: ignore[no-untyped-call] # oic is untyped yet
                     except Exception as e:
-                        logger.exception(e)
-                        logger.error(
-                            "OIDC login process failure; Cannot retrieve userinfo."
-                        )
+                        logger.exception("OIDC login process failure; Cannot retrieve userinfo.")
                         return self.login_failure(request)
 
                     # TODO: add a setting to allow/disallow session storage of the tokens
-                    access_token_jwt = (
-                        tokens["access_token"] if "access_token" in tokens else None
-                    )
+                    access_token_jwt = tokens["access_token"] if "access_token" in tokens else None
 
                     # this will call token instrospection or user defined validator
                     # or return None
-                    access_token_claims = self.engine.introspect_access_token(
-                        access_token_jwt, self.client
-                    )
+                    access_token_claims = self.engine.introspect_access_token(access_token_jwt, self.client)
 
-                    id_token_claims = (
-                        tokens["id_token"].to_dict() if "id_token" in tokens else None
-                    )
+                    id_token_claims = tokens["id_token"].to_dict() if "id_token" in tokens else None
                     # id_token_jwt = (
                     #     tokens["id_token_jwt"] if "id_token_jwt" in tokens else None
                     # )
@@ -447,9 +400,7 @@ class OIDCCallbackView(OIDCView):
                     )
 
                     if not user or not user.is_authenticated:
-                        logger.error(
-                            "OIDC login process failure. Cannot set active authenticated user."
-                        )
+                        logger.error("OIDC login process failure. Cannot set active authenticated user.")
                         return self.login_failure(request)
                     else:
                         auth.login(request, user)
@@ -463,18 +414,14 @@ class OIDCCallbackView(OIDCView):
                         redir = self.success_url(request)
                         return redirect(redir)
                 else:
-                    logger.warning(
-                        "OIDC login process failure. OIDC state does not match session sid."
-                    )
-                    raise SuspiciousOperation(
-                        "Login process: OIDC state does not match session sid."
-                    )
+                    msg = "OIDC login process failure. OIDC state does not match session sid."
+                    logger.warning(msg)
+                    raise SuspiciousOperation(msg)
             else:
                 logger.warning(
                     "OIDC login process failure. No OIDC sid state in user session for a request on the OIDC callback."
                 )
                 return self.login_failure(request)
         except PermissionDenied as exc:
-            logger.exception(exc)
             messages.error(request, "Permission Denied.")
             return self.login_failure(request)

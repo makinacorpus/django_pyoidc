@@ -26,13 +26,9 @@ class Keycloak10Provider(Provider):
         if keycloak_base_uri is None or keycloak_realm is None:
             # Usage of this provider SHOULD be providing keycloak_base_uri and keycloak_realm so we generate provider_discovery_uri
             # but the contrary works (you provide provider_discovery_uri and we extract base_uri and realm).
-            if (
-                "provider_discovery_uri" not in kwargs
-                or not kwargs["provider_discovery_uri"]
-            ):
-                raise TypeError(
-                    "Keycloak10Provider requires keycloak_base_uri and keycloak_realm or provider_discovery_uri."
-                )
+            if "provider_discovery_uri" not in kwargs or not kwargs["provider_discovery_uri"]:
+                msg = "Keycloak10Provider requires keycloak_base_uri and keycloak_realm or provider_discovery_uri."
+                raise TypeError(msg)
             url = urlparse(kwargs["provider_discovery_uri"])
             base_path = url.path
             if "/realms/" in base_path:
@@ -48,18 +44,16 @@ class Keycloak10Provider(Provider):
                 extra_string = "/"
                 if keycloak_realm is not None and keycloak_realm.endswith(extra_string):
                     keycloak_realm = keycloak_realm[: -len(extra_string)]
-                if (
-                    keycloak_realm is not None
-                    and "/" in keycloak_realm
-                    or keycloak_realm is None
-                ):
-                    raise RuntimeError(
-                        "Cannot extract the keycloak realm from the provided url."
-                    )
+                if (keycloak_realm is not None and "/" in keycloak_realm) or keycloak_realm is None:
+                    msg = "Cannot extract the keycloak realm from the provided url."
+                    raise RuntimeError(msg)
             else:
-                raise RuntimeError(
-                    "Provided 'provider_discovery_uri' url is not a valid Keycloak metadata url, it does not contains /realms/."
+                msg = (
+                    "Provided 'provider_discovery_uri' url is not a valid Keycloak metadata url,"
+                    " it does not contains /realms/."
                 )
+
+                raise RuntimeError(msg)
             keycloak_base_uri = f"{url.scheme}{url.netloc}{base_path}"
 
         if keycloak_base_uri is not None:
@@ -67,9 +61,7 @@ class Keycloak10Provider(Provider):
         if self.keycloak_base_uri[-1] == "/":
             self.keycloak_base_uri = self.keycloak_base_uri[:-1]
         self.keycloak_realm = keycloak_realm
-        provider_discovery_uri = (
-            f"{self.keycloak_base_uri}/realms/{self.keycloak_realm}"
-        )
+        provider_discovery_uri = f"{self.keycloak_base_uri}/realms/{self.keycloak_realm}"
         kwargs["provider_discovery_uri"] = provider_discovery_uri
         super().__init__(op_name=op_name, *args, **kwargs)
 
