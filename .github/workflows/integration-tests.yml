@@ -12,7 +12,7 @@ jobs:
     # From https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers#configuring-the-runner-job-for-jobs-directly-on-the-runner-machine
     services:
       postgres:
-        image: postgres
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
