@@ -5,13 +5,18 @@ from unittest.mock import ANY, MagicMock, call
 import jwt
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
+from django.test import override_settings
 from django.urls import reverse
 from oic.oic import IdToken
 from oic.oic.message import OpenIDSchema
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.models import OIDCSession
-from django_pyoidc.views import OIDCBackChannelLogoutView
+from django_pyoidc.views import (
+    OIDCBackChannelLogoutView,
+    OIDCCallbackView,
+    OIDCLoginView,
+)
 from tests.utils import OIDCTestCase
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
@@ -155,6 +160,7 @@ class LoginViewTestCase(OIDCTestCase):
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     @mock.patch("django_pyoidc.client.Consumer.begin", return_value=(1, "/"))
+    @override_settings(MIDDLEWARE=[*settings.MIDDLEWARE, "django.contrib.auth.middleware.LoginRequiredMiddleware"])
     def test_scope_is_set(self, mocked_begin: MagicMock, *args):
         response = self.client.get(
             reverse("test_login"),
@@ -167,6 +173,15 @@ class LoginViewTestCase(OIDCTestCase):
         )
         self.assertEqual(response.status_code, 302)
         mocked_begin.assert_called_once_with(scope=["openid"], response_type=ANY, use_nonce=ANY, path=ANY)
+
+    @override_settings(MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"])
+    def test_login_required_middleware(self):
+        """
+        Ensures that the login view does not need authentication when using
+        LoginRequiredMiddleware.
+        """
+        view = OIDCLoginView(op_name="sso1")
+        self.assertFalse(view.dispatch.login_required)
 
 
 class LogoutViewTestCase(OIDCTestCase):
@@ -481,6 +496,15 @@ class CallbackViewTestCase(OIDCTestCase):
         self.assertEqual(OIDCSession.objects.all().count(), 0)
         mocked_user_access_token_hook.assert_called_once()
 
+    @override_settings(MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"])
+    def test_callback_required_middleware(self):
+        """
+        Ensures that the callback view does not need authentication when using
+        LoginRequiredMiddleware.
+        """
+        view = OIDCCallbackView(op_name="sso1")
+        self.assertFalse(view.dispatch.login_required)
+
 
 class BackchannelLogoutTestCase(OIDCTestCase):
     @classmethod
@@ -705,3 +729,12 @@ class BackchannelLogoutTestCase(OIDCTestCase):
         with mock.patch("django_pyoidc.views.OIDCView.call_function") as mocked_call_function:
             view._logout_session("test")
         mocked_call_function.assert_called_once_with("hook_session_logout", session="test")
+
+    @override_settings(MIDDLEWARE=["django.contrib.auth.middleware.LoginRequiredMiddleware"])
+    def test_login_required_middleware(self):
+        """
+        Ensures that the backchannel logout view does not need authentication when using
+        LoginRequiredMiddleware.
+        """
+        view = OIDCBackChannelLogoutView(op_name="sso1")
+        self.assertFalse(view.dispatch.login_required)
