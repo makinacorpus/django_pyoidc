@@ -1,0 +1,58 @@
+name: test-django-main.yml
+
+permissions:
+  contents: read  # Minimal pour le workflow
+
+on:
+  schedule:
+    - cron: '0 0 * * SUN'
+
+jobs:
+  test-django-main:
+    runs-on: ubuntu-latest
+    # From https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers#configuring-the-runner-job-for-jobs-directly-on-the-runner-machine
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:18
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0 # Needed for versioningit to find the repo version
+          persist-credentials: 'false'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          python-version: "3.14"
+          version: "0.9.8"
+
+      - name: Install dependencies
+        run: uv pip install .[drf] -r requirements/requirements-dev.in -r requirements/requirements-test.in git+https://github.com/django/django.git@main#egg=Django
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Run unit tests
+        run: python3 run_tests.py
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          POSTGRES_HOST: localhost
+          # The default PostgreSQL port
+          POSTGRES_PORT: 5432
