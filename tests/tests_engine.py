@@ -52,9 +52,10 @@ class OIDCEngineTestCase(OIDCTestCase):
         client.client_extension.do_token_introspection = mocked_do_introspection
         client.consumer.introspection_endpoint = "test_endpoint"
 
-        with self.assertRaises(FailedIntrospection), self.assertLogs(
-            level="ERROR", logger="django_pyoidc"
-        ) as cm:
+        with (
+            self.assertRaises(FailedIntrospection),
+            self.assertLogs(level="ERROR", logger="django_pyoidc") as cm,
+        ):
             engine._call_introspection(access_token_jwt=access_token, client=client)
 
         self.assertEqual(
