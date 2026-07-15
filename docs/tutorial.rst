@@ -9,8 +9,8 @@ Requirements
 
 To use this library, make sure that you meet the following requirements:
 
-- ``django>=4.2``
-- ``python>=3.8``
+- ``django>=5.2``
+- ``python>=3.9``
 - the `Session middleware <https://docs.djangoproject.com/en/5.1/ref/middleware/#module-django.contrib.sessions.middleware>`_ is enabled
 - a cache backend for django (redis, etc.)
 - an OIDC-compliant identity provider
