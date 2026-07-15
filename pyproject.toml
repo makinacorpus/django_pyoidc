@@ -11,10 +11,6 @@ classifiers=["Topic :: Utilities",
         "Intended Audience :: Developers",
         "Environment :: Web Environment",
         "Framework :: Django",
-        "Framework :: Django :: 4.2",
-        "Framework :: Django :: 5",
-        "Framework :: Django :: 5.0",
-        "Framework :: Django :: 5.1",
         "Framework :: Django :: 5.2",
         "Framework :: Django :: 6.0",
         "Development Status :: 5 - Production/Stable",
@@ -29,13 +25,13 @@ classifiers=["Topic :: Utilities",
         "Topic :: Security"
 ]
 description="Authenticate your users using OpenID Connect (OIDC)"
-requires-python=">=3.9"
+requires-python=">=3.10"
 keywords=["openid","oidc","django","sso","single-sign-on", "openid-connect", "authentication"]
 readme="README.md"
 license="GPL-3.0-only"
 dependencies = [
         "oic==1.7.0",
-        "django>=3.2",
+        "django>=5.2",
         "jsonpickle",
         "pyjwt",
         "pycryptodomex",

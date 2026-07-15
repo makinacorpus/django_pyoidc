@@ -1,6 +1,7 @@
 NEXT
 ----
 - drop support for python 3.8
+- drop support for python 3.9
 
 
 1.0.12
