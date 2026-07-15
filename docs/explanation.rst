@@ -18,7 +18,25 @@ Here are our criteria:
 `django-allauth <https://github.com/pennersr/django-allauth/>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Todo, see https://github.com/makinacorpus/django_pyoidc/issues/33
+We would say that this package is your best alternative to django_pyoidc. django_allauth is a very big
+package whose main feature seems to be a "one does it all" authentication package. On the other
+side, django_pyoidc is more narrowly focused on OpenID Connect which allows us to implement some features
+that might not be in scope for allauth.
+
+.. note::
+
+    This is a very big package, we reviewed it as best as we could. You should probably take the time
+    to look at their documentation and make an informed choice :)
+
+**Advantages** :
+
+- very used and well maintained library
+- the author has an economic model around django_allauth, so support should not end soon.
+
+**Drawbacks** :
+
+- very minimal implementation of OIDC : no backchannel logout (we are not sure I have seen a logout view either...)
+- drf integration does not seem to support bearer token straight from the identity provider, it *seems* that you need to convert your token
 
 `django-auth-oidc <https://gitlab.com/aiakos/django-auth-oidc>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
