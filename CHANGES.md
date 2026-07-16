@@ -1,10 +1,9 @@
-NEXT
+1.0.13
 ----
 - drop support for python 3.8
 - drop support for python 3.9
 - fix LoginRequiredMiddleware was unusable with django pyoidc (#78)
 - add documentation for `django_pyoidc.utils.extract_claim_from_tokens` (#71)
-
 
 1.0.12
 ------
