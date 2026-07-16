@@ -281,3 +281,77 @@ two ``drf`` keys in the settings.
 
 .. tip::
     Taking a look at the documentation of :ref:`use_introspection_on_access_tokens` might be a good idea if you run into some issues
+
+Configuring drf spectacular (swagger) integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After settings drf-spectacular with swagger integration, you can setup the swagger authentication
+module to use OIDC.
+
+.. note::
+    To our knowledge, redoc is no supported.
+
+Usually we have two OIDC clients for a django API :
+
+- one is the client used to check incoming token (the drf client in the tutorial above)
+- one is a full client used to authenticate users on the admin page
+
+You can configure swagger to use your full client to generate OIDC tokens. The setup is quite easy,
+you just need to tell swagger about your client credentials.
+
+In your ``settings.py`` add :
+
+.. code-block:: python
+    :caption: settings.py
+
+    SPECTACULAR_SETTINGS = {
+        "SWAGGER_UI_OAUTH2_CONFIG": {
+            "clientId": os.getenv("SSO_CLIENT_ID"), # adapt this to your projet
+            "clientSecret": os.getenv("SSO_CLIENT_SECRET"), # adapt this to your project
+            "scopes": [], # optional
+        },
+    }
+
+You will also need to add a special view to register the token in your browser after you've authenticated
+succesfully. In the following example, you should have some equivalent for ``api/schema`` and ``api/docs``.
+
+.. code-block:: python
+    :caption: urls.py
+
+    from drf_spectacular.views import (
+        SpectacularAPIView,
+        SpectacularSwaggerOauthRedirectView,
+        SpectacularSwaggerView,
+    )
+
+    urlpatterns += [
+        # The following 2 urls need to be configured according to drf-spectacular documentation
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        path(
+            "api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"
+        ),
+        # This is the view that you need to add
+        path(
+            "api/docs/oauth2-redirect.html", # FIX this so that this view is next to the SpectacularSwaggerView
+            CustomSpectacularView.as_view(),
+            name="swagger-ui-oauth",
+        )
+    ]
+
+You should now have an authorize button on the the top right corner of your swagger page.
+
+
+.. image:: images/drf-spectacular/swagger-home.png
+    :alt: Screenshot of the swagger home page with a green authorize button
+
+After clicking on it, a popup opens. Scroll top the top. You should reach a section named "openIdConnect (OAuth2, authorization_code) ".
+The client_id and client_secret shoud already be filled from your env variables. Scroll down until you
+see an authorize button. Click on it.
+
+.. image:: images/drf-spectacular/prompt.png
+    :alt: Screenshot of the popup
+
+After clicking on authorize, you are redirected to to your SSO login page. After login you are redirected
+to the special swagger page which stores the token to be used on the main swagger page.
+
+You're done ! 🎉
