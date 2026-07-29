@@ -1,3 +1,5 @@
+.. _tutorial_provider:
+
 Connecting a django project to an identity provider
 ===================================================
 
@@ -355,3 +357,158 @@ After clicking on authorize, you are redirected to to your SSO login page. After
 to the special swagger page which stores the token to be used on the main swagger page.
 
 You're done ! 🎉
+
+Integrating django-pyoidc with the admin site
+=============================================
+
+To use this library to authenticate users into the admin site, you must first :ref:`configure a provider <tutorial_provider>`.
+
+We will assume that you configured a provider name 'sso' for the remaining of this tutorial.
+
+To integrate OIDC with the admin site :
+
+- you need to have some views implementing OIDC behaviour and logging users into django authentication backend (this is provided by this library)
+- you need to change the admin login page to redirect to the OIDC login view : this is the purpose of this tutorial
+
+To change the admin login page you have two options :
+
+1. declare a template that overrides the login page of the admin
+2. plug a custom template into the admin site
+
+We will go for the second option because we think that it is the cleanest. If the admin template organization was to change, our login page will still be used.
+
+This is the login page that will be implemented in this tutorial :
+
+.. image:: images/admin/login.png
+    :alt: Screenshot of the admin login page patched with a single login button
+
+Replace the login form with a button redirecting to the SSO
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we will create a custom login template that replaces the login form with a button redirecting
+the user to our OIDC Login View.
+
+Why do we use a button instead of silently redirecting to the login view ? Because the user might not
+have the permission to view the admin site and would be stuck in a redirection loop if we redirect them automatically.
+
+Create the following template in ``my_project/templates/my_project/login.html`` :
+
+.. code-block:: html+django
+    :caption: my_project/templates/my_project/login.html
+
+    {% extends "admin/base_site.html" %}
+    {% load i18n static %}
+
+    {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/login.css" %}">
+    {{ form.media }}
+    {% endblock %}
+
+    {% block bodyclass %}{{ block.super }} login{% endblock %}
+
+    {% block usertools %}{% endblock %}
+
+    {% block nav-global %}{% endblock %}
+
+    {% block nav-sidebar %}{% endblock %}
+
+    {% block content_title %}{% endblock %}
+
+    {% block nav-breadcrumbs %}{% endblock %}
+
+    {% block content %}
+    {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+    {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+    </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+    <p class="errornote">
+        {{ error }}
+    </p>
+    {% endfor %}
+    {% endif %}
+
+    <div id="content-main">
+
+    {% if user.is_authenticated %}
+    <p class="errornote">
+    {% blocktranslate trimmed %}
+        You are logged in as {{ username }} but you are not allowed to access this page. Would you like to logout to try with an other user account ?
+    {% endblocktranslate %}
+
+    <form action="{% url "sso-logout" %}" method="GET" id="login-form">{% csrf_token %}
+      <div class="submit-row">
+        <input type="submit" value="{% translate "Logout" %}">
+      </div>
+    </form>
+
+    </p>
+    {% else %}
+    <form action="{% url "sso-login" %}" method="GET" id="login-form">{% csrf_token %}
+      <div class="submit-row">
+        <input type="submit" value="{% translate "Login" %}">
+      </div>
+    </form>
+    {% endif %}
+
+
+
+    </div>
+    {% endblock %}
+
+We extend the base admin template to re-use style components. If the user is authenticated and is on this page, it means that login failed and we show a logout button.
+
+
+Creating a custom admin site
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a ``sites.py`` file somewhere suitable. We tend to put it next to our settings module as we find that this configuration is more 'project related' than 'application related'.
+
+.. code-block:: python
+    :caption: sites.py
+
+    from django.contrib.admin import AdminSite
+
+
+    class OIDCLoginAdminSite(AdminSite):
+        login_template = "my_project/login.html" # we will declare this template later
+        site_header = "Administration Site"
+
+
+    site = OIDCLoginAdminSite(name="my-project-admin")
+
+    # We need a callable for the next step
+    def get_site():
+        return site
+
+Next, we need to register this admin site with the admin config. Create an ``admin_config.py`` module somewhere suitable (next to the settings for example) :
+
+.. code-block:: python
+    :caption: admin_config.py
+
+    from django.contrib.admin.apps import AdminConfig
+
+
+    class CustomAdmin(AdminConfig):
+        # Change my_project with the name of the package holding your sites.py module
+        default_site = "my_project.sites.get_site"
+
+Now you have the following files next to each other :
+
+    - ``settings.py``
+    - ``sites.py``
+    - ``admin_config.py``
+
+To use the custom login page, you must import the admin app from your custom config instead of ``django.contrib.auth`` in your ``INSTALLED_APPS`` setting :
+
+.. code-block:: python
+    :caption: setting.py
+
+    INSTALLED_APPS = [
+        # The following lines replaces 'django.contrib.auth'
+        "my_project.admin_config.CustomAdmin",
+    ]
+
+And you are done !

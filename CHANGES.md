@@ -1,6 +1,7 @@
 NEXT
 ----
 - update documentation about SSO logout (#89)
+- add documentation about admin site integration (#92)
 
 1.0.13
 ----
