@@ -188,8 +188,7 @@ with another user in one of the client application, then visit your application 
   This is made using the refresh token which has a longer lifetime. Now if the SSO session has been terminated, the next time you'll try
   to transparently get a new access_token it will fail, and your OIDC client can decide to destroy the local Django session in that case.
   This solution is almost OK, you may still have some problems while the previous access token is still valid, and depending on the
-  lifetime of access token it can be for 5, 10 or 15 minutes. This SSO connection **'refreshing'** is implemented in this library, and
-  already ensure the minimum indirect SSO disconnect support.
+  lifetime of access token it can be for 5, 10 or 15 minutes. **We do not implement this behaviour in django-pyoidc**.
 * the **second** and **third** solutions are managed by the SSO server (and your application), they are called **Back-channel logout**
   and **Front-channel logout**. Not all SSO servers implements theses things, and usually not both.
 
