@@ -1,3 +1,7 @@
+NEXT
+----
+- update documentation about SSO logout (#89)
+
 1.0.13
 ----
 - drop support for python 3.8
