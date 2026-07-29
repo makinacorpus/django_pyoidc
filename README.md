@@ -20,12 +20,13 @@ If you are not satisfied with the default configuration, take a look at the cook
 - Easy configuration through premade `Provider` classes (see the list [here](https://django-pyoidc.readthedocs.io/latest/reference.html#providers))
 - Authenticate users from multiple providers
 - Bearer authentication support for [django-rest-framework](https://www.django-rest-framework.org/) integration (**single provider**)
-  - [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/customization.html) : your swagger page will allow to connect to your OIDC provider
 - Easy integration with the [Django permission system](https://django-pyoidc.readthedocs.io/latest/how-to.html#use-the-django-permission-system-with-oidc)
 - Highly customizable design that should suit most needs
 - Support back-channel logout
 - Support service accounts (accounts for machine-to-machine authentication)
-- Sane and secure defaults settings
+- Sane and secure default settings
+- [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/customization.html)/Swagger integration ([documentation here](https://django-pyoidc.readthedocs.io/latest/tutorial.html#configuring-drf-spectacular-swagger-integration)) : your swagger page will allow connecting to your OIDC provider
+- Admin integration ([documentation here](https://django-pyoidc.readthedocs.io/latest/tutorial.html#integrating-django-pyoidc-with-the-admin-site))
 
 ## Roadmap
 
@@ -35,7 +36,7 @@ If you are not satisfied with the default configuration, take a look at the cook
 
 ## Acknowledgement
 
-This library is built on the work of many others. First of all, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementation. This library is mostly about glue between Django and *pyoidc*.
+This library is built on the work of many others. First, thanks to all the maintainers of [pyoidc](https://github.com/CZ-NIC/pyoidc/) as they did all the spec implementations. This library is mostly about glue between Django and *pyoidc*.
 
 We were also heavily inspired by:
 
