@@ -610,6 +610,65 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         self.assertTrue("message: user_app1_only@example.com is logged in." in bodyText)
         self._selenium_logout(end_url)
 
+
+    def test_110_selenium_basic_protected_page_not_available_if_anonymous(self, *args):
+        """
+        Check that a basic protected view cannot be accessed without OIDC login.
+        """
+        self.selenium.delete_all_cookies()
+        timeout = 5
+
+        self.wait = WebDriverWait(self.selenium, timeout)
+        starting_url = reverse("e2e_test_basic_1")
+        for i in range(3):
+            self.selenium.get(f"{self.live_server_url}{starting_url}")
+            WebDriverWait(self.selenium, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+
+            bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+
+            # Check the session message is never shown
+            self.assertFalse("is viewing protected page." in bodyText)
+
+    def test_111_selenium_basic_protected_page_available_if_connected(self, *args):
+        """
+        Check that a basic protected view can be viewed after OIDC login.
+        """
+        self.selenium.delete_all_cookies()
+        timeout = 5
+        login_location = reverse("e2e_test_login_1")
+        success_location = reverse("e2e_test_success_1")
+        post_logout_location = reverse("e2e_test_logout_done_1")
+
+        start_url = f"{self.live_server_url}{login_location}"
+        ok_url = f"{self.live_server_url}{success_location}"
+        end_url = f"{self.live_server_url}{post_logout_location}"
+
+        self.wait = WebDriverWait(self.selenium, timeout)
+
+        # user1 login OK
+        self._selenium_sso_login(
+            start_url,
+            ok_url,
+            "user1",
+            "passwd1",
+            active_sso_session=False,
+        )
+
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+        self.assertTrue("message: user1@example.com is logged in." in bodyText)
+
+        # Now access the protected page -------------
+        self.selenium.get(f"{self.live_server_url}{reverse("e2e_test_basic_1")}")
+        WebDriverWait(self.selenium, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        ## time.sleep(3200)
+        bodyText = self.selenium.find_element(By.TAG_NAME, "body").text
+
+        # Check the session message is shown
+        self.assertTrue("message: user1@example.com is viewing protected page." in bodyText)
+
+        # Disconnect
+        self._selenium_logout(end_url)
+
     def test_201_selenium_front_app_api_call(self, *args):
         """
         Check that a test front app can make an OIDC API call.

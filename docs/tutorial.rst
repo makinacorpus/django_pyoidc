@@ -250,7 +250,7 @@ is similar to the one made in :ref:`Configure the library`.
 
 
 .. note::
-    Usually your application should request a different *client_id* for the apimode (like a **my-app-full** *client_id* for a confidential classical OIDC client and a **my-app-api** *client_id* for a bearer-only OIDC client in Keycloak). But if you have only one *client_id* it's OK to simply make a copy for the settings.
+    Usually your application should request a different *client_id* for the api mode (like a **my-app-full** *client_id* for a confidential classical OIDC client and a **my-app-api** *client_id* for a bearer-only OIDC client in Keycloak). But if you have only one *client_id* it's OK to simply make a copy of these credentials in this new provider settings.
 
 
 Once you declared those settings, you can configure ``DEFAULT_AUTHENTICATION_CLASSES`` to use ``django_pyoidc.drf.authentication.OIDCBearerAuthentication`` to use this authentication class on all your views:

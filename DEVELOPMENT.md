@@ -105,6 +105,16 @@ python3 run_tests.py  # for unit tests
 python3 run_e2e_tests.py  # for end to end tests
 ```
 
+If you want to log end to end tests use:
+
+```bash
+# But do not do that in a script without 'pipefail'
+# if you need to exit result code
+python3 run_e2e_tests.py 2>&1 | tee tests.log
+```
+
+Note that a recorder script also exists with `ci_run_e2e_tests.sh`.
+
 ## Adding a dependency
 
 Add the dependency to either `requirements/requirements.in`, `requirements/requirements-test.in` or `requirements/requirements-dev.in` 

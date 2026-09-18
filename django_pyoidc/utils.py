@@ -24,25 +24,47 @@ def import_object(path: str, def_name: str) -> Any:  # FIXME : this function is 
     return getattr(import_module(mod), cls)
 
 
-def extract_claim_from_tokens(claim: str, tokens: Dict[str, Any], raise_exception: bool = True) -> Any:
+def extract_claim_from_tokens(
+    claim: str, tokens: Dict[str, Any], raise_exception: bool = True, priority: str = "UIA"
+) -> Any:
     """
     Given a dictionary of token claims, extract the given claim.
 
-    This function searches the ``tokens`` dictionary for the requested data in priority order:
+    This function searches the ``tokens`` dictionary for the requested data in priority order, using by default
+    priority 'UIA' (Userinfo, Id, Access) so:
 
      1. *info_token_claims*
      2. *id_token_claims*
      3. *access_token_claims*
 
+    You can alter the priority between UIA, UAI, IAU, IUA, AIU or AUI.
+    Each letter is a token:
+     U: user_info token
+     I: id token
+     A: access token
     If the claim is not found a ``ClaimNotFoundError`` exception is raised unless the parameter
     ``raise_exception`` has been set to false.
+    If a priority is given which is not valid a RunetimeError exception will be raised even if ``raise_exception``
+    ha been set to true.
     """
-    if "info_token_claims" in tokens and claim in tokens["info_token_claims"]:
-        value = tokens["info_token_claims"][claim]
-    elif "id_token_claims" in tokens and claim in tokens["id_token_claims"]:
-        value = tokens["id_token_claims"][claim]
-    elif "access_token_claims" in tokens and claim in tokens["access_token_claims"]:
-        value = tokens["access_token_claims"][claim]
+    if priority not in ("UIA", "UAI", "IAU", "IUA", "AIU", "AUI"):
+        msg = f"{priority} is an invalid priority value."
+        raise RuntimeError(msg)
+    pmap = {
+        "I": "id_token_claims",
+        "U": "info_token_claims",
+        "A": "access_token_claims",
+    }
+    first_tokens = tokens.get(pmap[priority[0]])
+    second_tokens = tokens.get(pmap[priority[1]])
+    third_tokens = tokens.get(pmap[priority[2]])
+    value = None
+    if first_tokens and claim in first_tokens:
+        value = first_tokens[claim]
+    elif second_tokens and claim in second_tokens:
+        value = second_tokens[claim]
+    elif third_tokens and claim in third_tokens:
+        value = third_tokens[claim]
     else:
         if raise_exception:
             msg = f"{claim} not found in available OIDC tokens."

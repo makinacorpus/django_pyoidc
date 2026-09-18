@@ -237,12 +237,14 @@ class OIDCE2ELemonLdapNgTestCase(OIDCE2ETestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print(" *** Live Server Test Case : Teardown ***")
+        print(" *** Live Server Test Case : Teardown (LemonLdap::Ng) ***")
+        super().tearDownClass()
 
         # print(" + Debug LemonLdap conf.")
         # conf = cls.docker_lemonldap_command("/usr/share/lemonldap-ng/bin/lemonldap-ng-cli save > /tmp/conf && cat /tmp/conf")
         # print(conf.stdout)
 
+        print(" + LemonLDAP Fixtures ending.")
         print("Removing lemonldap docker image...")
 
         os.chdir(cls.docker_workdir)
@@ -700,7 +702,8 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print(" *** Live Server Test Case : Teardown ***")
+        print(" *** Live Server Test Case : Teardown (Keycloak) ***")
+        super().tearDownClass()
 
         print("Extracting keycloak logs before stopping...")
         os.chdir(cls.docker_workdir)
@@ -712,6 +715,7 @@ class OIDCE2EKeycloakTestCase(OIDCE2ETestCase):
         finally:
             os.chdir(cls.workdir)
 
+        print(" + Keycloak Fixtures ending.")
         print("Removing keycloak docker image...")
 
         os.chdir(cls.docker_workdir)
