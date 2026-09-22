@@ -172,6 +172,7 @@ two environment variables:
             # the `provider_discovery_uri` setting
             "oidc_cache_provider_metadata": True,
         },
+    }
 
 
 When you need to configure a setting for your identity provider, it means that you have to update the dictionary in this setting. For example, if you were to configure ``oidc_paths_prefix`` for your Keycloak provider,  you would add ``oidc_paths_prefix : <your value>`` to the ``sso`` dictionary.
