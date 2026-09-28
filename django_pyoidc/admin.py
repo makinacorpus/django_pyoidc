@@ -17,6 +17,8 @@ class OIDCSessionAdmin(admin.ModelAdmin):  # type: ignore[type-arg] # https://gi
         "cache_session_key",
         "session_is_active",
         "created_at",
+        "expiration",
+        "op_name",
     )
     list_display = [
         "id",
@@ -24,6 +26,8 @@ class OIDCSessionAdmin(admin.ModelAdmin):  # type: ignore[type-arg] # https://gi
         "session_is_active",
         "sub",
         "created_at",
+        "expiration",
+        "op_name",
     ]
 
     @admin.display(boolean=True)

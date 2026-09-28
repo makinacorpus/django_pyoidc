@@ -38,6 +38,11 @@ def _debug_tokens(tokens={}):
         print(tokens["access_token_jwt"])
         print(type(tokens["access_token_jwt"]))  # <class 'str'>
 
+    if "refresh_token_jwt" in tokens:
+        print("refresh_token_jwt")
+        print(tokens["refresh_token_jwt"])
+        print(type(tokens["refresh_token_jwt"]))  # <class 'str'>
+
     if "access_token_claims" in tokens:
         print("access_token_claims")
         print(type(tokens["access_token_claims"]))  # oic.extension.message.TokenIntrospectionResponse

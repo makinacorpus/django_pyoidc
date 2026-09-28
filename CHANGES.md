@@ -2,6 +2,8 @@ NEXT
 ----
 - update documentation about SSO logout (#89)
 - add documentation about admin site integration (#92)
+- add priority argument in `django_pyoidc.utils.extract_claim_from_tokens`
+- add middleware django_pyoidc.middleware.OIDCSessionExpirationMiddleware managing session expirations
 
 1.0.13
 ----

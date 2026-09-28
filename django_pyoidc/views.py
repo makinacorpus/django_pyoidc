@@ -1,15 +1,18 @@
 import logging
+
+# import oic
+from datetime import datetime, timedelta
+from datetime import timezone as dtimezone
 from typing import Any, Dict, Optional, TypeVar, Union
 
 import jwt
-
-# import oic
 from django.contrib import auth, messages
 from django.contrib.auth.decorators import login_not_required
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, resolve_url
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
@@ -19,10 +22,10 @@ from oic.utils.http_util import BadRequest
 from django_pyoidc import backchannel_logout_session
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.engine import OIDCEngine
-from django_pyoidc.exceptions import DjangoOIDCException, InvalidSIDException
+from django_pyoidc.exceptions import ClaimNotFoundError, DjangoOIDCException, InvalidSIDException
 from django_pyoidc.models import OIDCSession
 from django_pyoidc.settings import OIDCSettings, OIDCSettingsFactory, OidcSettingValue
-from django_pyoidc.utils import import_object
+from django_pyoidc.utils import extract_claim_from_tokens, import_object
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +128,14 @@ class OIDCLoginView(OIDCView):
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
 
         sid = request.session.get("oidc_sid")
+        # FIXME: multi-provider: conflict issue
+        # if an existing sid exists it may be from a previous op attempt or success with the same session.
+        # if oidc_sid_valid exists in the session it means this one was a success
+        # for full multi provider we may need to prefix these records with op_name in the session
+        # but that would also mean maybe allowing multiple parallel OIDCSession for the same django session
+        # better than trying to allow multiple SSO connections for the same django sessions we
+        # may at least need to detect that this get page should not be called from another op_name when an
+        # active sso session on a first op_name is present.
         if sid:
             try:
                 client = OIDCClient(self.op_name, session_id=sid)
@@ -229,6 +240,7 @@ class OIDCLogoutView(OIDCView):
         auth.logout(request)
 
         if sid:
+            # cleanup of our OIDC session storage
             OIDCSession.objects.filter(session_state=sid).delete()
 
         # Build SSO disconnect link
@@ -286,6 +298,12 @@ class OIDCBackChannelLogoutView(OIDCView):
     def _logout_session(self, session: OIDCSession) -> None:
         if self.opsettings.get("hook_session_logout") is not None:
             self.call_function("hook_session_logout", session=session)
+            # in case the user hook forgot to do that
+            try:
+                session.delete()
+            except Exception:
+                logger.info("OIDCSession deletion after hook_session_logout has failed")
+                pass
         else:
             backchannel_logout_session(session=session)
 
@@ -388,6 +406,7 @@ class OIDCCallbackView(OIDCView):
 
                     # TODO: add a setting to allow/disallow session storage of the tokens
                     access_token_jwt = tokens["access_token"] if "access_token" in tokens else None
+                    refresh_token_jwt = tokens["refresh_token"] if "refresh_token" in tokens else None
 
                     # this will call token instrospection or user defined validator
                     # or return None
@@ -403,6 +422,7 @@ class OIDCCallbackView(OIDCView):
                         "access_token_jwt": access_token_jwt,
                         "access_token_claims": access_token_claims,
                         "id_token_claims": id_token_claims,
+                        "refresh_token_jwt": refresh_token_jwt,
                     }
                     # simplify check code, if any dict is None remove the entry
                     filtered_tokens = {k: v for k, v in tokens.items() if v is not None}
@@ -417,11 +437,29 @@ class OIDCCallbackView(OIDCView):
                         return self.login_failure(request)
                     else:
                         auth.login(request, user)
+                        # record end of auth phase in session
+                        request.session["oidc_sid_valid"] = request.session["oidc_sid"]
+                        # record expiration
+                        try:
+                            # we take expiration from access_tokens if available, before id or info tokens
+                            utimestamp = extract_claim_from_tokens("exp", tokens, True, priority="AIU")
+                            expiration = datetime.fromtimestamp(utimestamp, tz=dtimezone.utc)
+                        except ClaimNotFoundError:
+                            # FIXME: default duration to 300s?
+                            expiration = datetime.now(tz=dtimezone.utc) + timedelta(seconds=300)
+
+                        # delete pre-existing OIDCSession with same session_key
+                        # Note: this prevent currently any multiple parallel sso session management
+                        # for the same django session
+                        OIDCSession.objects.filter(cache_session_key=request.session.session_key).delete()
+                        # Record this success in OIDCSession (used by middleware and backchannel)
                         OIDCSession.objects.create(
                             state=state,
                             sub=userinfo["sub"],
                             cache_session_key=request.session.session_key,  # type: ignore[misc] # we call auth.login right before, so session_key is set to a value
                             session_state=session_state,
+                            expiration=expiration,
+                            op_name=self.op_name,
                         )
                         self.call_user_login_callback_function(request, user)
                         redir = self.success_url(request)

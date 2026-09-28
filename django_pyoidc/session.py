@@ -36,7 +36,7 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
         self.op_name = opsettings.get("op_name")
 
     def get_key(self, key: str) -> str:
-        return f"{self.op_name}-{key}"
+        return f"django-pyoidc-{self.op_name}-{key}"
 
     def __setitem__(self, key: str, value: Dict[str, Union[str, bool]]) -> None:
         self.storage.set(self.get_key(key), jsonpickle.encode(value))
@@ -54,7 +54,6 @@ class OIDCCacheSessionBackendForDjango(SessionBackend):
         return self.storage.get(self.get_key(key)) is not None
 
     def get_by_uid(self, uid: str) -> List[str]:
-        # FIXME : maybe .filter(cache_session_key=uid) ?
         result = OIDCSession.objects.filter(cache_session_key=uid).values_list("cache_session_key", flat=True)
         logger.debug("Fetched the following sid : %result for %s", result, uid)
 

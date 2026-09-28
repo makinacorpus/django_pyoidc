@@ -23,6 +23,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_pyoidc.middleware.OIDCSessionExpirationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
 ]
 

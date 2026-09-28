@@ -131,7 +131,7 @@ class UrlsTestCase(OIDCTestCase):
         )
 
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
-    def test_helper_allback_path_with_oidc_paths_prefix_and_callback_uri_name_and_route_prefix(self, *args):
+    def test_helper_callback_path_with_oidc_paths_prefix_and_callback_uri_name_and_route_prefix(self, *args):
         """ """
         host = settings.DJANGO_PYOIDC["sso13"]["login_uris_redirect_allowed_hosts"][0]
         response = self.client.get(

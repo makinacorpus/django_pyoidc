@@ -7,12 +7,15 @@ from django_pyoidc.views import (
     OIDCLoginView,
     OIDCLogoutView,
 )
+from tests.views import AnonymousView, AuthentifiedView
 
 helper10 = OIDCHelper(op_name="sso10")
 helper11 = OIDCHelper(op_name="sso11")
 helper12 = OIDCHelper(op_name="sso12")
 helper13 = OIDCHelper(op_name="sso13")
 urlpatterns = [
+    path("not-managed-anon/", AnonymousView.as_view(), name="test_unmanaged_anonymous"),
+    path("not-managed-auth/", AuthentifiedView.as_view(), name="test_unmanaged_authentified"),
     path("login-xyz/", OIDCLoginView.as_view(op_name="sso1"), name="test_login"),
     path("login-wtf/", OIDCLoginView.as_view(op_name="sso2"), name="test_login_2"),
     path(

@@ -15,6 +15,7 @@ from tests.e2e.test_app.views import (
     OIDCTestFailureView,
     OIDCTestLogoutView,
     OIDCTestSuccessView,
+    OIDCProtectedView
 )
 
 
@@ -57,6 +58,7 @@ urlpatterns = [
     path("login-3/", OIDCLoginView.as_view(op_name="sso3"), name="e2e_test_login_3"),
     path("login-4/", OIDCLoginView.as_view(op_name="sso4"), name="e2e_test_login_4"),
     path("login-5/", OIDCLoginView.as_view(op_name="sso5"), name="e2e_test_login_5"),
+    path("basic-1/", OIDCProtectedView.as_view(), name="e2e_test_basic_1"),
     path(
         "callback-1/",
         OIDCCallbackView.as_view(op_name="sso1"),
