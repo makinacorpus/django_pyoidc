@@ -577,7 +577,7 @@ class KeycloakTestCase(OIDCE2EKeycloakTestCase):
         # is not good enough for Keycloak, a ressource_access check would be better.
         # user_limit_app2 login Will NOT FAIL
         # as our 'aud' check is not sufficient to detect that, sad...
-        # since keycloak decided to remove the current client_di in 'aud' in access_tokens
+        # since keycloak decided to remove the current client_id in 'aud' in access_tokens
         # that's hard to detect this type of users from access_tokens without test resource_access
         self._selenium_sso_login(
             start_url,

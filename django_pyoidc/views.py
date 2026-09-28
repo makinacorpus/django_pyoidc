@@ -406,6 +406,7 @@ class OIDCCallbackView(OIDCView):
 
                     # TODO: add a setting to allow/disallow session storage of the tokens
                     access_token_jwt = tokens["access_token"] if "access_token" in tokens else None
+                    refresh_token_jwt = tokens["refresh_token"] if "refresh_token" in tokens else None
 
                     # this will call token instrospection or user defined validator
                     # or return None
@@ -421,6 +422,7 @@ class OIDCCallbackView(OIDCView):
                         "access_token_jwt": access_token_jwt,
                         "access_token_claims": access_token_claims,
                         "id_token_claims": id_token_claims,
+                        "refresh_token_jwt": refresh_token_jwt,
                     }
                     # simplify check code, if any dict is None remove the entry
                     filtered_tokens = {k: v for k, v in tokens.items() if v is not None}
@@ -439,7 +441,7 @@ class OIDCCallbackView(OIDCView):
                         request.session["oidc_sid_valid"] = request.session["oidc_sid"]
                         # record expiration
                         try:
-                            # we take expiration form access_tokens if available, before id or info tokens
+                            # we take expiration from access_tokens if available, before id or info tokens
                             utimestamp = extract_claim_from_tokens("exp", tokens, True, priority="AIU")
                             expiration = datetime.fromtimestamp(utimestamp, tz=dtimezone.utc)
                         except ClaimNotFoundError:
