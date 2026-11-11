@@ -12,6 +12,7 @@ from oic.oic.message import OpenIDSchema
 
 from django_pyoidc.client import OIDCClient
 from django_pyoidc.models import OIDCSession
+from django_pyoidc.settings import OIDCSettingsFactory
 from django_pyoidc.views import (
     OIDCBackChannelLogoutView,
     OIDCCallbackView,
@@ -306,8 +307,53 @@ class CallbackViewTestCase(OIDCTestCase):
                 "info_token_claims": {},
                 "access_token_jwt": "--",
                 "id_token_claims": {"iss": "fake"},
-            }
+            },
+            require_email_verified=False,
         )
+
+        self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
+        self.assertEqual(OIDCSession.objects.all().count(), 0)
+
+    @mock.patch(
+        "django_pyoidc.client.Consumer.parse_authz",
+        return_value=({"state": "verified-email-state"}, None, None),
+    )
+    @mock.patch(
+        "django_pyoidc.client.Consumer.get_user_info",
+        return_value=OpenIDSchema(
+            sub="unverified-user",
+            email="alice@example.com",
+            preferred_username="alice",
+            email_verified=False,
+        ),
+    )
+    @mock.patch(
+        "django_pyoidc.client.Consumer.complete",
+        return_value={"id_token": IdToken(iss="fake"), "access_token": "--"},
+    )
+    @mock.patch("django_pyoidc.client.Consumer.restore")
+    @mock.patch("django_pyoidc.client.Consumer.provider_config")
+    def test_callback_denies_unverified_email_when_setting_is_enabled(self, *args):
+        provider_settings = {
+            **settings.DJANGO_PYOIDC,
+            "sso1": {
+                **settings.DJANGO_PYOIDC["sso1"],
+                "require_email_verified": True,
+            },
+        }
+        cache_clear = OIDCSettingsFactory.get.__func__.cache_clear
+        cache_clear()
+        self.addCleanup(cache_clear)
+
+        state = "verified-email-state"
+        session = self.client.session
+        session["oidc_sid"] = state
+        session.save()
+
+        middleware = list(settings.MIDDLEWARE)
+        middleware.insert(1, "django.contrib.messages.middleware.MessageMiddleware")
+        with override_settings(DJANGO_PYOIDC=provider_settings, MIDDLEWARE=middleware):
+            response = self.client.get(reverse("my_test_callback"))
 
         self.assertRedirects(response, "/logout_failure", fetch_redirect_response=False)
         self.assertEqual(OIDCSession.objects.all().count(), 0)
@@ -365,7 +411,8 @@ class CallbackViewTestCase(OIDCTestCase):
                 "info_token_claims": user_info_dict,
                 "access_token_jwt": "--",
                 "id_token_claims": {"iss": "fake"},
-            }
+            },
+            require_email_verified=False,
         )
 
         self.assertRedirects(response, "/default/success", fetch_redirect_response=False)
@@ -434,7 +481,8 @@ class CallbackViewTestCase(OIDCTestCase):
                 "info_token_claims": user_info_dict,
                 "access_token_jwt": "--",
                 "id_token_claims": {"iss": "fake"},
-            }
+            },
+            require_email_verified=False,
         )
 
         self.assertRedirects(response, "/default/success", fetch_redirect_response=False)

@@ -35,7 +35,8 @@ class OIDCEngine:
             return self.call_function("hook_get_user", client=client, tokens=tokens)
         else:
             logger.debug("OIDC, Calling get_user_by_email")
-            return get_user_by_email(tokens)
+            require_email_verified = self.opsettings.get("require_email_verified", False) is True
+            return get_user_by_email(tokens, require_email_verified=require_email_verified)
 
     def introspect_access_token(self, access_token_jwt: Optional[str], client: OIDCClient) -> Any:
         """

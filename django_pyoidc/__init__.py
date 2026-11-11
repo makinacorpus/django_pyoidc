@@ -3,7 +3,7 @@ import typing
 from typing import Any, Dict
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 
 from django_pyoidc.exceptions import ClaimNotFoundError
 
@@ -14,7 +14,7 @@ from django_pyoidc.utils import SessionStore, extract_claim_from_tokens
 logger = logging.getLogger(__name__)
 
 
-def get_user_by_email(tokens: Dict[str, Any]) -> Any:
+def get_user_by_email(tokens: Dict[str, Any], require_email_verified: bool = False) -> Any:
     User = get_user_model()  # noqa: N806
 
     username = None
@@ -29,6 +29,16 @@ def get_user_by_email(tokens: Dict[str, Any]) -> Any:
         email = extract_claim_from_tokens("email", tokens)
     except ClaimNotFoundError:
         pass
+
+    if require_email_verified and email:
+        try:
+            email_verified = extract_claim_from_tokens("email_verified", tokens)
+        except ClaimNotFoundError as exc:
+            msg = "OIDC email address is not verified."
+            raise PermissionDenied(msg) from exc
+        if email_verified is not True:
+            msg = "OIDC email address is not verified."
+            raise PermissionDenied(msg)
 
     try:
         preferred_username = extract_claim_from_tokens("preferred_username", tokens)
