@@ -74,6 +74,10 @@ However you can implement more complex behavior by specifying a :ref:`hook_get_u
 configuration. In this guide we will look at the ``groups`` attribute in a userinfo token and set the
 :attr:`is_staff <django.contrib.auth.models.User.is_staff>` attribute depending on the value.
 
+The per-provider ``require_email_verified`` setting (default ``False``) is enforced by the default
+``get_user_by_email`` implementation only. A custom ``hook_get_user`` replaces that implementation,
+so the hook must perform its own ``email_verified`` check when required.
+
 First, if you don't already have a Python module holding OIDC related code in your project, create a file
 named ``oidc.py`` next to your settings.
 

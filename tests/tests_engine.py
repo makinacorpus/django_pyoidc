@@ -13,6 +13,17 @@ from tests.utils import OIDCTestCase
 
 
 class OIDCEngineTestCase(OIDCTestCase):
+    @mock.patch("django_pyoidc.engine.get_user_by_email")
+    def test_default_user_lookup_receives_email_verification_setting(self, mocked_get_user):
+        op_settings = OIDCSettings(op_name="sso1")
+        op_settings.set("require_email_verified", True)
+        engine = OIDCEngine(opsettings=op_settings)
+        tokens = {"info_token_claims": {"email": "alice@example.com"}}
+
+        engine.call_get_user_function(client=MagicMock(), tokens=tokens)
+
+        mocked_get_user.assert_called_once_with(tokens, require_email_verified=True)
+
     @mock.patch("django_pyoidc.client.Consumer.provider_config")
     def test_handle_missing_introspection_endpoint(self, *args):
         op_name = "sso1"

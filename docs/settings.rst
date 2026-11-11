@@ -80,6 +80,15 @@ scopes
 
 The list of scopes requested by the OIDC Client when sending an authentication request.
 
+require_email_verified
+**********************
+
+**Default**: ``False``
+
+When enabled for a provider, the default ``get_user_by_email`` implementation requires the ``email_verified`` claim to be the boolean value ``True`` whenever it uses an email address from the OIDC tokens. Missing, false, or non-boolean values deny the login before a user is looked up or created. Claim lookup follows the usual priority: userinfo, ID token, then access token.
+
+This setting applies only to the default user lookup. If you configure ``hook_get_user``, your custom hook must enforce email verification itself.
+
 oidc_paths_prefix
 *****************
 
